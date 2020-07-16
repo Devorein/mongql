@@ -99,7 +99,6 @@ class Mongql {
 			},
 			generate:{
         type: true,
-        mutation: {...this.#globalConfigs.generate.mutation},
         query: true
       },
 			output: false,
@@ -109,7 +108,14 @@ class Mongql {
 			}
     });
 
-    
+    populateObjDefaultValue(mongql.generate,{
+      mutation: {
+        create: [true,true],
+        update: [true,true],
+        delete: [true,true],
+      }
+    })
+
     this.#schemaConfigs[mongql.resource] = mongql;
   };
   

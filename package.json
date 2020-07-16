@@ -10,7 +10,12 @@
   "scripts": {
     "test": "npm run unitTest && npm run integrationTest"
   },
-  "keywords": [],
+  "keywords": [
+    "codegen",
+    "schema-generator",
+    "mongoose-to-graphql",
+    "graphql-schema"
+  ],
   "author": "Devon Reid <devorein00@gmail.com>",
   "license": "MIT",
   "dependencies": {

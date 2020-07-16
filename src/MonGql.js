@@ -7,8 +7,6 @@ const fs = require('fs-extra');
 const Password = require("../utils/gql-types/password")
 const Username = require("../utils/gql-types/username")
 
-const deepFreeze = require("../utils/deepFreeze");
-
 const generateTypedefs = require('./generateTypedefs');
 const generateResolvers = require('./generateResolvers');
 const populateObjDefaultValue = require('../utils/populateObjDefaultValue');
@@ -44,7 +42,6 @@ class Mongql {
       else this.#globalConfigs.resources.push(resource);
 			this.#createDefaultSchemaConfigs(schema);
     })
-    deepFreeze(this.#schemaConfigs);
 
     // Adding custom gql scalars to validators
 
@@ -54,8 +51,6 @@ class Mongql {
     
     this.#globalConfigs.Validators.Password = Password.serialize;
     this.#globalConfigs.Validators.Username = Username.serialize;
-
-		deepFreeze(this.#globalConfigs);
 	}
 
 	getResources = () => this.#globalConfigs.resources;
@@ -133,7 +128,7 @@ class Mongql {
       const {
         mongql
       } = Schema;
-      const {  resource } = mongql;
+      const { resource } = mongql;
       const { typedefsAST,transformedSchema } = generateTypedefs(
         Schema,
         InitTypedefs[resource],

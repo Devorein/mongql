@@ -9,34 +9,19 @@ module.exports = function (Schema) {
 	const pluralizedcapitalizedResource = pluralize(capitalizedResource, 2);
 
 	let mutationsStr = ``;
-	if (mutation || mutation.create[0])
-		mutationsStr += `
-    "Create a new ${resource}"
-    create${capitalizedResource}(data: ${capitalizedResource}Input!): Self${capitalizedResource}Type!
-  `;
 
-	if (mutation || mutation.update[0])
-		mutationsStr += `
-    "Update single ${resource}"
-    update${capitalizedResource}(data: ${capitalizedResource}Input!,id: ID!): Self${capitalizedResource}Type!
-  `;
+	[ 'create', 'update', 'delete' ].forEach((action) => {
+		if (mutation === true || mutation[action] === true || mutation[action][0])
+			mutationsStr += `
+        "${S(action).capitalize().s} single ${resource}"
+        ${action}${capitalizedResource}(data: ${capitalizedResource}Input!): Self${capitalizedResource}Type!
+      `;
 
-	if (mutation || mutation.update[1])
-		mutationsStr += `
-    "Update multiple ${pluralizedResource}"
-    update${pluralizedcapitalizedResource}(data: [${capitalizedResource}Input!],ids: [ID!]!): [Self${capitalizedResource}Type!]!
-  `;
-
-	if (mutation || mutation.delete[0])
-		mutationsStr += `
-    "Delete single ${resource}"
-    delete${capitalizedResource}(id: ID!): Self${capitalizedResource}Type!
-  `;
-
-	if (mutation || mutation.delete[1])
-		mutationsStr += `
-    "Delete multiple ${pluralizedResource}"
-    delete${pluralizedcapitalizedResource}(ids: [ID!]): [Self${capitalizedResource}Type!]!
-  `;
+		if (mutation === true || mutation[action] === true || mutation[action][1])
+			mutationsStr += `
+      "${S(action).capitalize().s} multiple ${pluralizedResource}"
+      ${action}${pluralizedcapitalizedResource}(data: ${capitalizedResource}Input!): [Self${capitalizedResource}Type!]!
+    `;
+	});
 	return `extend type Mutation {\n${mutationsStr}\n}`;
 };

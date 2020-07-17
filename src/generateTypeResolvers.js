@@ -1,6 +1,4 @@
-const S = require('String');
-module.exports = function (resource, transformedSchema) {
-	resource = S(resource).capitalize().s;
+module.exports = function (Schema, transformedSchema) {
 	let target = transformedSchema;
 	target = {
 		...target.types.base,

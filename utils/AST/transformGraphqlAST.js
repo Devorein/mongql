@@ -22,7 +22,6 @@ function transformTypedefObjExtAST (objExtTypeName, typedefsAST, typedefsStr) {
 		};
 		typedefsAST.definitions.push(objTypeExtension);
 	}
-
 	objTypeExtension.fields.push(
 		...gql`
 				${typedefsStr}

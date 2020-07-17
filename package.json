@@ -1,6 +1,6 @@
 {
   "name": "mongql",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "Create graphql Schema from mongoose Schema",
   "main": "src/Mongql.js",
   "repository": {
@@ -9,8 +9,8 @@
   },
   "scripts": {
     "prepublish": "npm run lint && npm run test",
-    "test": "jest --runInBand",
-    "lint": "eslint --fix"
+    "test": "npx jest --runInBand",
+    "lint": "npx eslint --fix"
   },
   "keywords": [
     "codegen",
@@ -55,7 +55,7 @@
   },
   "lint-staged": {
     "*.js": [
-      "eslint --fix",
+      "npm run lint",
       "git add"
     ]
   }

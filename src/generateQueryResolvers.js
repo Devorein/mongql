@@ -4,8 +4,8 @@ const { difference } = require('lodash');
 
 const parsePagination = require('../utils/query/parsePagination');
 
-module.exports = function (resource, transformedSchema) {
-	const capitalizedResource = S(resource).capitalize().s;
+module.exports = function (Schema, transformedSchema) {
+	const capitalizedResource = S(Schema.mongql.resource).capitalize().s;
 	const selfFields = [],
 		mixedFields = [],
 		othersFields = [];

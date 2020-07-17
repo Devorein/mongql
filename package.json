@@ -1,6 +1,6 @@
 {
   "name": "mongql",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Create graphql Schema from mongoose Schema",
   "main": "src/Mongql.js",
   "repository": {

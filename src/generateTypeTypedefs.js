@@ -243,8 +243,6 @@ module.exports = function (baseSchema, Validators) {
 
 	let typedefTypeStr = ``;
 	typeArrs.forEach((typeArr) => (typedefTypeStr += generateTypeStr(typeArr)));
-	// fs.writeFile(path.join(dirname, `${resource}.mongql`), `# ${Date.now()}\n${typedefTypeStr}`, 'UTF-8', () => {});
-	// fs.writeFile(path.join(dirname, `${resource}.json`), JSON.stringify(schemaObj, null, 2), 'UTF-8', () => {});
 	return {
 		typedefTypeStr,
 		transformedSchema: {

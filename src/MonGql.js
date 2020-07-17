@@ -159,7 +159,8 @@ class Mongql {
       );
       TransformedResolvers.obj[resource] = resolver;
       TransformedResolvers.arr.push(resolver);
-    })
+    });
+
 		return {
 			TransformedTypedefs,
 			TransformedResolvers

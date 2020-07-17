@@ -1,6 +1,6 @@
 {
   "name": "mongql",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Create graphql Schema from mongoose Schema",
   "main": "src/Mongql.js",
   "repository": {
@@ -8,7 +8,7 @@
     "url": "git+https://github.com:Devorein/mongql.git"
   },
   "scripts": {
-    "test": "npm run unitTest && npm run integrationTest"
+    "test": "jest --runInBand"
   },
   "keywords": [
     "codegen",
@@ -40,6 +40,7 @@
     "dotenv": "^8.2.0",
     "env-cmd": "^10.1.0",
     "eslint": "^7.4.0",
+    "eslint-plugin-jest": "^23.18.0",
     "eslint-plugin-prettier": "^3.1.4",
     "jest": "^26.1.0",
     "nodemon": "^2.0.4"

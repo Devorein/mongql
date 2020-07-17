@@ -8,11 +8,12 @@ A package to convert your mongoose schema to graphql schema
 2. Stitch already created typedef and resolvers
 3. Easily configurable (any of the typedef and resolvers can be turned off)
 4. View the generated SDL
+5. Auto addition of graphql validators with mongoose
 
 ## Motivation
 
 1. Creating a graphql SDL is not a difficult task by any means, but things get really cumbersome after a while, especially since a lot of the typedefs and resolvers are being repeated.
-2. Automating the schema generation helps to avoid errors regarding forgetting to define something in the schema or adding to the resolver.
+2. Automating the schema generation helps to avoid errors regarding forgetting to define something in the schema thats been added to the resolver or vice versa.
 
 ## Basic Usage (Without initial typedef and resolvers)
 
@@ -103,6 +104,7 @@ Precedence of same config option is global < Schema < field. That is for the sam
   <td>Type</td>
   <td>Default Value</td>
   <td>Usage</td>
+  <td>Available in</td>
   </tr>
  </thead>
  <tbody>
@@ -217,6 +219,25 @@ Precedence of same config option is global < Schema < field. That is for the sam
  `init: {User: InitialUserResolver}`
   </td>
   </tr>
+
+  <tr>
+  <td>appendRTypeToEmbedTypesKey</td>
+  <td>Controls whether or not to append the resource type to sub/embed/extra types</td>
+  <td>
+  
+ `boolean`
+   </td>
+  <td>
+  
+ `true`
+  </td>
+  <td>
+  
+ `appendRTypeToEmbedTypesKey: true`
+  </td>
+  <td>schema</td>
+  </tr>
+
  </tbody>
 </table>
 
@@ -324,7 +345,7 @@ Precedence of same config option is global < Schema < field. That is for the sam
  `{base: [], extra: ['Others', 'Mixed']}`
   </td>
   <td>
-  
+
  `global_excludePartitions: {base: [ 'Others', 'Mixed' ],extra: ['Self']}`
   </td>
   </tr>
@@ -344,6 +365,8 @@ Precedence of same config option is global < Schema < field. That is for the sam
   
  `generateInterface: true`
   </td>
+  </
+
   </tr>
  </tbody>
 </table>

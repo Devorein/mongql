@@ -8,7 +8,9 @@
     "url": "git+https://github.com:Devorein/mongql.git"
   },
   "scripts": {
-    "test": "jest --runInBand"
+    "prepublish": "npm run lint && npm run test",
+    "test": "jest --runInBand",
+    "lint": "eslint --fix"
   },
   "keywords": [
     "codegen",
@@ -47,7 +49,8 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged"
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run lint && npm run test"
     }
   },
   "lint-staged": {

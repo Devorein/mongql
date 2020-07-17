@@ -57,6 +57,7 @@ class Mongql {
 
   #createDefaultGlobalConfigs = ()=>{
     const temp = this.#globalConfigs;
+
     populateObjDefaultValue(temp,{
       output: false,
       generate: {
@@ -71,13 +72,15 @@ class Mongql {
       }
     });
 
-    populateObjDefaultValue(temp.generate,{
-      mutation: {
-        create: [true,true],
-        update: [true,true],
-        delete: [true,true],
-      }
-    });
+    if(temp.generate.mutation !== false){
+      populateObjDefaultValue(temp.generate,{
+        mutation: {
+          create: [true,true],
+          update: [true,true],
+          delete: [true,true],
+        }
+      });
+    }
   }
 
 	#createDefaultSchemaConfigs = (baseSchema) => {
@@ -108,13 +111,15 @@ class Mongql {
 			}
     });
 
-    populateObjDefaultValue(mongql.generate,{
-      mutation: {
-        create: [true,true],
-        update: [true,true],
-        delete: [true,true],
-      }
-    })
+    if(mongql.generate.mutation !== false){
+      populateObjDefaultValue(mongql.generate,{
+        mutation: {
+          create: [true,true],
+          update: [true,true],
+          delete: [true,true],
+        }
+      });
+    }
 
     this.#schemaConfigs[mongql.resource] = mongql;
   };
@@ -130,7 +135,7 @@ class Mongql {
 			Schemas
     } = this.#globalConfigs;
 
-    Schemas.forEachAsync(async (Schema)=>{
+    await Schemas.forEachAsync(async (Schema)=>{
       const {
         mongql
       } = Schema;

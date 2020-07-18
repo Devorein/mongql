@@ -171,14 +171,14 @@ Precedence of same config option is global < Schema < field. That is for the sam
 |---|---|---|---|---|---|
 | output  | output related configuration | `boolean or Object` | false | `{output: false}`  `{output: { dir: process.cwd()}}` | Schema |
 | &.dir  | Output directory | `string` | `process.cwd()+"\SDL"` | `{output: { dir: process.cwd()}}` | Schema | 
-| generate  | Controls generation of type, query and mutations typedefs and resolvers | `Object` or `boolean` | `generate: true` | Schema |
-| &.mutation  | Controls generation of mutations typedefs and resolvers | `Object` or `boolean` | `generate :{mutation: true}` | Schema |
-| &.(create|update|delete)  | Controls generation of mutations typedefs and resolvers parts , if using tuple first one indicates single resource mutation, and second indicates multi resource mutation. | `[boolean,boolean] or boolean` | `true` | `generate :{mutation: {create: false, update: [true,false]}}` here no create relation mutation will be create, only single resource update resolver and typedef will be created and both single and multi resource will be created for delete | Schema |
+| generate  | Controls generation of type, query and mutations typedefs and resolvers | `Object` or `boolean` | `true` | `generate: true` | Schema |
+| &.mutation  | Controls generation of mutations typedefs and resolvers | `Object` or `boolean` | `true` | `generate :{mutation: true}` | Schema |
+| &.(create\|update\|delete)  | Controls generation of mutations typedefs and resolvers parts , if using tuple first one indicates single resource mutation, and second indicates multi resource mutation. | `[boolean,boolean] or boolean` | `true` | `generate :{mutation: {create: false, update: [true,false]}}` here no create relation mutation will be create, only single resource update resolver and typedef will be created and both single and multi resource will be created for delete | Schema |
 | Schemas  | Array of schemas generate by mongoose | `Schema[]` | `[]` | `Schemas: [UserSchema, ...]` | | 
 | Typedefs  | Typedefs related configuration | `Object` | `{init: undefined}` | `Typedefs: {init: {User: InitialUserTypedef}}` | | 
 | &.init  | Initial typedefs to be attached to resultant typedef | `Object` | `undefined` | `init: {User: InitialUserTypedef}` | | 
 | Resolvers  | Resolvers related configuration | `Object` | `{init: undefined}` | `Resolvers: {init: {User: InitialUserResolvers}}` | | 
-| &.init  | Initial resolvers to be attached to resultant resolver | `Object` | `undefined` | `init: {User: InitialUserResolver}` | 
+| &.init  | Initial resolvers to be attached to resultant resolver | `Object` | `undefined` | `init: {User: InitialUserResolver}` | |
 | appendRTypeToEmbedTypesKey  | Controls whether or not to append the resource type to sub/embed/extra types | `boolean` | `true` | `appendRTypeToEmbedTypesKey: true` | Schema |
 
 ### Schema configs
@@ -187,7 +187,7 @@ Precedence of same config option is global < Schema < field. That is for the sam
 |---|---|---|---|---|---|
 | resource  | name of the resource  | `string` | **Required** | `resource: User` | |
 | global_excludePartitions  | Controls which auth partition will be excluded in the generated schemas  | `Object` | `{base: [], extra: ['Others', 'Mixed']}` | `global_excludePartitions: {base: [ 'Others', 'Mixed' ]}` | |
-| &.(base|extra)  | Controls which auth partition will be excluded in the types of generated schemas  | `[] | boolean` | `{base: [], extra: ['Others', 'Mixed']}` | `global_excludePartitions: {base: [ 'Others', 'Mixed' ],extra: ['Self']}` | |
+| &.(base\|extra)  | Controls which auth partition will be excluded in the types of generated schemas  | `[] | boolean` | `{base: [], extra: ['Others', 'Mixed']}` | `global_excludePartitions: {base: [ 'Others', 'Mixed' ],extra: ['Self']}` | |
 | generateInterface  | Controls whether or not to generate interface from base resource  | `boolean` | `true` | `generateInterface: true` | |
 
 ### Field configs

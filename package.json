@@ -35,23 +35,15 @@
     "mongoose": "^5.9.25",
     "pluralize": "^8.0.0",
     "string": "^3.3.3",
-    "typescript": "^3.9.6"
+    "typescript": "^3.9.7"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
-    "dotenv": "^8.2.0",
-    "env-cmd": "^10.1.0",
     "eslint": "^7.4.0",
     "eslint-plugin-jest": "^23.18.0",
     "eslint-plugin-prettier": "^3.1.4",
     "jest": "^26.1.0",
     "nodemon": "^2.0.4"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged && npm run test",
-      "pre-push": "npm run lint && npm run test"
-    }
   },
   "lint-staged": {
     "*.js": [

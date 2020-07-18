@@ -141,7 +141,7 @@ module.exports = function (baseSchema, Validators) {
 
 	function generateVariant (value, isArray) {
 		let variant = 'scalar';
-		const instanceOfSchema = value instanceof mongoose.Schema;
+		const instanceOfSchema = value instanceof mongoose.Schema || Object.getPrototypeOf(value).instanceOfSchema;
 		if (instanceOfSchema) variant = 'type';
 		else if (value.enum) variant = 'enum';
 		else if (value.ref) variant = 'ref';
@@ -186,7 +186,6 @@ module.exports = function (baseSchema, Validators) {
 	function parseSchema (schema, parentKey, path = undefined) {
 		Object.entries(schema.obj).forEach(([ key, value ]) => {
 			const isArray = Array.isArray(value);
-			const instanceOfSchema = (isArray ? value[0] : value) instanceof mongoose.Schema;
 			value = isArray ? value[0] : value;
 			const extractedFieldOptions = extractFieldOptions(value, parentKey, isArray);
 			const variant = generateVariant(value, isArray);
@@ -215,7 +214,7 @@ module.exports = function (baseSchema, Validators) {
 			if (!inputs[input_key]) inputs[input_key] = {};
 			if (writable) inputs[input_key][key] = { value: transformed_input_type, variant };
 
-			fields[key] = !instanceOfSchema ? value : 'Schema';
+			fields[key] = !variant.match(/(type)/) ? value : 'Schema';
 
 			if (variant.match(/(type)/)) parseSchema(value, field_type, `${path ? path + '.' : ''}${key}`);
 		});

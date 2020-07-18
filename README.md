@@ -259,8 +259,14 @@ Generated Mutation Examples: createSetting, updateSettings
 
 ## API
 
-1. **`generate()`** : Generate the Typedefs and resolvers from the schemas
-2. **`getResources()`** : Gets all the resources collected from all schemas
+These methods are available in the created Mongql instance
+
+| Name  | Description  | Params | Returned |
+|---|---|---|---|
+| `generate()` | Generate the Typedefs and resolvers from the schemas| | `{TransformedTypedefs, TransformedResolvers}`
+| `getResources()` | Gets all the resources collected from all schemas| | `(Schema.mongql.resource)[]`
+| `generateModels()` | Generates models from the schema provided | | `Object:{[Schema.mongql.resource]: MongooseModel}`
+| `generateSchema()` | Generates a schema by calling `makeExecutableSchema` internally | options passed to `makeExecutableSchema` expect for typedefs and resolvers | `GraphQLSchema`
 
 ## TODO
 

@@ -21,8 +21,8 @@
   "author": "Devon Reid <devorein00@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@graphql-tools/resolvers-composition": "^6.0.13",
-    "@graphql-tools/schema": "^6.0.13",
+    "@graphql-tools/resolvers-composition": "^6.0.14",
+    "@graphql-tools/schema": "^6.0.14",
     "colors": "^1.4.0",
     "fs-extra": "^9.0.1",
     "graphql": "^15.3.0",
@@ -32,7 +32,7 @@
     "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
     "mkdirp": "^1.0.4",
-    "mongoose": "^5.9.24",
+    "mongoose": "^5.9.25",
     "pluralize": "^8.0.0",
     "string": "^3.3.3",
     "typescript": "^3.9.6"
@@ -55,8 +55,7 @@
   },
   "lint-staged": {
     "*.js": [
-      "npm run lint",
-      "git add"
+      "npm run lint"
     ]
   }
 }

@@ -74,14 +74,9 @@ describe('Single schema Typedefs generation', () => {
 		expect(TransformedTypedefs).not.toHaveProperty('obj.Settings');
 	});
 
-	it('Should create typedefs where arr key has only user', async () => {
-		expect(TransformedTypedefs.arr.length).toBe(1);
-		expect(TransformedTypedefs.arr.length).not.toBe(2);
-	});
-
-	it('Should create typedefs where both arr and object are same', async () => {
-		expect(TransformedTypedefs.arr.length).toBe(Object.keys(TransformedTypedefs.obj).length);
-		expect(TransformedTypedefs.arr[0]).toBe(TransformedTypedefs.obj.User);
+	it('Should create typedefs where obj key has base and external keys', async () => {
+		expect(TransformedTypedefs).toHaveProperty('obj.External');
+		expect(TransformedTypedefs).toHaveProperty('obj.Base');
 	});
 });
 
@@ -129,15 +124,9 @@ describe('Multiple schema Typedefs generation', () => {
 		expect(TransformedTypedefs).not.toHaveProperty('obj.Folder');
 	});
 
-	it('Should create typedefs where arr key has only user and settings', async () => {
-		expect(TransformedTypedefs.arr.length).toBe(2);
-		expect(TransformedTypedefs.arr.length).not.toBe(3);
-	});
-
-	it('Should create typedefs where both arr and object are same', async () => {
-		expect(TransformedTypedefs.arr.length).toBe(Object.keys(TransformedTypedefs.obj).length);
-		expect(TransformedTypedefs.arr[0]).toBe(TransformedTypedefs.obj.User);
-		expect(TransformedTypedefs.arr[1]).toBe(TransformedTypedefs.obj.Settings);
+	it('Should create typedefs where obj key has Base and External keys', async () => {
+		expect(TransformedTypedefs).toHaveProperty('obj.Base');
+		expect(TransformedTypedefs).toHaveProperty('obj.External');
 	});
 });
 
@@ -177,8 +166,7 @@ describe('Single schema Resolvers generation', () => {
 	});
 
 	it('Should create resolvers where arr key has only user', async () => {
-		expect(TransformedResolvers.arr.length).toBe(1);
-		expect(TransformedResolvers.arr.length).not.toBe(2);
+		expect(TransformedResolvers.arr.length).toBe(3);
 	});
 
 	it('Should create resolvers where both arr and object are same', async () => {
@@ -232,8 +220,7 @@ describe('Multiple schema Resolvers generation', () => {
 	});
 
 	it('Should create resolvers where arr key has only user and settings', async () => {
-		expect(TransformedResolvers.arr.length).toBe(2);
-		expect(TransformedResolvers.arr.length).not.toBe(3);
+		expect(TransformedResolvers.arr.length).toBe(4);
 	});
 
 	it('Should create resolvers where both arr and object are same', async () => {

@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD013 -->
-
 # Mongql
 
 A package to convert your mongoose schema to graphql schema
@@ -14,6 +12,7 @@ A package to convert your mongoose schema to graphql schema
     - [Basic Usage (Without initial typedef and resolvers)](#basic-usage-without-initial-typedef-and-resolvers)
     - [Intermediate Usage (With initial typedef and resolvers)](#intermediate-usage-with-initial-typedef-and-resolvers)
     - [Intermediate Usage (Fine grain Mutation configuration)](#intermediate-usage-fine-grain-mutation-configuration)
+    - [Advanced Usage (generating Schema and Models)](#advanced-usage-generating-schema-and-models)
   - [Configs](#configs)
     - [Global Configs](#global-configs)
     - [Schema configs](#schema-configs)
@@ -153,6 +152,29 @@ const mongql = new Mongql({
 });
 ```
 
+### Advanced Usage (generating Schema and Models)
+
+``` js
+const Mongql = require('mongql');
+const {
+    ApolloServer
+} = require('apollo-server');
+
+(async function() {
+    const mongql = new Mongql({
+        Schemas: [
+            /* Your schema array here */
+        ],
+
+    });
+    const server = new ApolloServer({
+        schema: await mongql.generateSchema(),
+        context: mongql.generateModels()
+    });
+    await server.listen();
+})();
+```
+
 Mongql contains 3 level of configs
 
 1. **Constructor/global level config**: passed to the ctor during Mongql instantiation
@@ -163,21 +185,21 @@ Precedence of same config option is global < Schema < field. That is for the sam
 
 ## Configs
 
-& refers to the complete key declared above.
+& refers to the complete key declared right above.
 
 ### Global Configs
 
 | Name  | Description  | Type | Default Value | Usage | Available in |
 |---|---|---|---|---|---|
 | output  | output related configuration | `boolean \| Object` | false | `{output: false}`  `{output: { dir: process.cwd()}}` | Schema |
-| &.dir  | Output directory | `string` | `process.cwd()+"\SDL"` | `{output: { dir: process.cwd()}}` | Schema | 
+| &.dir  | Output directory | `string` | `process.cwd()+"\SDL"` | `{output: { dir: process.cwd()}}` | Schema |
 | generate  | Controls generation of type, query and mutations typedefs and resolvers | `Object` \| `boolean` | `true` | `generate: true` | Schema |
 | &.mutation  | Controls generation of mutations typedefs and resolvers | `Object` \| `boolean` | `true` | `generate :{mutation: true}` | Schema |
 | &.(create\|update\|delete)  | Controls generation of mutations typedefs and resolvers parts , if using tuple first one indicates single resource mutation, and second indicates multi resource mutation. | `[boolean,boolean] \| boolean` | `true` | `generate :{mutation: {create: false, update: [true,false]}}` here no create relation mutation will be create, only single resource update resolver and typedef will be created and both single and multi resource will be created for delete | Schema |
-| Schemas  | Array of schemas generate by mongoose | `Schema[]` | `[]` | `Schemas: [UserSchema, ...]` | | 
-| Typedefs  | Typedefs related configuration | `Object` | `{init: undefined}` | `Typedefs: {init: {User: InitialUserTypedef}}` | | 
-| &.init  | Initial typedefs to be attached to resultant typedef | `Object` | `undefined` | `init: {User: InitialUserTypedef}` | | 
-| Resolvers  | Resolvers related configuration | `Object` | `{init: undefined}` | `Resolvers: {init: {User: InitialUserResolvers}}` | | 
+| Schemas  | Array of schemas generate by mongoose | `Schema[]` | `[]` | `Schemas: [UserSchema, ...]` | |
+| Typedefs  | Typedefs related configuration | `Object` | `{init: undefined}` | `Typedefs: {init: {User: InitialUserTypedef}}` | |
+| &.init  | Initial typedefs to be attached to resultant typedef | `Object` | `undefined` | `init: {User: InitialUserTypedef}` | |
+| Resolvers  | Resolvers related configuration | `Object` | `{init: undefined}` | `Resolvers: {init: {User: InitialUserResolvers}}` | |
 | &.init  | Initial resolvers to be attached to resultant resolver | `Object` | `undefined` | `init: {User: InitialUserResolver}` | |
 | appendRTypeToEmbedTypesKey  | Controls whether or not to append the resource type to sub/embed/extra types | `boolean` | `true` | `appendRTypeToEmbedTypesKey: true` | Schema |
 

@@ -1,6 +1,26 @@
+<!-- markdownlint-disable MD013 -->
+
 # Mongql
 
 A package to convert your mongoose schema to graphql schema
+
+## TOC
+
+- [Mongql](#mongql)
+  - [TOC](#toc)
+  - [Features](#features)
+  - [Motivation](#motivation)
+  - [Usage](#usage)
+    - [Basic Usage (Without initial typedef and resolvers)](#basic-usage-without-initial-typedef-and-resolvers)
+    - [Intermediate Usage (With initial typedef and resolvers)](#intermediate-usage-with-initial-typedef-and-resolvers)
+    - [Intermediate Usage (Fine grain Mutation configuration)](#intermediate-usage-fine-grain-mutation-configuration)
+  - [Configs](#configs)
+    - [Global Configs](#global-configs)
+    - [Schema configs](#schema-configs)
+    - [Field configs](#field-configs)
+  - [Concept](#concept)
+  - [API](#api)
+  - [TODO](#todo)
 
 ## Features
 
@@ -16,7 +36,9 @@ A package to convert your mongoose schema to graphql schema
 2. Automating the schema generation helps to avoid errors regarding forgetting to define something in the schema thats been added to the resolver or vice versa.
 3. Creating resolvers for subtypes in a PITA, especially if all of them just refers to the same named key in parent
 
-## Basic Usage (Without initial typedef and resolvers)
+## Usage
+
+### Basic Usage (Without initial typedef and resolvers)
 
 ``` js
 // User.schema.js
@@ -73,7 +95,7 @@ const UserSchema = require('./User.schema.js');
 })();
 ```
 
-## Intermediate Usage (With initial typedef and resolvers)
+### Intermediate Usage (With initial typedef and resolvers)
 
 ``` js
 // user.typedef.js
@@ -116,7 +138,7 @@ const mongql = new Mongql({
 });
 ```
 
-## Intermediate Usage (Fine grain Mutation configuration)
+### Intermediate Usage (Fine grain Mutation configuration)
 
 ``` js
 const mongql = new Mongql({
@@ -141,332 +163,40 @@ Precedence of same config option is global < Schema < field. That is for the sam
 
 ## Configs
 
+& refers to the complete key declared above.
+
 ### Global Configs
 
-<table>
- <thead>
-  <tr>
-  <td>Name</td>
-  <td>Description</td>
-  <td>Type</td>
-  <td>Default Value</td>
-  <td>Usage</td>
-  <td>Available in</td>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-  <td>output</td>
-  <td>Output information</td>
-  <td> `boolean | Object` </td>
-  <td>false</td>
-  <td>
-  
- `{output: false}`
- `{output: { dir: process.cwd()}}`
-  </td>
-  </tr>
-  <tr>
-  <td>output.dir</td>
-  <td>Output directory</td>
-  <td>
-  
- `string`
-   </td>
-  <td>
-  
- `process.cwd()+"\SDL"`
-  </td>
-  <td>
-  
- `{output: { dir: process.cwd()}}`
-  </td>
-
-  </tr>
-  <td>Schemas</td>
-  <td>Array of schemas generate by mongoose</td>
-  <td>
-  
- `Schema[]`
-  </td>
-  <td>
-  
- `[]`
-  </td>
-  <td>
-  
- `Schemas: [UserSchema, ...]`
-  </td>
-  </tr>
-
-  </tr>
-  <td>Typedefs</td>
-  <td>Typedefs related configuration</td>
-  <td>
-  
- `Object`
-  </td>
-  <td>
-  
- `{init: undefined}`
-  </td>
-  <td>
-  
- `Typedefs: {init: {User: InitialUserTypedef}}`
-  </td>
-  </tr>
-
-  </tr>
-  <td>Typedefs.init</td>
-  <td>Initial typedefs to be attached to resultant typedef</td>
-  <td>
-  
- `Object`
-  </td>
-  <td>
-  
- `undefined`
-  </td>
-  <td>
-  
- `init: {User: InitialUserTypedef}`
-  </td>
-  </tr>
-
-  </tr>
-  <td>Resolvers</td>
-  <td>Typedefs related configuration</td>
-  <td>
-  
- `Object`
-  </td>
-  <td>
-  
- `{init: undefined}`
-  </td>
-  <td>
-  
- `Resolvers: {init: {User: InitialUserResolvers}}`
-  </td>
-  </tr>
-
-  </tr>
-  <td>Resolvers.init</td>
-  <td>Initial resolvers to be attached to resultant resolver</td>
-  <td>
-  
- `Object`
-  </td>
-  <td>
-  
- `undefined`
-  </td>
-  <td>
-  
- `init: {User: InitialUserResolver}`
-  </td>
-  </tr>
-
-  <tr>
-  <td>appendRTypeToEmbedTypesKey</td>
-  <td>Controls whether or not to append the resource type to sub/embed/extra types</td>
-  <td>
-  
- `boolean`
-   </td>
-  <td>
-  
- `true`
-  </td>
-  <td>
-  
- `appendRTypeToEmbedTypesKey: true`
-  </td>
-  <td>schema</td>
-  </tr>
-
- </tbody>
-</table>
+| Name  | Description  | Type | Default Value | Usage | Available in |
+|---|---|---|---|---|---|---|
+| output  | output related configuration | `boolean | Object` | false | `{output: false}`  `{output: { dir: process.cwd()}}` | Schema
+| &.dir  | Output directory | `string` | `process.cwd()+"\SDL"` | `{output: { dir: process.cwd()}}` | Schema
+| generate  | Controls generation of type, query and mutations typedefs and resolvers | `Object` | `true` | `generate: true` | Schema
+| &.mutation  | Controls generation of mutations typedefs and resolvers | `Object` | `true` | `generate :{mutation: true}` | Schema
+| &.(create|update|delete)  | Controls generation of mutations typedefs and resolvers parts , if using tuple first one indicates single resource mutation, and second indicates multi resource mutation. | `[boolean,boolean] | boolean` | `true` | `generate :{mutation: {create: false, update: [true,false]}}` here no create relation mutation will be create, only single resource update resolver and typedef will be created and both single and multi resource will be created for delete | Schema
+| Schemas  | Array of schemas generate by mongoose | `Schema[]` | `[]` | `Schemas: [UserSchema, ...]` |
+| Typedefs  | Typedefs related configuration | `Object` | `{init: undefined}` | `Typedefs: {init: {User: InitialUserTypedef}}` |
+| &.init  | Initial typedefs to be attached to resultant typedef | `Object` | `undefined` | `init: {User: InitialUserTypedef}` |
+| Resolvers  | Resolvers related configuration | `Object` | `{init: undefined}` | `Resolvers: {init: {User: InitialUserResolvers}}` |
+| &.init  | Initial resolvers to be attached to resultant resolver | `Object` | `undefined` | `init: {User: InitialUserResolver}` |
+| appendRTypeToEmbedTypesKey  | Controls whether or not to append the resource type to sub/embed/extra types | `boolean` | `true` | `appendRTypeToEmbedTypesKey: true` | Schema
 
 ### Schema configs
 
-<table>
- <thead>
-  <tr>
-  <td>Name</td>
-  <td>Description</td>
-  <td>Type</td>
-  <td>Default Value</td>
-  <td>Usage</td>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-  <td>resource</td>
-  <td>name of the resource</td>
-  <td> `string` </td>
-  <td>**Required**</td>
-  <td>
-  
- `resource: User`
-  </tr>
-
-  <tr>
-  <td>generate</td>
-  <td>Controls generation of type, query and mutations typedefs and resolvers</td>
-  <td>
-  
- `Object`
-   </td>
-  <td>
-  
- `true`
-  </td>
-  <td>
-  
- `generate: true`
-  </td>
-  </tr>
-
-  <tr>
-  <td>generate.mutation</td>
-  <td>Controls generation of mutations typedefs and resolvers</td>
-  <td>
-  
- `Object`
-   </td>
-  <td>
-  
- `true`
-  </td>
-  <td>
-  
- `generate :{mutation: true}`
-  </td>
-  </tr>
-
-  <tr>
-  <td>generate.mutation.(create|update|delete)</td>
-  <td>Controls generation of mutations typedefs and resolvers parts</td>
-  <td>
-  
-`[boolean,boolean] | boolean` , if using tuple first one indicates single resource mutation, and second indicates multi resource mutation.
-   </td>
-  <td>
-  
- `true`
-  </td>
-  <td>
-  
- `generate :{mutation: {create: false, update: [true,false]}}`
- here no create relation mutation will be create, only single resource update resolver and typedef will be created and both single and multi resource will be created for delete
-  </td>
-  </tr>
-
-  <tr>
-  <td>global_excludePartitions</td>
-  <td>Controls which auth partition will be excluded in the generated schemas</td>
-  <td>
-  
- `Object`
-   </td>
-  <td>
-  
- `{base: [], extra: ['Others', 'Mixed']}`
-  </td>
-  <td>
-  
- `global_excludePartitions: {base: [ 'Others', 'Mixed' ]}`
-  </td>
-  </tr>
-
-  <tr>
-  <td>global_excludePartitions.(base|extra)</td>
-  <td>Controls which auth partition will be excluded in the types of generated schemas</td>
-  <td>
-  
- `[] | boolean`
-   </td>
-  <td>
-  
- `{base: [], extra: ['Others', 'Mixed']}`
-  </td>
-  <td>
-
- `global_excludePartitions: {base: [ 'Others', 'Mixed' ],extra: ['Self']}`
-  </td>
-  </tr>
-
-  <tr>
-  <td>generateInterface</td>
-  <td>Controls whether or not to generate interface from base resource</td>
-  <td>
-  
- `boolean`
-   </td>
-  <td>
-  
- `true`
-  </td>
-  <td>
-  
- `generateInterface: true`
-  </td>
-  </
-
-  </tr>
- </tbody>
-</table>
+| Name  | Description  | Type | Default Value | Usage | Available in |
+|---|---|---|---|---|---|---|
+| resource  | name of the resource  | `string` | **Required** | `resource: User` |
+| global_excludePartitions  | Controls which auth partition will be excluded in the generated schemas  | `Object` | `{base: [], extra: ['Others', 'Mixed']}` | `global_excludePartitions: {base: [ 'Others', 'Mixed' ]}` |
+| &.(base|extra)  | Controls which auth partition will be excluded in the types of generated schemas  | `[] | boolean` | `{base: [], extra: ['Others', 'Mixed']}` | `global_excludePartitions: {base: [ 'Others', 'Mixed' ],extra: ['Self']}` |
+| generateInterface  | Controls whether or not to generate interface from base resource  | `boolean` | `true` |  
+`generateInterface: true` |
 
 ### Field configs
 
-<table>
-  <thead>
-  <tr>
-  <td>Name</td>
-  <td>Description</td>
-  <td>Type</td>
-  <td>Default Value</td>
-  <td>Usage</td>
-  </tr>
- </thead>
-  <tbody>
-
-  <tr>
-  <td>writable</td>
-  <td>Controls whether or not this field is present in generate input</td>
-  <td>
-  
- `boolean`
-   </td>
-  <td>
-  
- `true`
-  </td>
-  <td>
-  
- `writable: true`
-  </td>
-  </tr>
-
-  <tr>
-  <td>scalar</td>
-  <td>Custom graphql scalar to be used (atm all graphql-scalars scalars are included)</td>
-  <td>
-  
- `string`
-   </td>
-  <td>
-  
- type from mongoose
-  </td>
-  <td>
-  
- `scalar: 'NonNegativeInt'`
-  </td>
-  </tr>
-  </tbody>
-</table>
+| Name  | Description  | Type | Default Value | Usage | Available in |
+|---|---|---|---|---|---|---|
+| writable  | Controls whether or not this field is present in generated input  | `boolean` | `true` | `writable: true` |
+| scalar  | Custom graphql scalar to be used (atm all graphql-scalars scalars are included)  | `string` | parsed type from mongoose | `scalar: 'NonNegativeInt'` |
 
 ## Concept
 

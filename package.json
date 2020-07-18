@@ -1,6 +1,6 @@
 {
   "name": "mongql",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Create graphql Schema from mongoose Schema",
   "main": "src/Mongql.js",
   "repository": {
@@ -49,7 +49,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged",
+      "pre-commit": "lint-staged && npm run test",
       "pre-push": "npm run lint && npm run test"
     }
   },

@@ -14,6 +14,7 @@ A package to convert your mongoose schema to graphql schema
 
 1. Creating a graphql SDL is not a difficult task by any means, but things get really cumbersome after a while, especially since a lot of the typedefs and resolvers are being repeated.
 2. Automating the schema generation helps to avoid errors regarding forgetting to define something in the schema thats been added to the resolver or vice versa.
+3. Creating resolvers for subtypes in a PITA, especially if all of them just refers to the same named key in parent
 
 ## Basic Usage (Without initial typedef and resolvers)
 
@@ -35,7 +36,9 @@ UserSchema.mongql = {
 }; // schema level config
 
 module.exports = UserSchema;
+```
 
+``` js
 // index.js
 const {
     makeExecutableSchema
@@ -70,9 +73,38 @@ const UserSchema = require('./User.schema.js');
 })();
 ```
 
-## Basic Usage (With initial typedef and resolvers)
+## Intermediate Usage (With initial typedef and resolvers)
 
 ``` js
+// user.typedef.js
+module.exports = gql `
+  type BasicUserType{
+    name:String!
+  }
+`;
+```
+
+``` js
+// user.resolver.js
+module.exports = {
+    Mutation: {
+        updateUserSettings: ...
+    }
+}
+```
+
+``` js
+const UserAST = require('./user.typedef.js');
+const UserResolver = require('./user.resolver.js');
+
+const PreTransformedTypeDefsASTs = {
+    user: UserAST // This has to match with the resource name added in the mongoose schema
+}
+
+const PreTransformedResolvers = {
+    user: UserResolver
+}
+
 const mongql = new Mongql({
     Schemas: [UserSchema, SettingsSchema],
     Typedefs: {
@@ -80,6 +112,21 @@ const mongql = new Mongql({
     },
     Resolvers: {
         init: PreTransformedResolvers
+    }
+});
+```
+
+## Intermediate Usage (Fine grain Mutation configuration)
+
+``` js
+const mongql = new Mongql({
+    Schemas: [UserSchema, SettingsSchema],
+    generate: {
+        mutation: false, // will not generate any mutation typedef and resolver,
+        mutation: {
+            create: false, // Will not generate any create mutation typedef and resolver,
+            update: [false, true], // will not generate single update mutation typedef and resolver but multiple will be generated
+        }
     }
 });
 ```
@@ -421,13 +468,11 @@ Precedence of same config option is global < Schema < field. That is for the sam
   </tbody>
 </table>
 
-**global_excludePartition options is also available**
-
 ## Concept
 
 During the generation of schema, a few concepts are followed
 
-1. Each Resource query object type contains four part
+1. Each Resource query object type contains four parts
 
    1. Range(Input):
 
@@ -449,6 +494,15 @@ During the generation of schema, a few concepts are followed
        1. Whole: Get the whole data along with sub/extra types
        2. NameAndId: get the name and id of the resource
        3. Count: get the count of resource
+
+2. Each resource mutation object type contains 2 parts
+
+   1. Action: One of create|update|delete
+   2. Target: resource for targeting single resource, resources for targeting multiple resources
+
+Generated Query Examples: getSelfSettingsWhole, getOthersSettingsNameAndId
+
+Generated Mutation Examples: createSetting, updateSettings
 
 **NOTE**: Count part is not generate in paginated and id range as for paginated query the user already knows the count and id returns just one
 

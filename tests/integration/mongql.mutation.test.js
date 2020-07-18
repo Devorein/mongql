@@ -86,33 +86,23 @@ describe('Mutation option checker', () => {
 
 			expect(documentApi().addSDL(TransformedTypedefs.obj.user).hasType('Mutation')).toBe(false);
 		});
+	});
 
-		actions.forEach((action) => {
-			describe('Typedefs', () => {
-				it(`Should not create, ${action} mutation typedefs when false`, async () => {
-					await mutationTypedefChecker([ `${action}User`, `${action}Users` ]);
-				});
+	actions.forEach((action) => {
+		const excludedMutations = [ [ `${action}User` ], [ `${action}Users` ], [ `${action}User`, `${action}Users` ] ];
 
-				it(`Should not create, ${action} mutation typedefs when [false,true]`, async () => {
-					await mutationTypedefChecker([ `${action}User` ]);
-				});
-
-				it(`Should not create, ${action} mutation typedefs when [true,false]`, async () => {
-					await mutationTypedefChecker([ `${action}Users` ]);
+		describe('Typedefs', () => {
+			excludedMutations.forEach((excludedMutation) => {
+				it(`Should not create, ${action} mutation typedefs when ${excludedMutation.toString()}`, async () => {
+					await mutationTypedefChecker(excludedMutation);
 				});
 			});
+		});
 
-			describe('Resolvers', () => {
-				it(`Should not create, ${action} mutation resolvers when false`, async () => {
-					await mutationResolverChecker([ `${action}User`, `${action}Users` ]);
-				});
-
-				it(`Should not create, ${action} mutation resolvers when [false,true]`, async () => {
-					await mutationResolverChecker([ `${action}User` ]);
-				});
-
-				it(`Should not create, ${action} mutation resolvers when [true,false]`, async () => {
-					await mutationResolverChecker([ `${action}Users` ]);
+		describe('Resolvers', () => {
+			excludedMutations.forEach((excludedMutation) => {
+				it(`Should not create, ${action} mutation resolvers when ${excludedMutation.toString()}`, async () => {
+					await mutationResolverChecker(excludedMutation);
 				});
 			});
 		});

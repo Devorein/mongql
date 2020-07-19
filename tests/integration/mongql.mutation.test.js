@@ -46,13 +46,13 @@ async function mutationTypedefChecker (excludedMutationOps) {
 	});
 
 	includedMutationOps.forEach((includedMutationOp) => {
-		expect(documentApi().addSDL(TransformedTypedefs.obj.user).getExt('Mutation').hasField(includedMutationOp)).toBe(
+		expect(documentApi().addSDL(TransformedTypedefs.obj.User).getExt('Mutation').hasField(includedMutationOp)).toBe(
 			true
 		);
 	});
 
 	excludedMutationOps.forEach((excludedMutationOp) => {
-		expect(documentApi().addSDL(TransformedTypedefs.obj.user).getExt('Mutation').hasField(excludedMutationOp)).toBe(
+		expect(documentApi().addSDL(TransformedTypedefs.obj.User).getExt('Mutation').hasField(excludedMutationOp)).toBe(
 			false
 		);
 	});
@@ -66,11 +66,11 @@ async function mutationResolverChecker (excludedMutationOps) {
 	});
 
 	includedMutationOps.forEach((includedMutationOp) => {
-		expect(TransformedResolvers.obj.user.Mutation[includedMutationOp]).toBeTruthy();
+		expect(TransformedResolvers.obj.User.Mutation[includedMutationOp]).toBeTruthy();
 	});
 
 	excludedMutationOps.forEach((includedMutationOp) => {
-		expect(TransformedResolvers.obj.user.Mutation[includedMutationOp]).not.toBeTruthy();
+		expect(TransformedResolvers.obj.User.Mutation[includedMutationOp]).not.toBeTruthy();
 	});
 }
 
@@ -84,7 +84,7 @@ describe('Mutation option checker', () => {
 				}
 			});
 
-			expect(documentApi().addSDL(TransformedTypedefs.obj.user).hasType('Mutation')).toBe(false);
+			expect(documentApi().addSDL(TransformedTypedefs.obj.User).hasType('Mutation')).toBe(false);
 		});
 	});
 

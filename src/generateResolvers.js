@@ -5,20 +5,20 @@ const resolverCompose = require('../utils/resolverCompose');
 
 function transformResolvers (Schema, InitResolver, transformedSchema) {
 	const { mongql: { generate } } = Schema;
-	if (InitResolver === null) InitResolver = { Query: {}, Mutation: {} };
+	if (!InitResolver) InitResolver = { Query: {}, Mutation: {} };
 	if (generate !== false) {
 		const { type, query, mutation } = generate;
-		if (type)
+		if (generate === true || type)
 			InitResolver = {
 				...InitResolver,
 				...generateTypeResolvers(Schema, transformedSchema)
 			};
-		if (query)
+		if (generate === true || query)
 			InitResolver.Query = {
 				...InitResolver.Query,
 				...generateQueryResolvers(Schema, transformedSchema)
 			};
-		if (mutation)
+		if (generate === true || mutation)
 			InitResolver.Mutation = {
 				...InitResolver.Mutation,
 				...generateMutationResolvers(Schema, transformedSchema)

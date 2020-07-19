@@ -11,13 +11,13 @@ module.exports = function (Schema) {
 	let mutationsStr = ``;
 
 	[ 'create', 'update', 'delete' ].forEach((action) => {
-		if (mutation === true || mutation[action] === true || mutation[action][0])
+		if (Schema.mongql.generate === true || mutation === true || mutation[action] === true || mutation[action][0])
 			mutationsStr += `
         "${S(action).capitalize().s} single ${resource}"
         ${action}${capitalizedResource}(data: ${capitalizedResource}Input!): Self${capitalizedResource}Type!
       `;
 
-		if (mutation === true || mutation[action] === true || mutation[action][1])
+		if (Schema.mongql.generate === true || mutation === true || mutation[action] === true || mutation[action][1])
 			mutationsStr += `
       "${S(action).capitalize().s} multiple ${pluralizedResource}"
       ${action}${pluralizedcapitalizedResource}(data: ${capitalizedResource}Input!): [Self${capitalizedResource}Type!]!

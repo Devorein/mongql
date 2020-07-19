@@ -3,6 +3,7 @@ const colors = require('colors');
 const { documentApi } = require("graphql-extra");
 const mkdirp = require('mkdirp');
 const fs = require('fs-extra');
+const path = require('path');
 const S = require('string');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
 const gql = require("graphql-tag")
@@ -11,6 +12,7 @@ const mongoose = require('mongoose');
 const Password = require("../utils/gql-types/password")
 const Username = require("../utils/gql-types/username")
 
+const loadFiles = require("../utils/loadFiles");
 const generateTypedefs = require('./generateTypedefs');
 const generateResolvers = require('./generateResolvers');
 const populateObjDefaultValue = require('../utils/populateObjDefaultValue');
@@ -59,14 +61,15 @@ class Mongql {
       resources: [],
     };
 
+    this.#checkSchemaPath();
     this.#createDefaultGlobalConfigs();
-
     // Going through each schema to populate schema configs
     this.#globalConfigs.Schemas.forEach((schema) => {
       if (schema.mongql === undefined)
         throw new Error(
           colors.red.bold`Resource doesnt have a mongql key on the schema`
         )
+      schema.mongql.resource = S(schema.mongql.resource).capitalize().s
       const { resource } = schema.mongql;
       if (resource === undefined)
         throw new Error(colors.red.bold`Provide the mongoose schema resource key for mongql`);
@@ -82,6 +85,25 @@ class Mongql {
 
     this.#globalConfigs.Validators.Password = Password.serialize;
     this.#globalConfigs.Validators.Username = Username.serialize;
+  }
+
+  #checkSchemaPath = ()=>{
+    let {Schemas} = this.#globalConfigs
+    if(!Array.isArray(Schemas) && typeof Schemas === 'string'){
+      const schemaPath = String(Schemas);
+      Schemas = [];
+      const files = fs.readdirSync(schemaPath);
+      files.forEach(file=>{
+        const schemaFile = path.join(schemaPath,file);
+        const fileWithoutExt = path.basename(file,path.extname(file));
+        let imported = require(schemaFile);
+        imported = imported[fileWithoutExt+"Schema"] === undefined ? imported : imported[fileWithoutExt+"Schema"];
+        if(fileWithoutExt!=="index" && imported.mongql.skip !== true)
+          Schemas.push(imported)
+      })
+      this.#globalConfigs.Schemas = Schemas;
+    }else
+      this.#globalConfigs.Schemas = this.#globalConfigs.Schemas.filter(schema=>schema.mongql.skip !== true)
   }
 
   getResources = () => this.#globalConfigs.resources;
@@ -151,7 +173,6 @@ class Mongql {
         }
       });
     }
-
     this.#schemaConfigs[mongql.resource] = mongql;
   };
 
@@ -176,18 +197,25 @@ class Mongql {
     const TransformedTypedefs = { obj: {}, arr: [] },
       TransformedResolvers = { obj: {}, arr: [] };
     const {
-      Typedefs: {
-        init: InitTypedefs,
-      },
-      Resolvers: { init: InitResolvers },
+      Typedefs,
+      Resolvers,
       Schemas
     } = this.#globalConfigs;
+
+    let InitTypedefs = null;
+    let InitResolvers = null;
+
+    if(typeof Typedefs === 'string') InitTypedefs = loadFiles(Typedefs);
+    else InitTypedefs = Typedefs.init;
+    if(typeof Resolvers === 'string') InitResolvers = loadFiles(Resolvers);
+    else InitResolvers = Resolvers.init;
 
     await Schemas.forEachAsync(async (Schema) => {
       const {
         mongql
       } = Schema;
       const { resource } = mongql;
+      
       const { typedefsAST, transformedSchema } = generateTypedefs(
         Schema,
         InitTypedefs[resource],

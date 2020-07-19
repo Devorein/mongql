@@ -6,7 +6,7 @@ function isPOJO (arg) {
 }
 
 module.exports = function (obj, fields) {
-	if (obj.__undefineds === undefined)
+	if (obj.__undefineds === undefined && isPOJO(obj))
 		Object.defineProperty(obj, '__undefineds', {
 			value: [],
 			enumerable: true,
@@ -14,9 +14,9 @@ module.exports = function (obj, fields) {
 			configurable: false
 		});
 	Object.entries(fields).forEach(([ field, defvalue ]) => {
-		if (obj[field] === undefined) {
+		if (obj[field] === undefined && isPOJO(obj)) {
 			obj[field] = defvalue;
 			obj.__undefineds.push(field);
-		} else if (isPOJO(defvalue)) obj[field] = { ...defvalue, ...obj[field] };
+		} else if (isPOJO(defvalue) && isPOJO(obj[field])) obj[field] = { ...defvalue, ...obj[field] };
 	});
 };

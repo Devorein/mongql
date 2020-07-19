@@ -1,6 +1,6 @@
 {
   "name": "mongql",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Create graphql Schema from mongoose Schema",
   "main": "src/Mongql.js",
   "repository": {
@@ -21,6 +21,8 @@
   "author": "Devon Reid <devorein00@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@graphql-tools/load-files": "^6.0.14",
+    "@graphql-tools/merge": "^6.0.14",
     "@graphql-tools/resolvers-composition": "^6.0.14",
     "@graphql-tools/schema": "^6.0.14",
     "colors": "^1.4.0",

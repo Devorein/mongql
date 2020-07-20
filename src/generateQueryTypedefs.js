@@ -1,9 +1,9 @@
 const pluralize = require('pluralize');
-const S = require('string');
+const S = require('voca');
 
 module.exports = function (Schema) {
 	const { mongql: { resource } } = Schema;
-	const cResource = S(resource).capitalize().s;
+	const cResource = S.capitalize(resource);
 	const cpResource = pluralize(cResource, 2);
 	const res = [];
 	[ 'All', 'Paginated', 'Filtered', 'Id' ].forEach((range) => {

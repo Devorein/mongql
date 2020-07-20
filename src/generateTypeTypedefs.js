@@ -1,4 +1,4 @@
-const S = require('string');
+const S = require('voca');
 const mongoose = require('mongoose');
 
 const generateTypeStr = require('./generateTypeStr');
@@ -11,7 +11,7 @@ function populateObjDefaultValue (obj, fields) {
 
 module.exports = function (baseSchema, Validators) {
 	const resource = baseSchema.mongql.resource;
-	const capitalizedResource = S(resource).capitalize().s;
+	const capitalizedResource = S.capitalize(resource);
 
 	function parseScalarType (value, { mongql }, path) {
 		const isArray = Array.isArray(value);

@@ -31,20 +31,20 @@
     "graphql-extra": "^0.2.2",
     "graphql-scalars": "^1.2.2",
     "graphql-tag": "^2.10.4",
-    "husky": "^4.2.5",
-    "lint-staged": "^10.2.11",
     "mkdirp": "^1.0.4",
     "mongoose": "^5.9.25",
     "pluralize": "^8.0.0",
-    "string": "^3.3.3",
-    "typescript": "^3.9.7"
+    "typescript": "^3.9.7",
+    "voca": "^1.4.0"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
     "eslint": "^7.4.0",
     "eslint-plugin-jest": "^23.18.0",
     "eslint-plugin-prettier": "^3.1.4",
+    "husky": "^4.2.5",
     "jest": "^26.1.0",
+    "lint-staged": "^10.2.11",
     "nodemon": "^2.0.4"
   },
   "lint-staged": {

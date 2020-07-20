@@ -1,12 +1,12 @@
 const fs = require('fs');
 const path = require('path');
-const S = require('string');
+const S = require('voca');
 
 module.exports = function (_path) {
 	const res = {};
 	fs.readdirSync(_path).forEach((file) => {
 		const filename = path.basename(file, path.extname(file));
-		if (filename !== 'index') res[S(filename).capitalize().s] = require(path.join(_path, file));
+		if (filename !== 'index') res[S.capitalize(filename)] = require(path.join(_path, file));
 	});
 	return res;
 };

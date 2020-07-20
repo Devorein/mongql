@@ -1,11 +1,11 @@
 const pluralize = require('pluralize');
-const S = require('String');
+const S = require('voca');
 const { difference } = require('lodash');
 
 const parsePagination = require('../utils/query/parsePagination');
 
 module.exports = function (Schema, transformedSchema) {
-	const capitalizedResource = S(Schema.mongql.resource).capitalize().s;
+	const capitalizedResource = S.capitalize(Schema.mongql.resource);
 	const selfFields = [],
 		mixedFields = [],
 		othersFields = [];

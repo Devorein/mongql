@@ -4,7 +4,7 @@ const { documentApi } = require("graphql-extra");
 const mkdirp = require('mkdirp');
 const fs = require('fs-extra');
 const path = require('path');
-const S = require('string');
+const S = require('voca');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
 const gql = require("graphql-tag")
 const mongoose = require('mongoose');
@@ -69,8 +69,7 @@ class Mongql {
         throw new Error(
           colors.red.bold`Resource doesnt have a mongql key on the schema`
         )
-      schema.mongql.resource = S(schema.mongql.resource).capitalize().s
-      const { resource } = schema.mongql;
+      const {resource} = schema.mongql;
       if (resource === undefined)
         throw new Error(colors.red.bold`Provide the mongoose schema resource key for mongql`);
       else this.#globalConfigs.resources.push(resource);
@@ -102,8 +101,14 @@ class Mongql {
           Schemas.push(imported)
       })
       this.#globalConfigs.Schemas = Schemas;
-    }else
-      this.#globalConfigs.Schemas = this.#globalConfigs.Schemas.filter(schema=>schema.mongql.skip !== true)
+    }else{
+      this.#globalConfigs.Schemas = this.#globalConfigs.Schemas.filter(schema=>{
+        if(schema.mongql.skip !== true){
+          schema.mongql.resource = S.capitalize(schema.mongql.resource);
+          return true;
+        }
+      })
+    }
   }
 
   getResources = () => this.#globalConfigs.resources;
@@ -264,7 +269,7 @@ class Mongql {
     const res = {};
     this.#globalConfigs.Schemas.forEach((schema) => {
       const { mongql: { resource } } = schema;
-      res[resource] = mongoose.model(S(resource).capitalize().s, schema);
+      res[resource] = mongoose.model(S.capitalize(resource), schema);
     });
     return res;
   }

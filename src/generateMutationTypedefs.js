@@ -1,10 +1,10 @@
 const pluralize = require('pluralize');
-const S = require('String');
+const S = require('voca');
 
 module.exports = function (Schema) {
 	const { mongql: { resource, generate: { mutation } } } = Schema;
 
-	const capitalizedResource = S(resource).capitalize().s;
+	const capitalizedResource = S.capitalize(resource);
 	const pluralizedResource = pluralize(resource, 2);
 	const pluralizedcapitalizedResource = pluralize(capitalizedResource, 2);
 
@@ -13,13 +13,13 @@ module.exports = function (Schema) {
 	[ 'create', 'update', 'delete' ].forEach((action) => {
 		if (Schema.mongql.generate === true || mutation === true || mutation[action] === true || mutation[action][0])
 			mutationsStr += `
-        "${S(action).capitalize().s} single ${resource}"
+        "${S.capitalize(action)} single ${resource}"
         ${action}${capitalizedResource}(data: ${capitalizedResource}Input!): Self${capitalizedResource}Type!
       `;
 
 		if (Schema.mongql.generate === true || mutation === true || mutation[action] === true || mutation[action][1])
 			mutationsStr += `
-      "${S(action).capitalize().s} multiple ${pluralizedResource}"
+      "${S.capitalize(action)} multiple ${pluralizedResource}"
       ${action}${pluralizedcapitalizedResource}(data: ${capitalizedResource}Input!): [Self${capitalizedResource}Type!]!
     `;
 	});

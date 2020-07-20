@@ -5,7 +5,7 @@ const Mongql = require('../../src/MonGql');
 
 const actions = [ 'create', 'update', 'delete' ];
 
-async function mongqlGenerate (schema, mongql) {
+async function mongqlGenerate (schema, generate) {
 	const Schema = new mongoose.Schema(
 		schema !== null
 			? schema
@@ -13,7 +13,7 @@ async function mongqlGenerate (schema, mongql) {
 					name: String
 				}
 	);
-	Schema.mongql = mongql;
+	Schema.mongql = { resource: 'user', ...generate };
 	return await new Mongql({
 		Schemas: [ Schema ]
 	}).generate();
@@ -41,7 +41,6 @@ function generateExlucded (excludedMutationOps) {
 async function mutationTypedefChecker (excludedMutationOps) {
 	const { generate, includedMutationOps } = generateExlucded(excludedMutationOps);
 	const { TransformedTypedefs } = await mongqlGenerate(null, {
-		resource: 'user',
 		generate
 	});
 
@@ -61,7 +60,6 @@ async function mutationTypedefChecker (excludedMutationOps) {
 async function mutationResolverChecker (excludedMutationOps) {
 	const { generate, includedMutationOps } = generateExlucded(excludedMutationOps);
 	const { TransformedResolvers } = await mongqlGenerate(null, {
-		resource: 'user',
 		generate
 	});
 
@@ -78,12 +76,10 @@ describe('Mutation option checker', () => {
 	describe('Transformed typedefs checker', () => {
 		it('Should not contain mutation related typedefs', async () => {
 			const { TransformedTypedefs } = await mongqlGenerate(null, {
-				resource: 'user',
 				generate: {
 					mutation: false
 				}
 			});
-
 			expect(documentApi().addSDL(TransformedTypedefs.obj.User).hasType('Mutation')).toBe(false);
 		});
 	});

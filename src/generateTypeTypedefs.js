@@ -154,7 +154,7 @@ module.exports = function (baseSchema, Validators) {
 			baseType = null;
 		if (variant.match(/(type)/)) {
 			field_type =
-				(appendRTypeToEmbedTypesKey ? capitalizedResource + '_' : '') + (value.type || S(`_${key}`).camelize().s);
+				(appendRTypeToEmbedTypesKey ? capitalizedResource + '_' : '') + (value.type || S.camelCase(`_${key}`));
 			input_type = field_type + 'Input';
 			field_type += 'Type';
 		} else if (variant === 'enum') {

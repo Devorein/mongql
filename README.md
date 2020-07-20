@@ -294,6 +294,7 @@ These methods are available in the created Mongql instance
 | `getResources()` | Gets all the resources collected from all schemas| | `(Schema.mongql.resource)[]`
 | `generateModels()` | Generates models from the schema provided | | `Object:{[Schema.mongql.resource]: MongooseModel}`
 | `generateSchema()` | Generates a schema by calling `makeExecutableSchema` internally | options passed to `makeExecutableSchema` expect for typedefs and resolvers | `GraphQLSchema`
+| `static outputSDL()` | Outputs the SDL from the given typedef| <div> **path**: String *// SDL output dir* </div>  <div> **typedefs**: GraphqlAST \| String *// String or AST to convert* </div> <div> **resource**: String *// name of file or resource* </div>| |
 
 ## TODO
 

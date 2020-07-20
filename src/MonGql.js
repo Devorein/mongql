@@ -69,7 +69,7 @@ class Mongql {
         throw new Error(
           colors.red.bold`Resource doesnt have a mongql key on the schema`
         )
-      const {resource} = schema.mongql;
+      const { resource } = schema.mongql;
       if (resource === undefined)
         throw new Error(colors.red.bold`Provide the mongoose schema resource key for mongql`);
       else this.#globalConfigs.resources.push(resource);
@@ -86,24 +86,24 @@ class Mongql {
     this.#globalConfigs.Validators.Username = Username.serialize;
   }
 
-  #checkSchemaPath = ()=>{
-    let {Schemas} = this.#globalConfigs
-    if(!Array.isArray(Schemas) && typeof Schemas === 'string'){
+  #checkSchemaPath = () => {
+    let { Schemas } = this.#globalConfigs
+    if (!Array.isArray(Schemas) && typeof Schemas === 'string') {
       const schemaPath = String(Schemas);
       Schemas = [];
       const files = fs.readdirSync(schemaPath);
-      files.forEach(file=>{
-        const schemaFile = path.join(schemaPath,file);
-        const fileWithoutExt = path.basename(file,path.extname(file));
+      files.forEach(file => {
+        const schemaFile = path.join(schemaPath, file);
+        const fileWithoutExt = path.basename(file, path.extname(file));
         let imported = require(schemaFile);
-        imported = imported[fileWithoutExt+"Schema"] === undefined ? imported : imported[fileWithoutExt+"Schema"];
-        if(fileWithoutExt!=="index" && imported.mongql.skip !== true)
+        imported = imported[fileWithoutExt + "Schema"] === undefined ? imported : imported[fileWithoutExt + "Schema"];
+        if (fileWithoutExt !== "index" && imported.mongql.skip !== true)
           Schemas.push(imported)
       })
       this.#globalConfigs.Schemas = Schemas;
-    }else{
-      this.#globalConfigs.Schemas = this.#globalConfigs.Schemas.filter(schema=>{
-        if(schema.mongql.skip !== true){
+    } else {
+      this.#globalConfigs.Schemas = this.#globalConfigs.Schemas.filter(schema => {
+        if (schema.mongql.skip !== true) {
           schema.mongql.resource = S.capitalize(schema.mongql.resource);
           return true;
         }
@@ -210,9 +210,9 @@ class Mongql {
     let InitTypedefs = null;
     let InitResolvers = null;
 
-    if(typeof Typedefs === 'string') InitTypedefs = loadFiles(Typedefs);
+    if (typeof Typedefs === 'string') InitTypedefs = loadFiles(Typedefs);
     else InitTypedefs = Typedefs.init;
-    if(typeof Resolvers === 'string') InitResolvers = loadFiles(Resolvers);
+    if (typeof Resolvers === 'string') InitResolvers = loadFiles(Resolvers);
     else InitResolvers = Resolvers.init;
 
     await Schemas.forEachAsync(async (Schema) => {
@@ -220,22 +220,15 @@ class Mongql {
         mongql
       } = Schema;
       const { resource } = mongql;
-      
+
       const { typedefsAST, transformedSchema } = generateTypedefs(
         Schema,
         InitTypedefs[resource],
         this.#globalConfigs.Validators
       );
       const output = (!mongql.__undefineds.includes('output') && mongql.output) || (mongql.__undefineds.includes('output') && this.#globalConfigs.output);
-      if (output) {
-        try {
-          const ast = documentApi().addSDL(typedefsAST);
-          await mkdirp(output.dir);
-          await fs.writeFile(`${output.dir}\\${resource}.graphql`, ast.toSDLString(), 'UTF-8');
-        } catch (err) {
-          console.log(err.message)
-        }
-      }
+      if (output) 
+        await Mongql.outputSDL(output.dir,typedefsAST, resource)
       TransformedTypedefs.obj[resource] = typedefsAST;
       TransformedTypedefs.arr.push(typedefsAST);
       const resolver = generateResolvers(
@@ -263,6 +256,15 @@ class Mongql {
       resolvers: TransformedResolvers.arr,
       ...additionalOptions
     });
+  }
+
+  static async outputSDL(path,typedefs,resource){
+    try {
+      await mkdirp(path);
+      await fs.writeFile(`${path}\\${resource}.graphql`, documentApi().addSDL(typedefs).toSDLString(), 'UTF-8');
+    } catch (err) {
+      console.log(err.message)
+    }
   }
 
   generateModels() {

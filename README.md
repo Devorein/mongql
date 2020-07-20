@@ -297,9 +297,12 @@ These methods are available in the created Mongql instance
 
 ## TODO
 
-1. Add tests
-2. Convert the whole project to TS
-3. More enriched API
-4. Better documentation :^)
+1. Add more well rounded tests
+2. Migrate the whole project to TS
+3. Using babel to transpile to transform modern featues
+4. Standard liniting configuration
+5. Provide ES modules to make the library tree-shakable
+6. More enriched API
+7. Better documentation :^)
 
-**PRS are more than welcome !!!!**
+**PRS are more than welcome and highly appreciated!!!!**

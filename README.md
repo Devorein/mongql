@@ -11,6 +11,7 @@ A package to convert your mongoose schema to graphql schema
   - [Usage](#usage)
     - [Basic Usage (Without initial typedef and resolvers)](#basic-usage-without-initial-typedef-and-resolvers)
     - [Intermediate Usage (With initial typedef and resolvers)](#intermediate-usage-with-initial-typedef-and-resolvers)
+    - [Intermediate Usage (Output SDL and AST)](#intermediate-usage-output-sdl-and-ast)
     - [Intermediate Usage (Fine grain Mutation configuration)](#intermediate-usage-fine-grain-mutation-configuration)
     - [Advanced Usage (generating Schema and Models)](#advanced-usage-generating-schema-and-models)
     - [Advanced Usage (Using local folders)](#advanced-usage-using-local-folders)
@@ -138,6 +139,20 @@ const mongql = new Mongql({
 });
 ```
 
+### Intermediate Usage (Output SDL and AST)
+
+``` js
+  const mongql = new Mongql({
+      Schemas: [],
+      output: {
+          SDL: path.resolve(__dirname, "./SDL"),
+          AST: path.resolve(__dirname, "./AST")
+      }
+  });
+
+  await mongql.generate()
+```
+
 ### Intermediate Usage (Fine grain Mutation configuration)
 
 ``` js
@@ -218,10 +233,11 @@ Precedence of same config option is global < Schema < field. That is for the sam
 | Name  | Description  | Type | Default Value | Usage | Available in |
 |---|---|---|---|---|---|
 | output  | output related configuration | `boolean \| Object` | false | `{output: false}`  `{output: { dir: process.cwd()}}` | Schema |
-| &.dir  | Output directory | `string` | `process.cwd()+"\SDL"` | `{output: { dir: process.cwd()}}` | Schema |
+| &.(dir|SDL)  | SDL Output directory | `string` | `undefined` | `{output: { dir: process.cwd()}}` | Schema |
+| &. AST  | AST Output directory | `string` | `undefined` | `{output: { AST: process.cwd()}}` | Schema |
 | generate  | Controls generation of type, query and mutations typedefs and resolvers | `Object` \| `boolean` | `true` | `generate: true` | Schema |
 | &.mutation  | Controls generation of mutations typedefs and resolvers | `Object` \| `boolean` | `true` | `generate :{mutation: true}` | Schema |
-| &.(create\|update\|delete)  | Controls generation of mutations typedefs and resolvers parts , if using tuple first one indicates single resource mutation, and second indicates multi resource mutation. | `[boolean,boolean] \| boolean` | `true` | `generate :{mutation: {create: false, update: [true,false]}}` here no create relation mutation will be create, only single resource update resolver and typedef will be created and both single and multi resource will be created for delete | Schema |
+| &.(create\|update\|delete)  | Controls generation of mutations typedefs and resolvers parts , if using tuple first one indicates single resource mutation, and second indicates multi resource mutation. | `[boolean, boolean] \| boolean` | `true` | `generate :{mutation: {create: false, update: [true, false]}}` here no create relation mutation will be create, only single resource update resolver and typedef will be created and both single and multi resource will be created for delete | Schema |
 | Schemas  | Array of schemas generate by mongoose or path to schema folder | `Schema[]` \| `String` | `[]` | `Schemas: [UserSchema, ...]` | |
 | Typedefs  | Typedefs related configuration or path to typedefs folder | `Object` \| `String` | `{init: undefined}` | `Typedefs: {init: {User: InitialUserTypedef}}` | |
 | &.init  | Initial typedefs to be attached to resultant typedef | `Object` | `undefined` | `init: {User: InitialUserTypedef}` | |
@@ -235,7 +251,7 @@ Precedence of same config option is global < Schema < field. That is for the sam
 |---|---|---|---|---|---|
 | resource  | name of the resource  | `string` | **Required** | `resource: User` | |
 | global_excludePartitions  | Controls which auth partition will be excluded in the generated schemas  | `Object` | `{base: [], extra: ['Others', 'Mixed']}` | `global_excludePartitions: {base: [ 'Others', 'Mixed' ]}` | |
-| &.(base\|extra)  | Controls which auth partition will be excluded in the types of generated schemas  | `[] \| boolean` | `{base: [], extra: ['Others', 'Mixed']}` | `global_excludePartitions: {base: [ 'Others', 'Mixed' ],extra: ['Self']}` | |
+| &.(base\|extra)  | Controls which auth partition will be excluded in the types of generated schemas  | `[] \| boolean` | `{base: [], extra: ['Others', 'Mixed']}` | `global_excludePartitions: {base: [ 'Others', 'Mixed' ], extra: ['Self']}` | |
 | generateInterface  | Controls whether or not to generate interface from base resource  | `boolean` | `true` | `generateInterface: true` | |
 | skip  | Skip mongql all together  | `boolean` | `false` | `skip: true` | |
 

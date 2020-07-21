@@ -2,24 +2,32 @@
   "name": "mongql",
   "version": "1.2.2",
   "description": "Create graphql Schema from mongoose Schema",
-  "main": "src/Mongql.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com:Devorein/mongql.git"
-  },
-  "scripts": {
-    "prepublish": "npm run lint && npm run test",
-    "test": "npx jest --runInBand",
-    "lint": "npx eslint --fix"
-  },
   "keywords": [
     "codegen",
     "schema-generator",
     "mongoose-to-graphql",
     "graphql-schema"
   ],
-  "author": "Devon Reid <devorein00@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com:Devorein/mongql.git"
+  },
   "license": "MIT",
+  "author": "Devon Reid <devorein00@gmail.com>",
+  "main": "src/Mongql.js",
+  "scripts": {
+    "lint": "npx eslint --fix",
+    "prepublish": "npm run lint && npm run test",
+    "test": "npx jest --runInBand"
+  },
+  "lint-staged": {
+    "*.js": [
+      "npm run lint"
+    ],
+    "*.json": [
+      "npx sort-package-json"
+    ]
+  },
   "dependencies": {
     "@graphql-tools/load-files": "^6.0.14",
     "@graphql-tools/merge": "^6.0.14",
@@ -45,11 +53,7 @@
     "husky": "^4.2.5",
     "jest": "^26.1.0",
     "lint-staged": "^10.2.11",
-    "nodemon": "^2.0.4"
-  },
-  "lint-staged": {
-    "*.js": [
-      "npm run lint"
-    ]
+    "nodemon": "^2.0.4",
+    "sort-package-json": "^1.44.0"
   }
 }

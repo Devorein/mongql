@@ -3,8 +3,13 @@ const { transformTypedefTypesAST, transformTypedefObjExtAST } = require('../util
 const generateQueryTypedefs = require('./generateQueryTypedefs');
 const generateMutationTypedefs = require('./generateMutationTypedefs');
 const generateTypeTypedefs = require('./generateTypeTypedefs');
+const fs = require('fs-extra');
+const path = require('path');
+const mkdirp = require('mkdirp');
 
-module.exports = function (schema, typedefsAST, Validators) {
+module.exports = async function (schema, typedefsAST, GlobalConfigs) {
+	const { Validators, output } = GlobalConfigs;
+
 	if (typedefsAST === null || typedefsAST === undefined)
 		typedefsAST = {
 			kind: 'Document',
@@ -22,6 +27,10 @@ module.exports = function (schema, typedefsAST, Validators) {
 		if (generate === true || query) transformTypedefObjExtAST('Query', typedefsAST, generateQueryTypedefs(schema));
 		if (generate === true || mutation)
 			transformTypedefObjExtAST('Mutation', typedefsAST, generateMutationTypedefs(schema));
+		if (typeof output.AST === 'string') {
+			await mkdirp(output.AST);
+			await fs.writeFile(path.join(output.AST, `${schema.mongql.resource}.json`), JSON.stringify(typedefsAST), 'UTF-8');
+		}
 		return { typedefsAST, transformedSchema };
 	} else return { typedefsAST };
 };

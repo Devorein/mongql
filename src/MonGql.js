@@ -221,14 +221,14 @@ class Mongql {
       } = Schema;
       const { resource } = mongql;
 
-      const { typedefsAST, transformedSchema } = generateTypedefs(
+      const { typedefsAST, transformedSchema } = await generateTypedefs(
         Schema,
         InitTypedefs[resource],
-        this.#globalConfigs.Validators
+        this.#globalConfigs
       );
       const output = (!mongql.__undefineds.includes('output') && mongql.output) || (mongql.__undefineds.includes('output') && this.#globalConfigs.output);
-      if (output) 
-        await Mongql.outputSDL(output.dir,typedefsAST, resource)
+      if (output)
+        await Mongql.outputSDL(output.SDL || output.dir,typedefsAST, resource)
       TransformedTypedefs.obj[resource] = typedefsAST;
       TransformedTypedefs.arr.push(typedefsAST);
       const resolver = generateResolvers(

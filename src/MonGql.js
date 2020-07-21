@@ -227,8 +227,7 @@ class Mongql {
         this.#globalConfigs
       );
       const output = (!mongql.__undefineds.includes('output') && mongql.output) || (mongql.__undefineds.includes('output') && this.#globalConfigs.output);
-      if (output)
-        await Mongql.outputSDL(output.SDL || output.dir,typedefsAST, resource)
+      await Mongql.outputSDL(output.SDL || output.dir,typedefsAST, resource)
       TransformedTypedefs.obj[resource] = typedefsAST;
       TransformedTypedefs.arr.push(typedefsAST);
       const resolver = generateResolvers(
@@ -259,11 +258,13 @@ class Mongql {
   }
 
   static async outputSDL(path,typedefs,resource){
-    try {
-      await mkdirp(path);
-      await fs.writeFile(`${path}\\${resource}.graphql`, documentApi().addSDL(typedefs).toSDLString(), 'UTF-8');
-    } catch (err) {
-      console.log(err.message)
+    if(path){
+      try {
+        await mkdirp(path);
+        await fs.writeFile(`${path}\\${resource}.graphql`, documentApi().addSDL(typedefs).toSDLString(), 'UTF-8');
+      } catch (err) {
+        console.log(err.message)
+      }
     }
   }
 

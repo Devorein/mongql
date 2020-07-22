@@ -12,6 +12,8 @@ const mongoose = require('mongoose');
 const Password = require("../utils/gql-types/password")
 const Username = require("../utils/gql-types/username")
 
+const nestedObjPopulation = require("../utils/nestedObjPopulation");
+
 const loadFiles = require("../utils/loadFiles");
 const generateTypedefs = require('./generateTypedefs');
 const generateResolvers = require('./generateResolvers');
@@ -22,6 +24,21 @@ Array.prototype.forEachAsync = async function (cb) {
     await cb(this[index], index, this);
   }
 };
+
+function generateQueryOptions(){
+  const obj = {};
+  ['all','paginated','filtered','id'].forEach(range=>{
+    obj[range] = {};
+    ['self','others','mixed'].forEach(auth=>{
+      obj[range][auth] = {};
+      const parts = range.match(/(Id|Paginated)/) ? [ 'whole', 'nameandid' ] : [ 'whole', 'nameandid', 'count' ];
+      parts.forEach(part=>{
+        obj[range][auth][part] = true;
+      })
+    })
+  });
+  return obj;
+}
 
 const baseTypedefs = gql`
   type Query {
@@ -97,8 +114,10 @@ class Mongql {
         const fileWithoutExt = path.basename(file, path.extname(file));
         let imported = require(schemaFile);
         imported = imported[fileWithoutExt + "Schema"] === undefined ? imported : imported[fileWithoutExt + "Schema"];
-        if (fileWithoutExt !== "index" && imported.mongql.skip !== true)
-          Schemas.push(imported)
+        if (fileWithoutExt !== "index" && imported.mongql.skip !== true){
+          Schemas.push(imported);
+          imported.mongql.resource = S.capitalize(imported.mongql.resource);
+        }
       })
       this.#globalConfigs.Schemas = Schemas;
     } else {
@@ -120,7 +139,7 @@ class Mongql {
       output: false,
       generate: {
         type: true,
-        query: true
+        query:{}
       },
       Typedefs: {
         init: {},
@@ -129,6 +148,8 @@ class Mongql {
         init: {}
       }
     });
+
+    this.#globalConfigs.generate.query = nestedObjPopulation(this.#globalConfigs.generate.query,generateQueryOptions());
 
     if (temp.generate.mutation !== false) {
       populateObjDefaultValue(temp.generate, {
@@ -160,7 +181,7 @@ class Mongql {
       },
       generate: {
         type: true,
-        query: true
+        query:{}
       },
       output: false,
       global_excludePartitions: {
@@ -178,6 +199,10 @@ class Mongql {
         }
       });
     }
+    if(mongql.generate.query === undefined)
+      mongql.generate.query = {...this.#globalConfigs.generate.query};
+    else
+      mongql.generate.query = nestedObjPopulation(mongql.generate.query,generateQueryOptions());
     this.#schemaConfigs[mongql.resource] = mongql;
   };
 
@@ -220,7 +245,6 @@ class Mongql {
         mongql
       } = Schema;
       const { resource } = mongql;
-
       const { typedefsAST, transformedSchema } = await generateTypedefs(
         Schema,
         InitTypedefs[resource],

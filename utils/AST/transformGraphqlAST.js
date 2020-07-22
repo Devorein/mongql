@@ -12,6 +12,7 @@ function transformTypedefObjExtAST (objExtTypeName, typedefsAST, typedefsStr) {
 	let objTypeExtension = typedefsAST.definitions.find((definition) => {
 		return definition.kind === 'ObjectTypeExtension' && definition.name.value === objExtTypeName;
 	});
+  
 	if (objTypeExtension === undefined) {
 		objTypeExtension = {
 			kind: 'ObjectTypeExtension',
@@ -20,13 +21,15 @@ function transformTypedefObjExtAST (objExtTypeName, typedefsAST, typedefsStr) {
 			directives: [],
 			fields: []
 		};
-		typedefsAST.definitions.push(objTypeExtension);
 	}
-	objTypeExtension.fields.push(
-		...gql`
-				${typedefsStr}
-			`.definitions[0].fields
-	);
+  if(typedefsStr !== null){
+    typedefsAST.definitions.push(objTypeExtension);
+    objTypeExtension.fields.push(
+      ...gql`
+          ${typedefsStr}
+        `.definitions[0].fields
+    );
+  }
 }
 
 module.exports = {

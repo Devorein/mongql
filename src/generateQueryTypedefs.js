@@ -2,32 +2,37 @@ const pluralize = require('pluralize');
 const S = require('voca');
 
 module.exports = function (Schema) {
-	const { mongql: { resource } } = Schema;
+	const { mongql: { resource, generate: { query } } } = Schema;
 	const cResource = S.capitalize(resource);
 	const cpResource = pluralize(cResource, 2);
 	const res = [];
-	[ 'All', 'Paginated', 'Filtered', 'Id' ].forEach((range) => {
-		[ 'Mixed', 'Others', 'Self' ].forEach((auth) => {
-			const parts = range.match(/(Id|Paginated)/) ? [ 'Whole', 'NameAndId' ] : [ 'Whole', 'NameAndId', 'Count' ];
+  const ranges = Object.keys(query).filter(range=>query[range].__original === undefined);
+	ranges.forEach((range) => {
+    const auths = Object.keys(query[range]).filter(auth=>query[range][auth].__original === undefined)
+		auths.forEach((auth) => {
+			const parts = Object.keys(query[range][auth]).filter(part=>query[range][auth][part] !== false) 
 			parts.forEach((part) => {
+        let _range = S.capitalize(range);
+        let _auth = S.capitalize(auth);
+        let _part = S.capitalize(part);
 				let input = '',
-					output = `[${auth}${cResource}Type!]!`;
-				if (range === 'Paginated') {
+					output = `[${_auth}${cResource}Type!]!`;
+				if (_range === 'Paginated') {
 					input = '(pagination: PaginationInput!)';
-					if (part === 'NameAndId') output = '[NameAndId!]!';
-				} else if (range === 'Filtered') {
+					if (_part === 'NameAndId') output = '[NameAndId!]!';
+				} else if (_range === 'Filtered') {
 					input = '(filter: JSON)';
-					if (part === 'NameAndId') output = '[NameAndId!]!';
-				} else if (range === 'Id') {
+					if (_part === 'NameAndId') output = '[NameAndId!]!';
+				} else if (_range === 'Id') {
 					input = '(id: ID!)';
-					output = `${auth}${cResource}Type!`;
-					if (part === 'NameAndId') output = 'NameAndId!';
+					output = `${_auth}${cResource}Type!`;
+					if (_part === 'NameAndId') output = 'NameAndId!';
 				}
-				if (part === 'Count') output = 'NonNegativeInt!';
-				const commonComment = `"Get ${range.toLowerCase()} ${auth.toLowerCase()} ${resource.toLowerCase()} ${part.toLowerCase()}`;
-				res.push(`${commonComment}"\n get${range}${auth}${cpResource}${part}${input}: ${output}`);
+				if (_part === 'Count') output = 'NonNegativeInt!';
+				const commonComment = `"Get ${_range.toLowerCase()} ${_auth.toLowerCase()} ${resource.toLowerCase()} ${_part.toLowerCase()}`;
+				res.push(`${commonComment}"\n get${_range}${_auth}${cpResource}${_part}${input}: ${output}`);
 			});
 		});
 	});
-	return `extend type Query {\n${res.join('\n')}\n}`;
+	return ranges.length > 0 ? `extend type Query {\n${res.join('\n')}\n}` : null;
 };

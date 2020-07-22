@@ -1,20 +1,20 @@
-const { transformTypedefTypesAST, transformTypedefObjExtAST } = require('../utils/ast/transformGraphqlAST');
-
-const generateQueryTypedefs = require('./generateQueryTypedefs');
-const generateMutationTypedefs = require('./generateMutationTypedefs');
-const generateTypeTypedefs = require('./generateTypeTypedefs');
 const fs = require('fs-extra');
 const path = require('path');
 const mkdirp = require('mkdirp');
 
+const generateQueryTypedefs = require('./generateQueryTypedefs');
+const generateMutationTypedefs = require('./generateMutationTypedefs');
+const generateTypeTypedefs = require('./generateTypeTypedefs');
+const { transformTypedefTypesAST, transformTypedefObjExtAST } = require('../utils/ast/transformGraphqlAST');
+
 module.exports = async function (schema, typedefsAST, GlobalConfigs) {
 	const { Validators, output } = GlobalConfigs;
-
 	if (typedefsAST === null || typedefsAST === undefined)
 		typedefsAST = {
 			kind: 'Document',
 			definitions: []
 		};
+  // console.log(typedefsAST);
 	const { generate } = schema.mongql;
 	let transformedSchema = null;
 	if (generate !== false) {

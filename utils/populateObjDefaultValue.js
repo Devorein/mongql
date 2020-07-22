@@ -1,9 +1,4 @@
-function isPOJO (arg) {
-	if (arg == null || typeof arg !== 'object') return false;
-	const proto = Object.getPrototypeOf(arg);
-	if (proto == null) return true;
-	return proto === Object.prototype;
-}
+const isPOJO = require('./isPOJO');
 
 module.exports = function (obj, fields) {
 	if (obj.__undefineds === undefined && isPOJO(obj))

@@ -4,3 +4,4 @@ jest.config.js
 /.vscode
 /experiment
 /outputs
+feature.md

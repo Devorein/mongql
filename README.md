@@ -13,6 +13,7 @@ A package to convert your mongoose schema to graphql schema
     - [Intermediate Usage (With initial typedef and resolvers)](#intermediate-usage-with-initial-typedef-and-resolvers)
     - [Intermediate Usage (Output SDL and AST)](#intermediate-usage-output-sdl-and-ast)
     - [Intermediate Usage (Fine grain Mutation configuration)](#intermediate-usage-fine-grain-mutation-configuration)
+    - [Intermediate Usage (Fine grain Query configuration)](#intermediate-usage-fine-grain-query-configuration)
     - [Advanced Usage (generating Schema and Models)](#advanced-usage-generating-schema-and-models)
     - [Advanced Usage (Using local folders)](#advanced-usage-using-local-folders)
   - [Configs](#configs)
@@ -21,6 +22,7 @@ A package to convert your mongoose schema to graphql schema
     - [Field configs](#field-configs)
   - [Concept](#concept)
   - [API](#api)
+  - [FAQ](#faq)
   - [TODO](#todo)
 
 ## Features
@@ -168,6 +170,32 @@ const mongql = new Mongql({
 });
 ```
 
+### Intermediate Usage (Fine grain Query configuration)
+
+``` js
+const mongql = new Mongql({
+    Schemas: [UserSchema, SettingsSchema],
+    generate: {
+        query: false,
+        query: {
+            all: false
+        },
+        query: {
+            paginated: {
+                self: false
+            }
+        },
+        query: {
+            filtered: {
+                others: {
+                    whole: false
+                }
+            }
+        }
+    }
+});
+```
+
 ### Advanced Usage (generating Schema and Models)
 
 ``` js
@@ -226,16 +254,20 @@ Precedence of same config option is global < Schema < field. That is for the sam
 
 ## Configs
 
-& refers to the complete key declared right above.
+& refers to the whole key declared just right above.
 
 ### Global Configs
 
 | Name  | Description  | Type | Default Value | Usage | Available in |
 |---|---|---|---|---|---|
 | output  | output related configuration | `boolean \| Object` | false | `{output: false}`  `{output: { dir: process.cwd()}}` | Schema |
-| &.(dir|SDL)  | SDL Output directory | `string` | `undefined` | `{output: { dir: process.cwd()}}` | Schema |
+| &.(dir\|SDL)  | SDL Output directory | `string` | `undefined` | `{output: { dir: process.cwd()}}` | Schema |
 | &. AST  | AST Output directory | `string` | `undefined` | `{output: { AST: process.cwd()}}` | Schema |
 | generate  | Controls generation of type, query and mutations typedefs and resolvers | `Object` \| `boolean` | `true` | `generate: true` | Schema |
+| &.query  | Controls generation of query typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query: true}` | Schema |
+| &.(range)  | Controls generation of query range typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query:{  all: false}}` Take a look at concepts to see all ranges | Schema |
+| &.(auth)  | Controls generation of query range auth typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query:{  all: {self: false}}}` Take a look at concepts to see all auth | Schema |
+| &.(part)  | Controls generation of query range auth part typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query:{  all: {self: {whole: false}}}}` Take a look at concepts to see all part | Schema |
 | &.mutation  | Controls generation of mutations typedefs and resolvers | `Object` \| `boolean` | `true` | `generate :{mutation: true}` | Schema |
 | &.(create\|update\|delete)  | Controls generation of mutations typedefs and resolvers parts , if using tuple first one indicates single resource mutation, and second indicates multi resource mutation. | `[boolean, boolean] \| boolean` | `true` | `generate :{mutation: {create: false, update: [true, false]}}` here no create relation mutation will be create, only single resource update resolver and typedef will be created and both single and multi resource will be created for delete | Schema |
 | Schemas  | Array of schemas generate by mongoose or path to schema folder | `Schema[]` \| `String` | `[]` | `Schemas: [UserSchema, ...]` | |
@@ -294,6 +326,10 @@ During the generation of schema, a few concepts are followed
    1. Action: One of create|update|delete
    2. Target: resource for targeting single resource, resources for targeting multiple resources
 
+3. Each resource types contains 2 parts
+
+   1. Based on the permitted auths types will be generated with the following syntax auth resource type and type, eg SelfUserType
+   2. All the **embedded mongoose schema** will be converted into its own type
 Generated Query Examples: getSelfSettingsWhole, getOthersSettingsNameAndId
 
 Generated Mutation Examples: createSetting, updateSettings
@@ -311,6 +347,17 @@ These methods are available in the created Mongql instance
 | `generateModels()` | Generates models from the schema provided | | `Object:{[Schema.mongql.resource]: MongooseModel}`
 | `generateSchema()` | Generates a schema by calling `makeExecutableSchema` internally | options passed to `makeExecutableSchema` expect for typedefs and resolvers | `GraphQLSchema`
 | `static outputSDL()` | Outputs the SDL from the given typedef| <div> **path**: String *// SDL output dir* </div>  <div> **typedefs**: GraphqlAST \| String *// String or AST to convert* </div> <div> **resource**: String *// name of file or resource* </div>| |
+
+## FAQ
+
+1. Why do I need to use resource key?
+
+Answer.
+
+  1. Resource key is used to merge the initial query, mutation and types in the correct place
+
+  2. Its used as the Model name, in the generated resolvers
+  3. Its used to derive relation between resources, (not yet supported), for eg in the mutation resolver, dependant resources can be created and deleted
 
 ## TODO
 

@@ -14,10 +14,11 @@
   },
   "license": "MIT",
   "author": "Devon Reid <devorein00@gmail.com>",
-  "main": "src/Mongql.js",
+  "main": "dist/src/Mongql.js",
   "scripts": {
+    "build": "npx babel src --out-dir dist/src && npx babel utils --out-dir dist/utils",
     "lint": "npx eslint --fix",
-    "prepublish": "npm run lint && npm run test",
+    "prepublishOnly": "npm run lint && npm run test && npm run build",
     "test": "npm run test:unit && npm run test:integration",
     "test:integration": "npx jest --runInBand ./tests/integration",
     "test:unit": "npx jest --runInBand ./tests/unit"
@@ -31,6 +32,7 @@
     ]
   },
   "dependencies": {
+    "@babel/runtime-corejs3": "^7.10.5",
     "@graphql-tools/load-files": "^6.0.14",
     "@graphql-tools/merge": "^6.0.14",
     "@graphql-tools/resolvers-composition": "^6.0.14",
@@ -44,11 +46,18 @@
     "mkdirp": "^1.0.4",
     "mongoose": "^5.9.25",
     "pluralize": "^8.0.0",
-    "typescript": "^3.9.7",
     "voca": "^1.4.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.10.5",
+    "@babel/core": "^7.10.5",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/plugin-transform-runtime": "^7.10.5",
+    "@babel/preset-env": "^7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
+    "@size-limit/preset-small-lib": "^4.5.5",
     "babel-eslint": "^10.1.0",
+    "babel-preset-minify": "^0.5.1",
     "eslint": "^7.4.0",
     "eslint-plugin-jest": "^23.18.0",
     "eslint-plugin-prettier": "^3.1.4",
@@ -58,6 +67,7 @@
     "lint-staged": "^10.2.11",
     "nodemon": "^2.0.4",
     "rimraf": "^3.0.2",
-    "sort-package-json": "^1.44.0"
+    "sort-package-json": "^1.44.0",
+    "typescript": "^3.9.7"
   }
 }

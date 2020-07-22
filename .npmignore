@@ -6,3 +6,11 @@ jest.config.js
 /outputs
 feature.md
 /test-report
+/src
+debug.log
+.markdownlint.json
+babel.config.js
+.huskyrc.js
+.browserslistrc
+/utils
+log.txt

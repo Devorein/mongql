@@ -4,3 +4,5 @@ debug.log
 /outputs
 feature.md
 /test-report
+/dist
+log.txt

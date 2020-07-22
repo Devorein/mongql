@@ -14,7 +14,6 @@ module.exports = async function (schema, typedefsAST, GlobalConfigs) {
 			kind: 'Document',
 			definitions: []
 		};
-  // console.log(typedefsAST);
 	const { generate } = schema.mongql;
 	let transformedSchema = null;
 	if (generate !== false) {

@@ -37,7 +37,7 @@ function generateQueryOptions(){
       })
     })
   });
-  return obj;
+  return {...obj};
 }
 
 const baseTypedefs = gql`
@@ -77,9 +77,9 @@ class Mongql {
       Validators: [],
       resources: [],
     };
-
     this.#checkSchemaPath();
     this.#createDefaultGlobalConfigs();
+
     // Going through each schema to populate schema configs
     this.#globalConfigs.Schemas.forEach((schema) => {
       if (schema.mongql === undefined)
@@ -134,12 +134,11 @@ class Mongql {
 
   #createDefaultGlobalConfigs = () => {
     const temp = this.#globalConfigs;
-
     populateObjDefaultValue(temp, {
       output: false,
       generate: {
         type: true,
-        query:{}
+        query: {}
       },
       Typedefs: {
         init: {},
@@ -150,7 +149,6 @@ class Mongql {
     });
 
     this.#globalConfigs.generate.query = nestedObjPopulation(this.#globalConfigs.generate.query,generateQueryOptions());
-
     if (temp.generate.mutation !== false) {
       populateObjDefaultValue(temp.generate, {
         mutation: {
@@ -189,7 +187,6 @@ class Mongql {
         extra: true
       }
     });
-
     if (mongql.generate.mutation !== false) {
       populateObjDefaultValue(mongql.generate, {
         mutation: {
@@ -199,8 +196,10 @@ class Mongql {
         }
       });
     }
-    if(mongql.generate.query === undefined)
+
+    if(Object.entries(mongql.generate.query).length === 0){
       mongql.generate.query = {...this.#globalConfigs.generate.query};
+    }
     else
       mongql.generate.query = nestedObjPopulation(mongql.generate.query,generateQueryOptions());
     this.#schemaConfigs[mongql.resource] = mongql;

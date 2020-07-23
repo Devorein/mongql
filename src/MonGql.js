@@ -12,7 +12,7 @@ const mongoose = require('mongoose');
 const Password = require("../utils/gql-types/password")
 const Username = require("../utils/gql-types/username")
 
-const nestedObjPopulation = require("../utils/nestedObjPopulation");
+const {nestedObjPopulation} = require("../utils/objManip");
 
 const loadFiles = require("../utils/loadFiles");
 const generateTypedefs = require('./generateTypedefs');
@@ -31,7 +31,7 @@ function generateQueryOptions(){
     obj[range] = {};
     ['self','others','mixed'].forEach(auth=>{
       obj[range][auth] = {};
-      const parts = range.match(/(Id|Paginated)/) ? [ 'whole', 'nameandid' ] : [ 'whole', 'nameandid', 'count' ];
+      const parts = range.match(/(id|paginated)/) ? [ 'whole', 'nameandid' ] : [ 'whole', 'nameandid', 'count' ];
       parts.forEach(part=>{
         obj[range][auth][part] = true;
       })

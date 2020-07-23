@@ -14,6 +14,7 @@ A package to convert your mongoose schema to graphql schema
     - [Intermediate Usage (Output SDL and AST)](#intermediate-usage-output-sdl-and-ast)
     - [Intermediate Usage (Fine grain Mutation configuration)](#intermediate-usage-fine-grain-mutation-configuration)
     - [Intermediate Usage (Fine grain Query configuration)](#intermediate-usage-fine-grain-query-configuration)
+    - [Intermediate Usage (Extra Powerful Fine grain Query configuration)](#intermediate-usage-extra-powerful-fine-grain-query-configuration)
     - [Advanced Usage (generating Schema and Models)](#advanced-usage-generating-schema-and-models)
     - [Advanced Usage (Using local folders)](#advanced-usage-using-local-folders)
   - [Configs](#configs)
@@ -196,6 +197,23 @@ const mongql = new Mongql({
 });
 ```
 
+### Intermediate Usage (Extra Powerful Fine grain Query configuration)
+
+``` js
+const mongql = new Mongql({
+    Schemas: [UserSchema, SettingsSchema],
+    generate: {
+        query: {
+            self: false, // remove all self related typedefs and resolvers,
+            self: {
+                whole: false // remove all selfwhole related typedefs and resolvers,
+            },
+            count: false, // remove all count related typedefs and resolvers,
+        }
+    }
+});
+```
+
 ### Advanced Usage (generating Schema and Models)
 
 ``` js
@@ -326,10 +344,14 @@ During the generation of schema, a few concepts are followed
    1. Action: One of create|update|delete
    2. Target: resource for targeting single resource, resources for targeting multiple resources
 
-3. Each resource types contains 2 parts
+3. Each resource types contains the following parts
 
    1. Based on the permitted auths types will be generated with the following syntax auth resource type and type, eg SelfUserType
    2. All the **embedded mongoose schema** will be converted into its own type
+   3. mongoose Enums fields will be converted into enums
+   4. Based on the `generateInterface` option interface will be generated
+   5. Inputs will be created based on the generated type
+
 Generated Query Examples: getSelfSettingsWhole, getOthersSettingsNameAndId
 
 Generated Mutation Examples: createSetting, updateSettings

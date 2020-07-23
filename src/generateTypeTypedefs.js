@@ -3,11 +3,7 @@ const mongoose = require('mongoose');
 
 const generateTypeStr = require('./generateTypeStr');
 
-function populateObjDefaultValue (obj, fields) {
-	Object.entries(fields).forEach(([ key, value ]) => {
-		if (obj[key] === undefined) obj[key] = value;
-	});
-}
+const { populateObjDefaultValue } = require('../utils/objManip');
 
 module.exports = function (baseSchema, Validators) {
 	const resource = baseSchema.mongql.resource;

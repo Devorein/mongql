@@ -92,4 +92,27 @@ function mixObjectProp (obj) {
 	return Array.from(set);
 }
 
-module.exports = { setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjQuery, nestedObjPopulation };
+function populateObjDefaultValue (obj, fields) {
+	if (obj.__undefineds === undefined && isPOJO(obj))
+		Object.defineProperty(obj, '__undefineds', {
+			value: [],
+			enumerable: true,
+			writable: false,
+			configurable: false
+		});
+	Object.entries(fields).forEach(([ field, defvalue ]) => {
+		if (obj[field] === undefined && isPOJO(obj)) {
+			obj[field] = defvalue;
+			obj.__undefineds.push(field);
+		} else if (isPOJO(defvalue) && isPOJO(obj[field])) obj[field] = { ...defvalue, ...obj[field] };
+	});
+}
+
+module.exports = {
+	setNestedProps,
+	mixObjectProp,
+	flattenObject,
+	matchFlattenedObjQuery,
+	nestedObjPopulation,
+	populateObjDefaultValue
+};

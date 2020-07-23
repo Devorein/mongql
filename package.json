@@ -16,12 +16,14 @@
   "author": "Devon Reid <devorein00@gmail.com>",
   "main": "dist/src/Mongql.js",
   "scripts": {
-    "build": "npx babel src --out-dir dist/src && npx babel utils --out-dir dist/utils",
+    "build": "npx rimraf ./dist && npx babel src --out-dir dist/src && npx babel utils --out-dir dist/utils",
     "lint": "npx eslint --fix",
+    "prepack": "npm run test_build",
     "prepublishOnly": "npm run lint && npm run test && npm run build",
     "test": "npm run test:unit && npm run test:integration",
     "test:integration": "npx jest --runInBand ./tests/integration",
-    "test:unit": "npx jest --runInBand ./tests/unit"
+    "test:unit": "npx jest --runInBand ./tests/unit",
+    "test_build": "npm run test && npm run build"
   },
   "lint-staged": {
     "*.js": [

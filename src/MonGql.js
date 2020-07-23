@@ -17,7 +17,7 @@ const {nestedObjPopulation} = require("../utils/objManip");
 const loadFiles = require("../utils/loadFiles");
 const generateTypedefs = require('./generateTypedefs');
 const generateResolvers = require('./generateResolvers');
-const populateObjDefaultValue = require('../utils/populateObjDefaultValue');
+const { populateObjDefaultValue } = require('../utils/objManip');
 
 Array.prototype.forEachAsync = async function (cb) {
   for (let index = 0; index < this.length; index++) {

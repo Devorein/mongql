@@ -59,4 +59,37 @@ function nestedObjPopulation (query, merger) {
 	return flattened_merger;
 }
 
-module.exports = { flattenObject, matchFlattenedObjQuery, nestedObjPopulation };
+function scrambler (key) {
+	const arr = [];
+	const keys = key.split('.');
+
+	function wrapper (keys, parent = []) {
+		const arr = [];
+		const first_key = keys[0];
+		if (keys.length > 0) arr.push(keys.join('.'));
+		arr.push(first_key);
+		for (let i = 1; i < keys.length; i++) {
+			let _arr = [];
+			if (parent.length > 0) _arr.push(parent);
+			_arr.push(first_key, keys[i]);
+			arr.push(_arr.join('.'));
+		}
+		return arr;
+	}
+
+	keys.forEach((_, i) => {
+		arr.push(...wrapper(keys.slice(i)));
+	});
+
+	return arr;
+}
+
+function mixObjectProp (obj) {
+	const set = new Set();
+	Object.entries(obj).forEach(([ key ]) => {
+		scrambler(key).forEach((scramble) => set.add(scramble));
+	});
+	return Array.from(set);
+}
+
+module.exports = { setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjQuery, nestedObjPopulation };

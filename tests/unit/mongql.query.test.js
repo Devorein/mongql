@@ -4,62 +4,39 @@ const S = require('voca');
 
 const Mongql = require('../../src/MonGql');
 
-Array.prototype.diff = function (a) {
-	return this.filter((i) => a.indexOf(i) < 0);
-};
+const { setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjQuery } = require('../../utils/objManip');
 
 const queryOpts = [];
 const allFields = [];
 
-const ranges = [ 'all', 'paginated', 'filtered', 'id' ];
-ranges.forEach((range) => {
-	const auths = [ 'self', 'others', 'mixed' ];
-	const parts = range.match(/(id|paginated)/) ? [ 'whole', 'nameandid' ] : [ 'whole', 'nameandid', 'count' ];
-	let field = range;
-	let excludedFields = [];
-	auths.forEach((auth) => {
-		parts.forEach((part) => {
-			excludedFields.push(`${range}.${auth}.${part}`);
-		});
-	});
-	queryOpts.push({ query: { [range]: false }, field, excludedFields });
+Array.prototype.diff = function (a) {
+	return this.filter((i) => a.indexOf(i) < 0);
+};
 
-	auths.forEach((auth) => {
-		field = `${range}.${auth}`;
-		let excludedFields = [];
+const obj = {};
+[ 'all', 'paginated', 'filtered', 'id' ].forEach((range) => {
+	obj[range] = {};
+	[ 'self', 'others', 'mixed' ].forEach((auth) => {
+		obj[range][auth] = {};
+		const parts = range.match(/(id|paginated)/) ? [ 'whole', 'nameandid' ] : [ 'whole', 'nameandid', 'count' ];
 		parts.forEach((part) => {
-			excludedFields.push(`${range}.${auth}.${part}`);
-		});
-
-		queryOpts.push({
-			query: {
-				[range]: {
-					[auth]: false
-				}
-			},
-			field,
-			excludedFields
-		});
-
-		parts.forEach((part) => {
-			field = `${range}.${auth}.${part}`;
-			queryOpts.push({
-				query: {
-					[range]: {
-						[auth]: {
-							[part]: false
-						}
-					}
-				},
-				field,
-				excludedFields: [ field ]
-			});
-			allFields.push(field);
+			obj[range][auth][part] = true;
+			allFields.push(`${range}.${auth}.${part}`);
 		});
 	});
 });
 
-function typedefQueryChecker (typedefAST, { excludedFields }) {
+mixObjectProp(flattenObject(obj)).sort().forEach((excludeQuery) => {
+	const query = setNestedProps({}, excludeQuery, false);
+	const excludedQuery = matchFlattenedObjQuery(excludeQuery, allFields);
+	queryOpts.push({
+		field: excludeQuery,
+		query,
+		excludedQuery
+	});
+});
+
+function typedefQueryChecker (typedefAST, { excludedQuery }) {
 	const QueryExt = documentApi().addSDL(typedefAST).getExt('Query');
 	function typeChecker (fields, against) {
 		fields.forEach((field) => {
@@ -69,12 +46,12 @@ function typedefQueryChecker (typedefAST, { excludedFields }) {
 		});
 	}
 
-	const includedFields = allFields.diff(excludedFields);
-	typeChecker(excludedFields, false);
+	const includedFields = allFields.diff(excludedQuery);
+	typeChecker(excludedQuery, false);
 	typeChecker(includedFields, true);
 }
 
-function resolverQueryChecker (resolvers, { excludedFields }) {
+function resolverQueryChecker (resolvers, { excludedQuery }) {
 	function resolverChecker (fields, against) {
 		fields.forEach((field) => {
 			const [ range, auth, part ] = field.split('.');
@@ -83,8 +60,8 @@ function resolverQueryChecker (resolvers, { excludedFields }) {
 		});
 	}
 
-	const includedFields = allFields.diff(excludedFields);
-	resolverChecker(excludedFields, false);
+	const includedFields = allFields.diff(excludedQuery);
+	resolverChecker(excludedQuery, false);
 	resolverChecker(includedFields, true);
 }
 
@@ -102,7 +79,7 @@ describe('Query option checker', () => {
 		expect(documentApi().addSDL(TransformedTypedefs.obj.User).hasType('Query')).toBe(false);
 	});
 
-	queryOpts.forEach(({ query, field, excludedFields }) => {
+	queryOpts.forEach(({ query, field, excludedQuery }) => {
 		it(`Should output correct query when ${field} is false in global config`, async () => {
 			const Schema = new mongoose.Schema({
 				name: String
@@ -113,8 +90,8 @@ describe('Query option checker', () => {
 				generate: { query }
 			});
 			const { TransformedTypedefs, TransformedResolvers } = await mongql.generate();
-			typedefQueryChecker(TransformedTypedefs.obj.User, { query, field, excludedFields });
-			resolverQueryChecker(TransformedResolvers.obj.User.Query, { query, field, excludedFields });
+			typedefQueryChecker(TransformedTypedefs.obj.User, { query, field, excludedQuery });
+			resolverQueryChecker(TransformedResolvers.obj.User.Query, { query, field, excludedQuery });
 		});
 	});
 

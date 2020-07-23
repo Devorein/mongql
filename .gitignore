@@ -6,3 +6,4 @@ feature.md
 /test-report
 /dist
 log.txt
+*.tgz

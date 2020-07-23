@@ -1,4 +1,9 @@
-const isPOJO = require('./isPOJO');
+function isPOJO (arg) {
+	if (arg == null || typeof arg !== 'object') return false;
+	const proto = Object.getPrototypeOf(arg);
+	if (proto == null) return true;
+	return proto === Object.prototype;
+}
 
 const setNestedProps = (object, path, value) => {
 	const root = object;
@@ -114,5 +119,6 @@ module.exports = {
 	flattenObject,
 	matchFlattenedObjQuery,
 	nestedObjPopulation,
-	populateObjDefaultValue
+	populateObjDefaultValue,
+	isPOJO
 };

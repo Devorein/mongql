@@ -103,7 +103,7 @@ describe('Query option checker', () => {
 	});
 
 	queryOpts.forEach(({ query, field, excludedFields }) => {
-		it(`Should output correct query when ${field} is false`, async () => {
+		it(`Should output correct query when ${field} is false in global config`, async () => {
 			const Schema = new mongoose.Schema({
 				name: String
 			});
@@ -115,6 +115,24 @@ describe('Query option checker', () => {
 			const { TransformedTypedefs, TransformedResolvers } = await mongql.generate();
 			typedefQueryChecker(TransformedTypedefs.obj.User, { query, field, excludedFields });
 			resolverQueryChecker(TransformedResolvers.obj.User.Query, { query, field, excludedFields });
+		});
+	});
+
+	// ? Making sure that schema level config overrides global config
+	queryOpts.forEach((queryOpt, index) => {
+		const { query, field } = queryOpt;
+		it(`Should output correct query when ${field} is true in local config`, async () => {
+			const Schema = new mongoose.Schema({
+				name: String
+			});
+			Schema.mongql = { resource: 'user', generate: { query } };
+			const mongql = new Mongql({
+				Schemas: [ Schema ],
+				generate: { query: queryOpts[index !== queryOpts.length - 1 ? index + 1 : 0].query }
+			});
+			const { TransformedTypedefs, TransformedResolvers } = await mongql.generate();
+			typedefQueryChecker(TransformedTypedefs.obj.User, queryOpt);
+			resolverQueryChecker(TransformedResolvers.obj.User.Query, queryOpt);
 		});
 	});
 });

@@ -165,7 +165,10 @@ const mongql = new Mongql({
         mutation: false, // will not generate any mutation typedef and resolver,
         mutation: {
             create: false, // Will not generate any create mutation typedef and resolver,
-            update: [false, true], // will not generate single update mutation typedef and resolver but multiple will be generated
+            update: {
+                multi: false // Will not generate any update multi mutation typedef and resolver
+            },
+            single: false // Will not generate any single mutation typedef and resolver
         }
     }
 });
@@ -287,7 +290,8 @@ Precedence of same config option is global < Schema < field. That is for the sam
 | &.(auth)  | Controls generation of query range auth typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query:{  all: {self: false}}}` Take a look at concepts to see all auth | Schema |
 | &.(part)  | Controls generation of query range auth part typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query:{  all: {self: {whole: false}}}}` Take a look at concepts to see all part | Schema |
 | &.mutation  | Controls generation of mutations typedefs and resolvers | `Object` \| `boolean` | `true` | `generate :{mutation: true}` | Schema |
-| &.(create\|update\|delete)  | Controls generation of mutations typedefs and resolvers parts , if using tuple first one indicates single resource mutation, and second indicates multi resource mutation. | `[boolean, boolean] \| boolean` | `true` | `generate :{mutation: {create: false, update: [true, false]}}` here no create relation mutation will be create, only single resource update resolver and typedef will be created and both single and multi resource will be created for delete | Schema |
+| &.(action)  | Controls generation of mutations typedefs and resolvers action| `Object` \| `boolean` | `true` | `generate :{mutation: {create: {multi:true}, update: {single: false}}}` Take a look at concepts to see all mutation action | Schema |
+| &.(target)  | Controls generation of mutations typedefs and resolvers target| `Object` \| `boolean` | `true` | `generate :{mutation: {create: {multi:true}, update: {single: false}}}` Take a look at concepts to see all mutation targets | Schema |
 | Schemas  | Array of schemas generate by mongoose or path to schema folder | `Schema[]` \| `String` | `[]` | `Schemas: [UserSchema, ...]` | |
 | Typedefs  | Typedefs related configuration or path to typedefs folder | `Object` \| `String` | `{init: undefined}` | `Typedefs: {init: {User: InitialUserTypedef}}` | |
 | &.init  | Initial typedefs to be attached to resultant typedef | `Object` | `undefined` | `init: {User: InitialUserTypedef}` | |
@@ -389,6 +393,6 @@ Answer.
 4. Standard liniting configuration
 5. Provide ES modules to make the library tree-shakable
 6. More enriched API
-7. Better documentation :^)
+7. Better documentation
 
 **PRS are more than welcome and highly appreciated!!!!**

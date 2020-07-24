@@ -25,7 +25,7 @@
     "test:integration": "npx jest --runInBand ./tests/integration",
     "test:unit": "npx jest --runInBand ./tests/unit",
     "test_build": "npm run test && npm run build",
-    "preversion": "npm run changelog"
+    "preversion": "npm run test && npm run changelog"
   },
   "lint-staged": {
     "*.js": [

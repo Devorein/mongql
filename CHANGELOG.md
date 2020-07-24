@@ -1,3 +1,12 @@
+## <small>1.2.8 (2020-07-24)</small>
+
+* CFG Added vscode settings and dependabot config ([bbce463](https://github.com/Devorein/mongql/commit/bbce463))
+* DOC Added documentation for new mutation config ([1558a10](https://github.com/Devorein/mongql/commit/1558a10))
+* FEAT Added powerful mutation configs ([09525cd](https://github.com/Devorein/mongql/commit/09525cd))
+* VER 1.2.8 ([4ddb99a](https://github.com/Devorein/mongql/commit/4ddb99a))
+
+
+
 ## <small>1.2.6 (2020-07-23)</small>
 
 * CFG Added *.tgz to .npmignore and .gitignore ([6582480](https://github.com/Devorein/mongql/commit/6582480))

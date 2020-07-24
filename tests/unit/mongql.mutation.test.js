@@ -5,8 +5,18 @@ const Mongql = require('../../src/MonGql');
 
 const { setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../utils/objManip');
 const { mutation: { options: MutationOptions, fields: MutationFields } } = require('../../utils/generateOptions');
+const { argumentsToString, outputToString } = require('../../utils/AST/transformASTToString');
 
 const mutationOpts = [];
+
+const MutationMap = {
+	createUser: [ 'data:UserInput!', 'SelfUserType!' ],
+	createUsers: [ 'data:[UserInput!]!', '[SelfUserType!]!' ],
+	updateUser: [ 'data:UserInput!,id:ID!', 'SelfUserType!' ],
+	updateUsers: [ 'data:[UserInput!]!,ids:[ID!]!', '[SelfUserType!]!' ],
+	deleteUser: [ 'id:ID!', 'SelfUserType!' ],
+	deleteUsers: [ 'ids:[ID!]!', '[SelfUserType!]!' ]
+};
 
 Array.prototype.diff = function (a) {
 	return this.filter((i) => a.indexOf(i) < 0);
@@ -33,7 +43,11 @@ function MutationChecker (target, { field, excludedMutation }, type) {
 		fields.forEach((field) => {
 			const [ action, part ] = field.split('.');
 			const typename = `${action}${part === 'multi' ? 'Users' : 'User'}`;
-			expect(type === 'typedef' ? target.hasField(typename) : Boolean(target[typename])).toBe(against);
+			if (type === 'typedef') {
+				expect(target.hasField(typename)).toBe(against);
+				if (against) expect(MutationMap[typename][0]).toBe(argumentsToString(target.getField(typename).node.arguments));
+				if (against) expect(MutationMap[typename][1]).toBe(outputToString(target.getField(typename).node.type));
+			} else expect(Boolean(target[typename])).toBe(against);
 		});
 	}
 	if (field === 'mutation' && type === 'typedef') expect(documentApi().addSDL(target).hasExt('Mutation')).toBe(false);

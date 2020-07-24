@@ -45,11 +45,14 @@ module.exports = function (Schema) {
 		auths.forEach((auth) => {
 			const parts = Object.keys(query[range][auth]).filter((part) => query[range][auth][part] !== false);
 			parts.forEach((part) => {
-				let output = `[${S.capitalize(auth)}${cr}Type!]!`;
-				if (range === 'paginated' && part === 'nameandid') output = '[NameAndId!]!';
-				else if (range === 'filtered' && part === 'nameandid') output = '[NameAndId!]!';
-				else if (range === 'id' && part === 'nameandid') output = 'NameAndId!';
+				let output = `${S.capitalize(auth)}${cr}Type!`;
+				output = range !== 'id' ? `[${output}]!` : output;
+				if (part === 'nameandid') {
+					if (range.match(/(paginated|filtered|all)/)) output = '[NameAndId!]!';
+					else if (range === 'id') output = 'NameAndId!';
+				}
 				if (part === 'count') output = 'NonNegativeInt!';
+
 				node.fields.push({
 					name: `get${S.capitalize(range)}${S.capitalize(auth)}${cpr}${S.capitalize(part)}`,
 					type: output,

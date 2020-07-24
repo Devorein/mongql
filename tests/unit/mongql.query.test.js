@@ -6,8 +6,42 @@ const Mongql = require('../../src/MonGql');
 
 const { setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../utils/objManip');
 const { query: { options: QueryOptions, fields: QueryFields } } = require('../../utils/generateOptions');
+const { argumentsToString, outputToString } = require('../../utils/AST/transformASTToString');
 
 const queryOpts = [];
+
+const QueryArgs = {
+	getAllSelfUsersWhole: [ '', '[SelfUserType!]!' ],
+	getAllSelfUsersNameandid: [ '', '[NameAndId!]!' ],
+	getAllSelfUsersCount: [ '', 'NonNegativeInt!' ],
+	getAllOthersUsersWhole: [ '', '[OthersUserType!]!' ],
+	getAllOthersUsersNameandid: [ '', '[NameAndId!]!' ],
+	getAllOthersUsersCount: [ '', 'NonNegativeInt!' ],
+	getAllMixedUsersWhole: [ '', '[MixedUserType!]!' ],
+	getAllMixedUsersNameandid: [ '', '[NameAndId!]!' ],
+	getAllMixedUsersCount: [ '', 'NonNegativeInt!' ],
+	getPaginatedSelfUsersWhole: [ 'pagination:PaginationInput!', '[SelfUserType!]!' ],
+	getPaginatedSelfUsersNameandid: [ 'pagination:PaginationInput!', '[NameAndId!]!' ],
+	getPaginatedOthersUsersWhole: [ 'pagination:PaginationInput!', '[OthersUserType!]!' ],
+	getPaginatedOthersUsersNameandid: [ 'pagination:PaginationInput!', '[NameAndId!]!' ],
+	getPaginatedMixedUsersWhole: [ 'pagination:PaginationInput!', '[MixedUserType!]!' ],
+	getPaginatedMixedUsersNameandid: [ 'pagination:PaginationInput!', '[NameAndId!]!' ],
+	getFilteredSelfUsersWhole: [ 'filter:JSON', '[SelfUserType!]!' ],
+	getFilteredSelfUsersNameandid: [ 'filter:JSON', '[NameAndId!]!' ],
+	getFilteredSelfUsersCount: [ 'filter:JSON', 'NonNegativeInt!' ],
+	getFilteredOthersUsersWhole: [ 'filter:JSON', '[OthersUserType!]!' ],
+	getFilteredOthersUsersNameandid: [ 'filter:JSON', '[NameAndId!]!' ],
+	getFilteredOthersUsersCount: [ 'filter:JSON', 'NonNegativeInt!' ],
+	getFilteredMixedUsersWhole: [ 'filter:JSON', '[MixedUserType!]!' ],
+	getFilteredMixedUsersNameandid: [ 'filter:JSON', '[NameAndId!]!' ],
+	getFilteredMixedUsersCount: [ 'filter:JSON', 'NonNegativeInt!' ],
+	getIdSelfUsersWhole: [ 'id:ID!', 'SelfUserType!' ],
+	getIdSelfUsersNameandid: [ 'id:ID!', 'NameAndId!' ],
+	getIdOthersUsersWhole: [ 'id:ID!', 'OthersUserType!' ],
+	getIdOthersUsersNameandid: [ 'id:ID!', 'NameAndId!' ],
+	getIdMixedUsersWhole: [ 'id:ID!', 'MixedUserType!' ],
+	getIdMixedUsersNameandid: [ 'id:ID!', 'NameAndId!' ]
+};
 
 Array.prototype.diff = function (a) {
 	return this.filter((i) => a.indexOf(i) < 0);
@@ -34,7 +68,13 @@ function QueryChecker (target, { field, excludedQuery }, type) {
 		fields.forEach((field) => {
 			const [ range, auth, part ] = field.split('.');
 			const typename = `get${S.capitalize(range)}${S.capitalize(auth)}Users${S.capitalize(part)}`;
-			expect(type === 'typedef' ? target.hasField(typename) : Boolean(target[typename])).toBe(against);
+			if (type === 'typedef') {
+				expect(target.hasField(typename)).toBe(against);
+				if (against) {
+					expect(QueryArgs[typename][0]).toBe(argumentsToString(target.getField(typename).node.arguments));
+					expect(QueryArgs[typename][1]).toBe(outputToString(target.getField(typename).node.type));
+				}
+			} else expect(Boolean(target[typename])).toBe(against);
 		});
 	}
 	if (field === 'query' && type === 'typedef') expect(documentApi().addSDL(target).hasExt('Query')).toBe(false);

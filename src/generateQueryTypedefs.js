@@ -6,9 +6,10 @@ module.exports = function (Schema) {
 	const cResource = S.capitalize(resource);
 	const cpResource = pluralize(cResource, 2);
 	const res = [];
-	const ranges = Object.keys(query).filter((range) => query[range].__original === undefined);
+
+	const ranges = Object.keys(query);
 	ranges.forEach((range) => {
-		const auths = Object.keys(query[range]).filter((auth) => query[range][auth].__original === undefined);
+		const auths = Object.keys(query[range]);
 		auths.forEach((auth) => {
 			const parts = Object.keys(query[range][auth]).filter((part) => query[range][auth][part] !== false);
 			parts.forEach((part) => {
@@ -34,5 +35,5 @@ module.exports = function (Schema) {
 			});
 		});
 	});
-	return ranges.length > 0 ? `extend type Query {\n${res.join('\n')}\n}` : null;
+	return res.length > 0 ? `extend type Query {\n${res.join('\n')}\n}` : null;
 };

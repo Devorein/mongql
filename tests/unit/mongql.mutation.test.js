@@ -3,103 +3,70 @@ const { documentApi } = require('graphql-extra');
 
 const Mongql = require('../../src/MonGql');
 
-const actions = [ 'create', 'update', 'delete' ];
+const { setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../utils/objManip');
+const { mutation: { options: MutationOptions, fields: MutationFields } } = require('../../utils/generateOptions');
 
-async function mongqlGenerate (schema, generate) {
-	const Schema = new mongoose.Schema(
-		schema !== null
-			? schema
-			: {
-					name: String
-				}
-	);
-	Schema.mongql = { resource: 'user', ...generate };
-	return await new Mongql({
-		Schemas: [ Schema ]
-	}).generate();
-}
+const mutationOpts = [];
 
-function generateExlucded (excludedMutationOps) {
-	const mutationOps = [ 'createUser', 'createUsers', 'updateUser', 'updateUsers', 'deleteUser', 'deleteUsers' ];
-	const generate = { mutation: { create: true, update: true, delete: true } };
+Array.prototype.diff = function (a) {
+	return this.filter((i) => a.indexOf(i) < 0);
+};
 
-	actions.forEach((action) => {
-		if (excludedMutationOps.includes(action + 'User') && excludedMutationOps.includes(action + 'Users'))
-			generate.mutation[action] = false;
-		else if (excludedMutationOps.includes(action + 'User')) generate.mutation[action] = [ false, true ];
-		else if (excludedMutationOps.includes(action + 'Users')) generate.mutation[action] = [ true, false ];
+mutationOpts.push({
+	field: 'mutation',
+	excludedMutation: MutationFields,
+	mutation: false
+});
+
+mixObjectProp(flattenObject(MutationOptions)).sort().forEach((excludeMutation) => {
+	const mutation = setNestedProps({}, excludeMutation, false);
+	const excludedMutation = matchFlattenedObjProps(excludeMutation, MutationFields);
+	mutationOpts.push({
+		field: excludeMutation,
+		mutation,
+		excludedMutation
 	});
+});
 
-	const includedMutationOps = mutationOps.filter((mutationOp) => !excludedMutationOps.includes(mutationOp));
-
-	return {
-		generate,
-		includedMutationOps
-	};
-}
-
-async function mutationTypedefChecker (excludedMutationOps) {
-	const { generate, includedMutationOps } = generateExlucded(excludedMutationOps);
-	const { TransformedTypedefs } = await mongqlGenerate(null, {
-		generate
-	});
-
-	includedMutationOps.forEach((includedMutationOp) => {
-		expect(documentApi().addSDL(TransformedTypedefs.obj.User).getExt('Mutation').hasField(includedMutationOp)).toBe(
-			true
-		);
-	});
-
-	excludedMutationOps.forEach((excludedMutationOp) => {
-		expect(documentApi().addSDL(TransformedTypedefs.obj.User).getExt('Mutation').hasField(excludedMutationOp)).toBe(
-			false
-		);
-	});
-}
-
-async function mutationResolverChecker (excludedMutationOps) {
-	const { generate, includedMutationOps } = generateExlucded(excludedMutationOps);
-	const { TransformedResolvers } = await mongqlGenerate(null, {
-		generate
-	});
-
-	includedMutationOps.forEach((includedMutationOp) => {
-		expect(TransformedResolvers.obj.User.Mutation[includedMutationOp]).toBeTruthy();
-	});
-
-	excludedMutationOps.forEach((includedMutationOp) => {
-		expect(TransformedResolvers.obj.User.Mutation[includedMutationOp]).not.toBeTruthy();
-	});
+function MutationChecker (target, { field, excludedMutation }, type) {
+	function checker (fields, against) {
+		fields.forEach((field) => {
+			const [ action, part ] = field.split('.');
+			const typename = `${action}${part === 'multi' ? 'Users' : 'User'}`;
+			expect(type === 'typedef' ? target.hasField(typename) : Boolean(target[typename])).toBe(against);
+		});
+	}
+	if (field === 'mutation' && type === 'typedef') expect(documentApi().addSDL(target).hasExt('Mutation')).toBe(false);
+	else {
+		target = type === 'typedef' ? documentApi().addSDL(target).getExt('Mutation') : target;
+		const includedFields = MutationFields.diff(excludedMutation);
+		checker(excludedMutation, false);
+		checker(includedFields, true);
+	}
 }
 
 describe('Mutation option checker', () => {
-	describe('Transformed typedefs checker', () => {
-		it('Should not contain mutation related typedefs', async () => {
-			const { TransformedTypedefs } = await mongqlGenerate(null, {
-				generate: {
-					mutation: false
-				}
-			});
-			expect(documentApi().addSDL(TransformedTypedefs.obj.User).hasType('Mutation')).toBe(false);
-		});
-	});
-
-	actions.forEach((action) => {
-		const excludedMutations = [ [ `${action}User` ], [ `${action}Users` ], [ `${action}User`, `${action}Users` ] ];
-
-		describe('Typedefs', () => {
-			excludedMutations.forEach((excludedMutation) => {
-				it(`Should not create, ${action} mutation typedefs when ${excludedMutation.toString()}`, async () => {
-					await mutationTypedefChecker(excludedMutation);
+	[ 'global', 'local' ].forEach((partition) => {
+		mutationOpts.forEach((mutationOpt, index) => {
+			const { mutation, field } = mutationOpt;
+			it(`Should output correct mutation when ${field} is false in ${partition} config`, async () => {
+				const Schema = new mongoose.Schema({
+					name: String
 				});
-			});
-		});
-
-		describe('Resolvers', () => {
-			excludedMutations.forEach((excludedMutation) => {
-				it(`Should not create, ${action} mutation resolvers when ${excludedMutation.toString()}`, async () => {
-					await mutationResolverChecker(excludedMutation);
+				Schema.mongql = { resource: 'user' };
+				if (partition === 'local') Schema.mongql.generate = { mutation };
+				const mongql = new Mongql({
+					Schemas: [ Schema ],
+					generate: {
+						mutation:
+							partition === 'local'
+								? mutationOpts[index !== mutationOpts.length - 1 ? index + 1 : 0].mutation
+								: mutation
+					}
 				});
+				const { TransformedTypedefs, TransformedResolvers } = await mongql.generate();
+				MutationChecker(TransformedTypedefs.obj.User, mutationOpt, 'typedef');
+				MutationChecker(TransformedResolvers.obj.User.Mutation, mutationOpt, 'resolver');
 			});
 		});
 	});

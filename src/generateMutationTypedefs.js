@@ -7,21 +7,25 @@ module.exports = function (Schema) {
 	const capitalizedResource = S.capitalize(resource);
 	const pluralizedResource = pluralize(resource, 2);
 	const pluralizedcapitalizedResource = pluralize(capitalizedResource, 2);
+	const res = [],
+		actions = Object.keys(mutation);
 
-	let mutationsStr = ``;
-
-	[ 'create', 'update', 'delete' ].forEach((action) => {
-		if (Schema.mongql.generate === true || mutation === true || mutation[action] === true || mutation[action][0])
-			mutationsStr += `
-        "${S.capitalize(action)} single ${resource}"
-        ${action}${capitalizedResource}(data: ${capitalizedResource}Input!): Self${capitalizedResource}Type!
-      `;
-
-		if (Schema.mongql.generate === true || mutation === true || mutation[action] === true || mutation[action][1])
-			mutationsStr += `
-      "${S.capitalize(action)} multiple ${pluralizedResource}"
-      ${action}${pluralizedcapitalizedResource}(data: ${capitalizedResource}Input!): [Self${capitalizedResource}Type!]!
-    `;
+	actions.forEach((action) => {
+		const parts = Object.keys(mutation[action]).filter((part) => mutation[action][part]);
+		parts.forEach((part) => {
+			if (part === 'single')
+				res.push(
+					`"${S.capitalize(
+						action
+					)} single ${resource}"\n${action}${capitalizedResource}(data: ${capitalizedResource}Input!): Self${capitalizedResource}Type!`
+				);
+			else if (part === 'multi')
+				res.push(
+					`"${S.capitalize(
+						action
+					)} multiple ${pluralizedResource}"\n${action}${pluralizedcapitalizedResource}(data: ${capitalizedResource}Input!): [Self${capitalizedResource}Type!]!`
+				);
+		});
 	});
-	return `extend type Mutation {\n${mutationsStr}\n}`;
+	return res.length > 0 ? `extend type Mutation {\n${res.join('\n')}\n}` : null;
 };

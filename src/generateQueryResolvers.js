@@ -56,53 +56,53 @@ module.exports = function (Schema, transformedSchema) {
 		});
 	};
 
-	const ranges = Object.keys(query).filter((range) => query[range].__original === undefined);
+	if (query !== false) {
+		const ranges = Object.keys(query);
+		ranges.forEach((range) => {
+			const auths = Object.keys(query[range]);
+			auths.forEach((auth) => {
+				const parts = Object.keys(query[range][auth]).filter((part) => query[range][auth][part] !== false);
+				parts.forEach((part) => {
+					const _range = S.capitalize(range);
+					const _auth = S.capitalize(auth);
+					const _part = S.capitalize(part);
+					QueryResolvers[`get${_range}${_auth}${pluralizedcapitalizedResource}${_part}`] = async function (
+						parent,
+						args,
+						ctx
+					) {
+						const AuthFilter = AuthFilters[_auth](ctx);
+						if (_part === 'Count') {
+							if (_range === 'All')
+								return await ctx[capitalizedResource].countDocuments({
+									...AuthFilter
+								});
+							else if (_range === 'Filtered')
+								return await ctx[capitalizedResource].countDocuments({
+									...AuthFilter,
+									...(args.filter || '{}')
+								});
+						}
 
-	ranges.forEach((range) => {
-		const auths = Object.keys(query[range]).filter((auth) => query[range][auth].__original === undefined);
+						let query = null;
 
-		auths.forEach((auth) => {
-			const parts = Object.keys(query[range][auth]).filter((part) => query[range][auth][part] !== false);
-			parts.forEach((part) => {
-				const _range = S.capitalize(range);
-				const _auth = S.capitalize(auth);
-				const _part = S.capitalize(part);
-				QueryResolvers[`get${_range}${_auth}${pluralizedcapitalizedResource}${_part}`] = async function (
-					parent,
-					args,
-					ctx
-				) {
-					const AuthFilter = AuthFilters[_auth](ctx);
-					if (_part === 'Count') {
-						if (_range === 'All')
-							return await ctx[capitalizedResource].countDocuments({
-								...AuthFilter
-							});
-						else if (_range === 'Filtered')
-							return await ctx[capitalizedResource].countDocuments({
+						if (_range === 'All') query = ctx[capitalizedResource].find({ ...AuthFilter });
+						else if (_range === 'Paginated') query = Pagination(_auth, args, ctx);
+						else if (_range === 'Filter') query = Filter(_auth, args, ctx);
+						else if (_range === 'Id')
+							query = ctx[capitalizedResource].find({
 								...AuthFilter,
-								...(args.filter || '{}')
+								_id: args.id
 							});
-					}
 
-					let query = null;
-
-					if (_range === 'All') query = ctx[capitalizedResource].find({ ...AuthFilter });
-					else if (_range === 'Paginated') query = Pagination(_auth, args, ctx);
-					else if (_range === 'Filter') query = Filter(_auth, args, ctx);
-					else if (_range === 'Id')
-						query = ctx[capitalizedResource].find({
-							...AuthFilter,
-							_id: args.id
-						});
-
-					query = query.select(Selection(_auth, _part));
-					const res = await query;
-					return _range === 'Id' ? res[0] : res;
-				};
+						query = query.select(Selection(_auth, _part));
+						const res = await query;
+						return _range === 'Id' ? res[0] : res;
+					};
+				});
 			});
 		});
-	});
+	}
 
 	return QueryResolvers;
 };

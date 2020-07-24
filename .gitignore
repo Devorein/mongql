@@ -7,3 +7,4 @@ feature.md
 /dist
 log.txt
 *.tgz
+package.lock.json

@@ -1,6 +1,6 @@
 {
   "name": "mongql",
-  "version": "1.2.5",
+  "version": "1.2.7",
   "description": "Create graphql Schema from mongoose Schema",
   "keywords": [
     "codegen",
@@ -17,13 +17,15 @@
   "main": "dist/src/Mongql.js",
   "scripts": {
     "build": "npx rimraf ./dist && npx babel src --out-dir dist/src && npx babel utils --out-dir dist/utils",
+    "changelog": "npx conventional-changelog -i ./CHANGELOG.md -s -r 0 -u false && git add CHANGELOG.md",
     "lint": "npx eslint --fix",
     "prepack": "npm run test_build",
-    "prepublishOnly": "npm run lint && npm run test && npm run build",
+    "prepublishOnly": "npm run test_build",
     "test": "npm run test:unit && npm run test:integration",
     "test:integration": "npx jest --runInBand ./tests/integration",
     "test:unit": "npx jest --runInBand ./tests/unit",
-    "test_build": "npm run test && npm run build"
+    "test_build": "npm run test && npm run build",
+    "preversion": "npm run changelog"
   },
   "lint-staged": {
     "*.js": [
@@ -60,6 +62,7 @@
     "@size-limit/preset-small-lib": "^4.5.5",
     "babel-eslint": "^10.1.0",
     "babel-preset-minify": "^0.5.1",
+    "conventional-changelog-cli": "^2.0.34",
     "eslint": "^7.4.0",
     "eslint-plugin-jest": "^23.18.0",
     "eslint-plugin-prettier": "^3.1.4",

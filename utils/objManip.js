@@ -5,6 +5,18 @@ function isPOJO (arg) {
 	return proto === Object.prototype;
 }
 
+function populateNestedFields (obj, setvalue) {
+	const temp = { ...obj };
+	function traverser (obj) {
+		Object.entries(obj).forEach(([ key, value ]) => {
+			if (!isPOJO(value)) temp[key] = setvalue;
+			else traverser(value);
+		});
+	}
+	traverser(temp);
+	return temp;
+}
+
 const setNestedProps = (object, path, value) => {
 	const root = object;
 	const pathArray = path.split('.');
@@ -31,7 +43,7 @@ function flattenObject (obj) {
 	return objectVisitor(obj);
 }
 
-function matchFlattenedObjQuery (flattened_query_prop, flattened_merger_props) {
+function matchFlattenedObjProps (flattened_query_prop, flattened_merger_props) {
 	const flattened_query_prop_parts = flattened_query_prop.split('.');
 	const match_queries = flattened_merger_props.filter((flattened_merger_prop) => {
 		const flattened_merger_prop_parts = flattened_merger_prop.split('.');
@@ -46,17 +58,17 @@ function matchFlattenedObjQuery (flattened_query_prop, flattened_merger_props) {
 	return match_queries;
 }
 
-function nestedObjPopulation (query, merger) {
+function nestedObjPopulation (query = {}, merger) {
+	if (query === false) query = populateNestedFields(merger, false);
 	const flattened_merger = flattenObject(merger);
 	const flattened_query = flattenObject(query);
 	const flattened_query_props = Object.keys(flattened_query);
 	const flattened_merger_props = Object.keys(flattened_merger);
 	flattened_query_props.forEach((flattened_query_prop) => {
-		matchFlattenedObjQuery(flattened_query_prop, flattened_merger_props).forEach(
+		matchFlattenedObjProps(flattened_query_prop, flattened_merger_props).forEach(
 			(match_query) => (flattened_merger[match_query] = flattened_query[flattened_query_prop])
 		);
 	});
-
 	Object.entries(flattened_merger).forEach(([ key, value ]) => {
 		setNestedProps(flattened_merger, key, value);
 		delete flattened_merger[key];
@@ -117,7 +129,7 @@ module.exports = {
 	setNestedProps,
 	mixObjectProp,
 	flattenObject,
-	matchFlattenedObjQuery,
+	matchFlattenedObjProps,
 	nestedObjPopulation,
 	populateObjDefaultValue,
 	isPOJO

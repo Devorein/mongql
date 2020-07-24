@@ -4,31 +4,24 @@ const S = require('voca');
 
 const Mongql = require('../../src/MonGql');
 
-const { setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjQuery } = require('../../utils/objManip');
+const { setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../utils/objManip');
+const { query: { options: QueryOptions, fields: QueryFields } } = require('../../utils/generateOptions');
 
 const queryOpts = [];
-const allFields = [];
 
 Array.prototype.diff = function (a) {
 	return this.filter((i) => a.indexOf(i) < 0);
 };
 
-const obj = {};
-[ 'all', 'paginated', 'filtered', 'id' ].forEach((range) => {
-	obj[range] = {};
-	[ 'self', 'others', 'mixed' ].forEach((auth) => {
-		obj[range][auth] = {};
-		const parts = range.match(/(id|paginated)/) ? [ 'whole', 'nameandid' ] : [ 'whole', 'nameandid', 'count' ];
-		parts.forEach((part) => {
-			obj[range][auth][part] = true;
-			allFields.push(`${range}.${auth}.${part}`);
-		});
-	});
+queryOpts.push({
+	field: 'query',
+	excludedQuery: QueryFields,
+	query: false
 });
 
-mixObjectProp(flattenObject(obj)).sort().forEach((excludeQuery) => {
+mixObjectProp(flattenObject(QueryOptions)).sort().forEach((excludeQuery) => {
 	const query = setNestedProps({}, excludeQuery, false);
-	const excludedQuery = matchFlattenedObjQuery(excludeQuery, allFields);
+	const excludedQuery = matchFlattenedObjProps(excludeQuery, QueryFields);
 	queryOpts.push({
 		field: excludeQuery,
 		query,
@@ -36,80 +29,44 @@ mixObjectProp(flattenObject(obj)).sort().forEach((excludeQuery) => {
 	});
 });
 
-function typedefQueryChecker (typedefAST, { excludedQuery }) {
-	const QueryExt = documentApi().addSDL(typedefAST).getExt('Query');
-	function typeChecker (fields, against) {
+function QueryChecker (target, { field, excludedQuery }, type) {
+	function checker (fields, against) {
 		fields.forEach((field) => {
 			const [ range, auth, part ] = field.split('.');
 			const typename = `get${S.capitalize(range)}${S.capitalize(auth)}Users${S.capitalize(part)}`;
-			expect(QueryExt.hasField(typename)).toBe(against);
+			expect(type === 'typedef' ? target.hasField(typename) : Boolean(target[typename])).toBe(against);
 		});
 	}
-
-	const includedFields = allFields.diff(excludedQuery);
-	typeChecker(excludedQuery, false);
-	typeChecker(includedFields, true);
-}
-
-function resolverQueryChecker (resolvers, { excludedQuery }) {
-	function resolverChecker (fields, against) {
-		fields.forEach((field) => {
-			const [ range, auth, part ] = field.split('.');
-			const typename = `get${S.capitalize(range)}${S.capitalize(auth)}Users${S.capitalize(part)}`;
-			expect(Boolean(resolvers[typename])).toBe(against);
-		});
+	if (field === 'query' && type === 'typedef') expect(documentApi().addSDL(target).hasExt('Query')).toBe(false);
+	else if (field === 'query' && type === 'resolver') expect(target.Query).toBeFalsy();
+	else {
+		target = type === 'typedef' ? documentApi().addSDL(target).getExt('Query') : target;
+		const includedFields = QueryFields.diff(excludedQuery);
+		checker(excludedQuery, false);
+		checker(includedFields, true);
 	}
-
-	const includedFields = allFields.diff(excludedQuery);
-	resolverChecker(excludedQuery, false);
-	resolverChecker(includedFields, true);
 }
 
 describe('Query option checker', () => {
-	it('Should not contain query related typedefs', async () => {
-		const Schema = new mongoose.Schema({
-			name: String
-		});
-		Schema.mongql = { resource: 'user' };
-		const mongql = new Mongql({
-			Schemas: [ Schema ],
-			generate: { query: false }
-		});
-		const { TransformedTypedefs } = await mongql.generate();
-		expect(documentApi().addSDL(TransformedTypedefs.obj.User).hasType('Query')).toBe(false);
-	});
-
-	queryOpts.forEach(({ query, field, excludedQuery }) => {
-		it(`Should output correct query when ${field} is false in global config`, async () => {
-			const Schema = new mongoose.Schema({
-				name: String
+	[ 'global', 'local' ].forEach((partition) => {
+		queryOpts.forEach((queryOpt, index) => {
+			const { query, field } = queryOpt;
+			it(`Should output correct query when ${field} is false in ${partition} config`, async () => {
+				const Schema = new mongoose.Schema({
+					name: String
+				});
+				Schema.mongql = { resource: 'user' };
+				if (partition === 'local') Schema.mongql.generate = { query };
+				const mongql = new Mongql({
+					Schemas: [ Schema ],
+					generate: {
+						query: partition === 'local' ? queryOpts[index !== queryOpts.length - 1 ? index + 1 : 0].query : query
+					}
+				});
+				const { TransformedTypedefs, TransformedResolvers } = await mongql.generate();
+				QueryChecker(TransformedTypedefs.obj.User, queryOpt, 'typedef');
+				QueryChecker(TransformedResolvers.obj.User.Query, queryOpt, 'resolver');
 			});
-			Schema.mongql = { resource: 'user' };
-			const mongql = new Mongql({
-				Schemas: [ Schema ],
-				generate: { query }
-			});
-			const { TransformedTypedefs, TransformedResolvers } = await mongql.generate();
-			typedefQueryChecker(TransformedTypedefs.obj.User, { query, field, excludedQuery });
-			resolverQueryChecker(TransformedResolvers.obj.User.Query, { query, field, excludedQuery });
-		});
-	});
-
-	// ? Making sure that schema level config overrides global config
-	queryOpts.forEach((queryOpt, index) => {
-		const { query, field } = queryOpt;
-		it(`Should output correct query when ${field} is true in local config`, async () => {
-			const Schema = new mongoose.Schema({
-				name: String
-			});
-			Schema.mongql = { resource: 'user', generate: { query } };
-			const mongql = new Mongql({
-				Schemas: [ Schema ],
-				generate: { query: queryOpts[index !== queryOpts.length - 1 ? index + 1 : 0].query }
-			});
-			const { TransformedTypedefs, TransformedResolvers } = await mongql.generate();
-			typedefQueryChecker(TransformedTypedefs.obj.User, queryOpt);
-			resolverQueryChecker(TransformedResolvers.obj.User.Query, queryOpt);
 		});
 	});
 });

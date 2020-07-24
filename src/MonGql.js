@@ -12,7 +12,8 @@ const mongoose = require('mongoose');
 const Password = require("../utils/gql-types/password")
 const Username = require("../utils/gql-types/username")
 
-const {nestedObjPopulation} = require("../utils/objManip");
+const { nestedObjPopulation } = require("../utils/objManip");
+const GenerateOptions = require("../utils/generateOptions");
 
 const loadFiles = require("../utils/loadFiles");
 const generateTypedefs = require('./generateTypedefs');
@@ -24,21 +25,6 @@ Array.prototype.forEachAsync = async function (cb) {
     await cb(this[index], index, this);
   }
 };
-
-function generateQueryOptions(){
-  const obj = {};
-  ['all','paginated','filtered','id'].forEach(range=>{
-    obj[range] = {};
-    ['self','others','mixed'].forEach(auth=>{
-      obj[range][auth] = {};
-      const parts = range.match(/(id|paginated)/) ? [ 'whole', 'nameandid' ] : [ 'whole', 'nameandid', 'count' ];
-      parts.forEach(part=>{
-        obj[range][auth][part] = true;
-      })
-    })
-  });
-  return {...obj};
-}
 
 const baseTypedefs = gql`
   type Query {
@@ -114,7 +100,7 @@ class Mongql {
         const fileWithoutExt = path.basename(file, path.extname(file));
         let imported = require(schemaFile);
         imported = imported[fileWithoutExt + "Schema"] === undefined ? imported : imported[fileWithoutExt + "Schema"];
-        if (fileWithoutExt !== "index" && imported.mongql.skip !== true){
+        if (fileWithoutExt !== "index" && imported.mongql.skip !== true) {
           Schemas.push(imported);
           imported.mongql.resource = S.capitalize(imported.mongql.resource);
         }
@@ -136,10 +122,7 @@ class Mongql {
     const temp = this.#globalConfigs;
     populateObjDefaultValue(temp, {
       output: false,
-      generate: {
-        type: true,
-        query: {}
-      },
+      generate: {},
       Typedefs: {
         init: {},
       },
@@ -148,16 +131,9 @@ class Mongql {
       }
     });
 
-    this.#globalConfigs.generate.query = nestedObjPopulation(this.#globalConfigs.generate.query,generateQueryOptions());
-    if (temp.generate.mutation !== false) {
-      populateObjDefaultValue(temp.generate, {
-        mutation: {
-          create: [true, true],
-          update: [true, true],
-          delete: [true, true],
-        }
-      });
-    }
+    Object.entries(GenerateOptions).forEach(([key,value])=>{
+      this.#globalConfigs.generate[key] = nestedObjPopulation(this.#globalConfigs.generate[key], { ...value.options });
+    });
   }
 
   #createDefaultSchemaConfigs = (baseSchema) => {
@@ -177,16 +153,19 @@ class Mongql {
         base: true,
         extra: true
       },
-      generate: {
-        type: true,
-        query:{}
-      },
+      generate: {},
       output: false,
       global_excludePartitions: {
         base: [],
         extra: true
       }
     });
+
+    populateObjDefaultValue(mongql.generate, {
+      query: {},
+      type: {}
+    });
+
     if (mongql.generate.mutation !== false) {
       populateObjDefaultValue(mongql.generate, {
         mutation: {
@@ -197,11 +176,14 @@ class Mongql {
       });
     }
 
-    if(Object.entries(mongql.generate.query).length === 0){
-      mongql.generate.query = {...this.#globalConfigs.generate.query};
-    }
-    else
-      mongql.generate.query = nestedObjPopulation(mongql.generate.query,generateQueryOptions());
+    // Schema config overriding for global config
+    Object.entries(GenerateOptions).forEach(([key, value]) => {
+      if (mongql.generate.__undefineds.includes(key))
+        mongql.generate[key] = { ...this.#globalConfigs.generate[key] };
+      else
+        mongql.generate[key] = nestedObjPopulation(mongql.generate[key], { ...value.options });
+    });
+
     this.#schemaConfigs[mongql.resource] = mongql;
   };
 
@@ -250,7 +232,7 @@ class Mongql {
         this.#globalConfigs
       );
       const output = (!mongql.__undefineds.includes('output') && mongql.output) || (mongql.__undefineds.includes('output') && this.#globalConfigs.output);
-      await Mongql.outputSDL(output.SDL || output.dir,typedefsAST, resource)
+      await Mongql.outputSDL(output.SDL || output.dir, typedefsAST, resource)
       TransformedTypedefs.obj[resource] = typedefsAST;
       TransformedTypedefs.arr.push(typedefsAST);
       const resolver = generateResolvers(
@@ -280,8 +262,8 @@ class Mongql {
     });
   }
 
-  static async outputSDL(path,typedefs,resource){
-    if(path){
+  static async outputSDL(path, typedefs, resource) {
+    if (path) {
       try {
         await mkdirp(path);
         await fs.writeFile(`${path}\\${resource}.graphql`, documentApi().addSDL(typedefs).toSDLString(), 'UTF-8');

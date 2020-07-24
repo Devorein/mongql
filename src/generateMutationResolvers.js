@@ -11,37 +11,40 @@ module.exports = function (Schema /* transformedSchema */) {
 	const pluralizedcapitalizedResource = pluralize(capitalizedResource, 2);
 
 	const MutationResolvers = {};
-
-	if (Schema.mongql.generate === true || mutation === true || mutation.create === true || mutation.create[0])
-		MutationResolvers[`create${capitalizedResource}`] = async function (parent, { data }, ctx) {
+	const MutationResolversMapper = {
+		'create.single': async function (parent, { data }, ctx) {
 			return await createResource(ctx[capitalizedResource], ctx.user.id, data);
-		};
-	if (Schema.mongql.generate === true || mutation === true || mutation.create === true || mutation.create[1])
-		MutationResolvers[`create${pluralizedcapitalizedResource}`] = async function (parent, { data }, ctx) {
+		},
+		'create.multi': async function (parent, { data }, ctx) {
 			return await createResource(ctx[capitalizedResource], ctx.user.id, data);
-		};
-	if (Schema.mongql.generate === true || mutation === true || mutation.update === true || mutation.update[0])
-		MutationResolvers[`update${capitalizedResource}`] = async function (parent, { data, id }, ctx) {
+		},
+		'update.single': async function (parent, { data, id }, ctx) {
 			data.id = id;
 			return (await updateResource(ctx[capitalizedResource], [ data ], ctx.user.id, (err) => {
 				throw err;
 			}))[0];
-		};
-	if (Schema.mongql.generate === true || mutation === true || mutation.update === true || mutation.update[1])
-		MutationResolvers[`update${pluralizedcapitalizedResource}`] = async function (parent, { data, ids }, ctx) {
+		},
+		'update.multi': async function (parent, { data, ids }, ctx) {
 			ids.forEach((id, i) => (data[i].id = id));
 			return await updateResource(ctx[capitalizedResource], data, ctx.user.id, (err) => {
 				throw err;
 			});
-		};
-	if (Schema.mongql.generate === true || mutation === true || mutation.delete === true || mutation.delete[0])
-		MutationResolvers[`delete${capitalizedResource}`] = async function (parent, { id }, ctx) {
+		},
+		'delete.single': async function (parent, { id }, ctx) {
 			return (await deleteResource(ctx[capitalizedResource], [ id ], ctx.user.id))[0];
-		};
-	if (Schema.mongql.generate === true || mutation === true || mutation.delete === true || mutation.delete[1])
-		MutationResolvers[`delete${pluralizedcapitalizedResource}`] = async function (parent, { ids }, ctx) {
+		},
+		'delete.multi': async function (parent, { ids }, ctx) {
 			return await deleteResource(ctx[capitalizedResource], ids, ctx.user.id);
-		};
+		}
+	};
 
+	const actions = Object.keys(mutation);
+	actions.forEach((action) => {
+		const parts = Object.keys(mutation[action]).filter((part) => mutation[action][part]);
+		parts.forEach((part) => {
+			MutationResolvers[`${action}${part === 'single' ? capitalizedResource : pluralizedcapitalizedResource}`] =
+				MutationResolversMapper[`${action}.${part}`];
+		});
+	});
 	return MutationResolvers;
 };

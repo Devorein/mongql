@@ -1,11 +1,43 @@
 const pluralize = require('pluralize');
 const S = require('voca');
+const { t } = require('graphql-extra');
+
+const ArgumentMap = {
+	paginated: [
+		{
+			name: 'pagination',
+			type: 'PaginationInput!',
+			description: 'An input consisting of skip,limit,filter and sort'
+		}
+	],
+	nameandid: [],
+	filtered: [
+		{
+			name: 'filter',
+			type: 'JSON',
+			description: 'An input for filtering using JSON syntax'
+		}
+	],
+	id: [
+		{
+			name: 'id',
+			type: 'ID!',
+			description: 'An input selecting resource by id'
+		}
+	]
+};
 
 module.exports = function (Schema) {
-	const { mongql: { resource, generate: { query } } } = Schema;
-	const cResource = S.capitalize(resource);
-	const cpResource = pluralize(cResource, 2);
-	const res = [];
+	const { mongql: { resource: r, generate: { query } } } = Schema;
+	const cr = S.capitalize(r);
+	const cpr = pluralize(cr, 2);
+	const node = {
+		name: 'Mutation',
+		description: 'Mutation',
+		directives: [],
+		interfaces: [],
+		fields: []
+	};
 
 	const ranges = Object.keys(query);
 	ranges.forEach((range) => {
@@ -13,27 +45,19 @@ module.exports = function (Schema) {
 		auths.forEach((auth) => {
 			const parts = Object.keys(query[range][auth]).filter((part) => query[range][auth][part] !== false);
 			parts.forEach((part) => {
-				const _range = S.capitalize(range);
-				const _auth = S.capitalize(auth);
-				const _part = S.capitalize(part);
-				let input = '',
-					output = `[${_auth}${cResource}Type!]!`;
-				if (_range === 'Paginated') {
-					input = '(pagination: PaginationInput!)';
-					if (_part === 'Nameandid') output = '[NameAndId!]!';
-				} else if (_range === 'Filtered') {
-					input = '(filter: JSON)';
-					if (_part === 'Nameandid') output = '[NameAndId!]!';
-				} else if (_range === 'Id') {
-					input = '(id: ID!)';
-					output = `${_auth}${cResource}Type!`;
-					if (_part === 'Nameandid') output = 'NameAndId!';
-				}
-				if (_part === 'Count') output = 'NonNegativeInt!';
-				const commonComment = `"Get ${_range.toLowerCase()} ${_auth.toLowerCase()} ${resource.toLowerCase()} ${_part.toLowerCase()}`;
-				res.push(`${commonComment}"\n get${_range}${_auth}${cpResource}${_part}${input}: ${output}`);
+				let output = `[${S.capitalize(auth)}${cr}Type!]!`;
+				if (range === 'paginated' && part === 'nameandid') output = '[NameAndId!]!';
+				else if (range === 'filtered' && part === 'nameandid') output = '[NameAndId!]!';
+				else if (range === 'id' && part === 'nameandid') output = 'NameAndId!';
+				if (part === 'count') output = 'NonNegativeInt!';
+				node.fields.push({
+					name: `get${S.capitalize(range)}${S.capitalize(auth)}${cpr}${S.capitalize(part)}`,
+					type: output,
+					description: `Get ${range} ${auth} ${r} ${part}`,
+					arguments: ArgumentMap[`${range}`]
+				});
 			});
 		});
 	});
-	return res.length > 0 ? `extend type Query {\n${res.join('\n')}\n}` : null;
+	return node.fields.length > 0 ? t.objectExt(node) : null;
 };

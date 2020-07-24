@@ -24,11 +24,7 @@ function transformTypedefObjExtAST (objExtTypeName, typedefsAST, typedefsStr) {
 	}
 	if (typedefsStr !== null) {
 		typedefsAST.definitions.push(objTypeExtension);
-		objTypeExtension.fields.push(
-			...gql`
-          ${typedefsStr}
-        `.definitions[0].fields
-		);
+		objTypeExtension.fields.push(...typedefsStr.fields);
 	}
 }
 

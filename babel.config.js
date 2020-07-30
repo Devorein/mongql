@@ -19,5 +19,6 @@ module.exports = {
 			presets: [ '@babel/env' ]
 		}
 	},
-	sourceMaps: false
+	sourceMaps: false,
+	comments: false
 };

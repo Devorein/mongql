@@ -1,136 +1,171 @@
-function isPOJO (arg) {
-	if (arg == null || typeof arg !== 'object') return false;
-	const proto = Object.getPrototypeOf(arg);
-	if (proto == null) return true;
-	return proto === Object.prototype;
+/**
+ * Checks whether the parameter is a POJO or not
+ * @param {any} arg Parameter to evalaute
+ * @returns {boolean} Whether or not the parameter is a POJO
+ */
+function isPOJO(arg) {
+  if (arg == null || typeof arg !== 'object') return false;
+  const proto = Object.getPrototypeOf(arg);
+  if (proto == null) return true;
+  return proto === Object.prototype;
 }
 
-function populateNestedFields (obj, setvalue) {
-	const temp = { ...obj };
-	function traverser (obj) {
-		Object.entries(obj).forEach(([ key, value ]) => {
-			if (!isPOJO(value)) temp[key] = setvalue;
-			else traverser(value);
-		});
-	}
-	traverser(temp);
-	return temp;
+/**
+ * Set all the deeply nested properties of an object to a specific value 
+ * @param {Object} obj Object to populate 
+ * @param {any} setvalue Value to set to 
+ * @returns {Object} Newly Manipulated object 
+ */
+function populateNestedFields(obj, setvalue) {
+  const temp = { ...obj };
+  function traverser(obj) {
+    Object.entries(obj).forEach(([key, value]) => {
+      if (!isPOJO(value)) temp[key] = setvalue;
+      else traverser(value);
+    });
+  }
+  traverser(temp);
+  return temp;
 }
 
+/**
+ * Converts a dot separated object prop to nested fields
+ * @param {Object} object Root object
+ * @param {string} path The nested path to populate
+ * @param {any} value Value to set to the nested path
+ * @returns {Object} Object with nested props set
+ */
 const setNestedProps = (object, path, value) => {
-	const root = object;
-	const pathArray = path.split('.');
+  const root = object;
+  const pathArray = path.split('.');
 
-	for (let i = 0; i < pathArray.length; i++) {
-		const p = pathArray[i];
-		if (!isPOJO(object[p])) object[p] = {};
-		if (i === pathArray.length - 1) object[p] = value;
-		object = object[p];
-	}
+  for (let i = 0; i < pathArray.length; i++) {
+    const p = pathArray[i];
+    if (!isPOJO(object[p])) object[p] = {};
+    if (i === pathArray.length - 1) object[p] = value;
+    object = object[p];
+  }
 
-	return root;
+  return root;
 };
 
-function flattenObject (obj) {
-	function objectVisitor (obj, parents = []) {
-		let res = {};
-		Object.entries(obj).forEach(([ key, value ]) => {
-			if (!isPOJO(value)) res[`${parents.join('.')}${parents.length > 0 ? '.' : ''}${key}`] = value;
-			else res = { ...res, ...objectVisitor(value, parents.concat(key)) };
-		});
-		return res;
-	}
-	return objectVisitor(obj);
+/**
+ * Flattens all deeply nested properties of an object 
+ * @param {Object} obj Object to flatten
+ * @returns {Object} Flattened object
+ */
+function flattenObject(obj) {
+  function objectVisitor(obj, parents = []) {
+    let res = {};
+    const entries = Object.entries(obj);
+    if (entries.length > 0)
+      entries.forEach(([key, value]) => {
+        if (!isPOJO(value)) res[`${parents.join('.')}${parents.length > 0 ? '.' : ''}${key}`] = value;
+        else res = { ...res, ...objectVisitor(value, parents.concat(key)) };
+      });
+    else res[parents.join('.')] = {}
+    return res;
+  }
+  return objectVisitor(obj);
 }
 
-function matchFlattenedObjProps (flattened_query_prop, flattened_merger_props) {
-	const flattened_query_prop_parts = flattened_query_prop.split('.');
-	const match_queries = flattened_merger_props.filter((flattened_merger_prop) => {
-		const flattened_merger_prop_parts = flattened_merger_prop.split('.');
-		let prevIndex = 0;
-		for (let i = 0; i < flattened_query_prop_parts.length; i++) {
-			const flattened_query_prop_part = flattened_query_prop_parts[i];
-			prevIndex = flattened_merger_prop_parts.indexOf(flattened_query_prop_part, prevIndex);
-			if (prevIndex === -1) break;
-		}
-		return prevIndex !== -1;
-	});
-	return match_queries;
+function matchFlattenedObjProps(flattened_query_prop, flattened_merger_props) {
+  const flattened_query_prop_parts = flattened_query_prop.split('.');
+  const match_queries = flattened_merger_props.filter((flattened_merger_prop) => {
+    const flattened_merger_prop_parts = flattened_merger_prop.split('.');
+    let prevIndex = 0;
+    for (let i = 0; i < flattened_query_prop_parts.length; i++) {
+      const flattened_query_prop_part = flattened_query_prop_parts[i];
+      prevIndex = flattened_merger_prop_parts.indexOf(flattened_query_prop_part, prevIndex);
+      if (prevIndex === -1) break;
+    }
+    return prevIndex !== -1;
+  });
+  return match_queries;
 }
 
-function nestedObjPopulation (query = {}, merger) {
-	if (query === false) query = populateNestedFields(merger, false);
-	const flattened_merger = flattenObject(merger);
-	const flattened_query = flattenObject(query);
-	const flattened_query_props = Object.keys(flattened_query);
-	const flattened_merger_props = Object.keys(flattened_merger);
-	flattened_query_props.forEach((flattened_query_prop) => {
-		matchFlattenedObjProps(flattened_query_prop, flattened_merger_props).forEach(
-			(match_query) => (flattened_merger[match_query] = flattened_query[flattened_query_prop])
-		);
-	});
-	Object.entries(flattened_merger).forEach(([ key, value ]) => {
-		setNestedProps(flattened_merger, key, value);
-		delete flattened_merger[key];
-	});
-	return flattened_merger;
+/**
+ * Ovewrites the deeply nested properties of init with merger
+ * @param {Object} init Initital object to flatten 
+ * @param {Object} merger Object to merge with init
+ * @returns {Object} Flattened, nested props populated and merged object
+ */
+function nestedObjPopulation(init = {}, merger) {
+  merger = { ...merger };
+  if (init === false) init = populateNestedFields(merger, false);
+  const flattened_merger = flattenObject(merger);
+  const flattened_init = flattenObject(init);
+  const flattened_init_props = Object.keys(flattened_init);
+  const flattened_merger_props = Object.keys(flattened_merger);
+  flattened_init_props.forEach((flattened_init_prop) => {
+    matchFlattenedObjProps(flattened_init_prop, flattened_merger_props).forEach(
+      (match_init) => (flattened_merger[match_init] = flattened_init[flattened_init_prop])
+    );
+  });
+  Object.entries(flattened_merger).forEach(([key, value]) => {
+    if (isPOJO(value)) {
+      setNestedProps(flattened_merger, key, value);
+      delete flattened_merger[key];
+    }
+  });
+  return flattened_merger;
 }
 
-function scrambler (key) {
-	const arr = [];
-	const keys = key.split('.');
+function scrambler(key) {
+  const arr = [];
+  const keys = key.split('.');
 
-	function wrapper (keys, parent = []) {
-		const arr = [];
-		const first_key = keys[0];
-		if (keys.length > 0) arr.push(keys.join('.'));
-		arr.push(first_key);
-		for (let i = 1; i < keys.length; i++) {
-			let _arr = [];
-			if (parent.length > 0) _arr.push(parent);
-			_arr.push(first_key, keys[i]);
-			arr.push(_arr.join('.'));
-		}
-		return arr;
-	}
+  function wrapper(keys, parent = []) {
+    const arr = [];
+    const first_key = keys[0];
+    if (keys.length > 0) arr.push(keys.join('.'));
+    arr.push(first_key);
+    for (let i = 1; i < keys.length; i++) {
+      let _arr = [];
+      if (parent.length > 0) _arr.push(parent);
+      _arr.push(first_key, keys[i]);
+      arr.push(_arr.join('.'));
+    }
+    return arr;
+  }
 
-	keys.forEach((_, i) => {
-		arr.push(...wrapper(keys.slice(i)));
-	});
+  keys.forEach((_, i) => {
+    arr.push(...wrapper(keys.slice(i)));
+  });
 
-	return arr;
+  return arr;
 }
 
-function mixObjectProp (obj) {
-	const set = new Set();
-	Object.entries(obj).forEach(([ key ]) => {
-		scrambler(key).forEach((scramble) => set.add(scramble));
-	});
-	return Array.from(set);
+function mixObjectProp(obj) {
+  const set = new Set();
+  Object.entries(obj).forEach(([key]) => {
+    scrambler(key).forEach((scramble) => set.add(scramble));
+  });
+  return Array.from(set);
 }
 
-function populateObjDefaultValue (obj, fields) {
-	if (obj.__undefineds === undefined && isPOJO(obj))
-		Object.defineProperty(obj, '__undefineds', {
-			value: [],
-			enumerable: true,
-			writable: false,
-			configurable: false
-		});
-	Object.entries(fields).forEach(([ field, defvalue ]) => {
-		if (obj[field] === undefined && isPOJO(obj)) {
-			obj[field] = defvalue;
-			obj.__undefineds.push(field);
-		} else if (isPOJO(defvalue) && isPOJO(obj[field])) obj[field] = { ...defvalue, ...obj[field] };
-	});
+function populateObjDefaultValue(Initial, Defaults) {
+  Initial = { ...Initial };
+  Defaults = { ...Defaults };
+  const flattened_initial = flattenObject(Initial);
+  const flattened_default = flattenObject(Defaults);
+  let res = { ...flattened_default, ...flattened_initial };
+  const reversed_keys = Object.keys(res).sort();
+  reversed_keys.forEach((key) => {
+    if (key.split(".").length > 1) {
+      setNestedProps(res, key, res[key]);
+      delete res[key];
+    }
+  })
+  return res;
 }
 
 module.exports = {
-	setNestedProps,
-	mixObjectProp,
-	flattenObject,
-	matchFlattenedObjProps,
-	nestedObjPopulation,
-	populateObjDefaultValue,
-	isPOJO
+  setNestedProps,
+  mixObjectProp,
+  flattenObject,
+  matchFlattenedObjProps,
+  nestedObjPopulation,
+  populateObjDefaultValue,
+  isPOJO
 };

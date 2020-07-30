@@ -12,13 +12,10 @@ const mongoose = require('mongoose');
 const Password = require("../utils/gql-types/password")
 const Username = require("../utils/gql-types/username")
 
-const { nestedObjPopulation } = require("../utils/objManip");
-const GenerateOptions = require("../utils/generateOptions");
-
+const { generateGlobalConfigs, generateSchemaConfigs } = require("../utils/generateConfigs");
 const loadFiles = require("../utils/loadFiles");
 const generateTypedefs = require('./generateTypedefs');
 const generateResolvers = require('./generateResolvers');
-const { populateObjDefaultValue } = require('../utils/objManip');
 
 Array.prototype.forEachAsync = async function (cb) {
   for (let index = 0; index < this.length; index++) {
@@ -26,7 +23,7 @@ Array.prototype.forEachAsync = async function (cb) {
   }
 };
 
-const baseTypedefs = gql`
+const BaseTypeDefs = gql`
   type Query {
 		_empty: Boolean
 	}
@@ -55,13 +52,11 @@ const baseTypedefs = gql`
 
 class Mongql {
   #globalConfigs = {};
-  #schemaConfigs = {};
+  #resources = [];
 
   constructor(options) {
     this.#globalConfigs = {
       ...options,
-      Validators: [],
-      resources: [],
     };
     this.#checkSchemaPath();
     this.#createDefaultGlobalConfigs();
@@ -75,18 +70,9 @@ class Mongql {
       const { resource } = schema.mongql;
       if (resource === undefined)
         throw new Error(colors.red.bold`Provide the mongoose schema resource key for mongql`);
-      else this.#globalConfigs.resources.push(resource);
-      this.#createDefaultSchemaConfigs(schema);
+      else this.#resources.push(resource);
+      schema.mongql = this.#createDefaultSchemaConfigs(schema.mongql, this.#globalConfigs);
     })
-
-    // Adding custom gql scalars to validators
-
-    Object.entries({ ...resolvers }).forEach(([key, value]) => {
-      this.#globalConfigs.Validators[key] = value.serialize;
-    });
-
-    this.#globalConfigs.Validators.Password = Password.serialize;
-    this.#globalConfigs.Validators.Username = Username.serialize;
   }
 
   #checkSchemaPath = () => {
@@ -116,76 +102,10 @@ class Mongql {
     }
   }
 
-  getResources = () => this.#globalConfigs.resources;
+  getResources = () => this.#resources;
 
-  #createDefaultGlobalConfigs = () => {
-    const temp = this.#globalConfigs;
-    populateObjDefaultValue(temp, {
-      output: false,
-      generate: {},
-      Typedefs: {
-        init: {},
-      },
-      Resolvers: {
-        init: {}
-      }
-    });
-
-    Object.entries(GenerateOptions).forEach(([key,value])=>{
-      this.#globalConfigs.generate[key] = nestedObjPopulation(this.#globalConfigs.generate[key], { ...value.options });
-    });
-  }
-
-  #createDefaultSchemaConfigs = (baseSchema) => {
-    const { mongql } = baseSchema;
-    if (mongql.global_excludePartitions !== undefined) {
-      const { base, extra } = mongql.global_excludePartitions;
-      mongql.global_excludePartitions = {
-        base: base === undefined ? [] : base,
-        extra: extra === undefined ? true : extra
-      };
-    }
-
-    populateObjDefaultValue(mongql, {
-      generateInterface: true,
-      appendRTypeToEmbedTypesKey: true,
-      global_inputs: {
-        base: true,
-        extra: true
-      },
-      generate: {},
-      output: false,
-      global_excludePartitions: {
-        base: [],
-        extra: true
-      }
-    });
-
-    populateObjDefaultValue(mongql.generate, {
-      query: {},
-      type: {}
-    });
-
-    if (mongql.generate.mutation !== false) {
-      populateObjDefaultValue(mongql.generate, {
-        mutation: {
-          create: [true, true],
-          update: [true, true],
-          delete: [true, true],
-        }
-      });
-    }
-
-    // Schema config overriding for global config
-    Object.entries(GenerateOptions).forEach(([key, value]) => {
-      if (mongql.generate.__undefineds.includes(key))
-        mongql.generate[key] = { ...this.#globalConfigs.generate[key] };
-      else
-        mongql.generate[key] = nestedObjPopulation(mongql.generate[key], { ...value.options });
-    });
-
-    this.#schemaConfigs[mongql.resource] = mongql;
-  };
+  #createDefaultGlobalConfigs = () => this.#globalConfigs = generateGlobalConfigs(this.#globalConfigs)
+  #createDefaultSchemaConfigs = (baseSchema) => generateSchemaConfigs(baseSchema, this.#globalConfigs)
 
   #addExtraTypedefsAndResolvers = (TransformedTypedefs, TransformedResolvers) => {
 
@@ -194,8 +114,8 @@ class Mongql {
     TransformedResolvers.obj.External = { ...resolvers, Password, Username };
     TransformedResolvers.arr.push({ ...resolvers, Password, Username });
 
-    TransformedTypedefs.obj.Base = baseTypedefs;
-    TransformedTypedefs.arr.push(baseTypedefs);
+    TransformedTypedefs.obj.Base = BaseTypeDefs;
+    TransformedTypedefs.arr.push(BaseTypeDefs);
     const BaseResolver = {
       Query: {},
       Mutation: {}
@@ -216,30 +136,36 @@ class Mongql {
     let InitTypedefs = null;
     let InitResolvers = null;
 
-    if (typeof Typedefs === 'string') InitTypedefs = loadFiles(Typedefs);
+    if (typeof Typedefs.init === 'string')
+      InitTypedefs = loadFiles(Typedefs.init);
     else InitTypedefs = Typedefs.init;
-    if (typeof Resolvers === 'string') InitResolvers = loadFiles(Resolvers);
+    if (typeof Resolvers.init === 'string') InitResolvers = loadFiles(Resolvers.init);
     else InitResolvers = Resolvers.init;
-
     await Schemas.forEachAsync(async (Schema) => {
       const {
         mongql
       } = Schema;
-      const { resource } = mongql;
-      const { typedefsAST, transformedSchema } = await generateTypedefs(
-        Schema,
-        InitTypedefs[resource],
-        this.#globalConfigs
-      );
-      const output = (!mongql.__undefineds.includes('output') && mongql.output) || (mongql.__undefineds.includes('output') && this.#globalConfigs.output);
-      await Mongql.outputSDL(output.SDL || output.dir, typedefsAST, resource)
+      const { resource, generate, output } = mongql;
+      let typedefsAST = InitTypedefs[resource], resolver = InitResolvers[resource];
+      if (generate !== false) {
+        const generated = await generateTypedefs(
+          Schema,
+          typedefsAST,
+        );
+        typedefsAST = generated.typedefsAST;
+        await Mongql.outputSDL(output.SDL, typedefsAST, resource);
+        if (typeof output.AST === 'string') {
+          await mkdirp(output.AST);
+          await fs.writeFile(path.join(output.AST, `${Schema.mongql.resource}.json`), JSON.stringify(typedefsAST), 'UTF-8');
+        }
+        resolver = generateResolvers(
+          Schema,
+          InitResolvers[resource],
+          generated.SchemaInfo,
+        );
+      }
       TransformedTypedefs.obj[resource] = typedefsAST;
       TransformedTypedefs.arr.push(typedefsAST);
-      const resolver = generateResolvers(
-        Schema,
-        InitResolvers[resource],
-        transformedSchema,
-      );
       TransformedResolvers.obj[resource] = resolver;
       TransformedResolvers.arr.push(resolver);
     });

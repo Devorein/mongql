@@ -282,7 +282,7 @@ Precedence of same config option is global < Schema < field. That is for the sam
 | Name  | Description  | Type | Default Value | Usage | Available in |
 |---|---|---|---|---|---|
 | output  | output related configuration | `boolean \| Object` | false | `{output: false}`  `{output: { dir: process.cwd()}}` | Schema |
-| &.(dir\|SDL)  | SDL Output directory | `string` | `undefined` | `{output: { dir: process.cwd()}}` | Schema |
+| &. SDL  | SDL Output directory | `string` | `undefined` | `{output: { S: process.cwd()}}` | Schema |
 | &. AST  | AST Output directory | `string` | `undefined` | `{output: { AST: process.cwd()}}` | Schema |
 | generate  | Controls generation of type, query and mutations typedefs and resolvers | `Object` \| `boolean` | `true` | `generate: true` | Schema |
 | &.query  | Controls generation of query typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query: true}` | Schema |
@@ -297,23 +297,17 @@ Precedence of same config option is global < Schema < field. That is for the sam
 | &.init  | Initial typedefs to be attached to resultant typedef | `Object` | `undefined` | `init: {User: InitialUserTypedef}` | |
 | Resolvers  | Resolvers related configuration or path to resolvers folders| `Object` \| `String` | `{init: undefined}` | `Resolvers: {init: {User: InitialUserResolvers}}` | |
 | &.init  | Initial resolvers to be attached to resultant resolver | `Object` | `undefined` | `init: {User: InitialUserResolver}` | |
-| appendRTypeToEmbedTypesKey  | Controls whether or not to append the resource type to sub/embed/extra types | `boolean` | `true` | `appendRTypeToEmbedTypesKey: true` | Schema |
 
 ### Schema configs
 
 | Name  | Description  | Type | Default Value | Usage | Available in |
 |---|---|---|---|---|---|
 | resource  | name of the resource  | `string` | **Required** | `resource: User` | |
-| global_excludePartitions  | Controls which auth partition will be excluded in the generated schemas  | `Object` | `{base: [], extra: ['Others', 'Mixed']}` | `global_excludePartitions: {base: [ 'Others', 'Mixed' ]}` | |
-| &.(base\|extra)  | Controls which auth partition will be excluded in the types of generated schemas  | `[] \| boolean` | `{base: [], extra: ['Others', 'Mixed']}` | `global_excludePartitions: {base: [ 'Others', 'Mixed' ], extra: ['Self']}` | |
-| generateInterface  | Controls whether or not to generate interface from base resource  | `boolean` | `true` | `generateInterface: true` | |
-| skip  | Skip mongql all together  | `boolean` | `false` | `skip: true` | |
 
 ### Field configs
 
 | Name  | Description  | Type | Default Value | Usage | Available in |
 |---|---|---|---|---|---|
-| writable  | Controls whether or not this field is present in generated input  | `boolean` | `true` | `writable: true` | |
 | scalar  | Custom graphql scalar to be used (atm all graphql-scalars scalars are included)  | `string` | parsed type from mongoose | `scalar: 'NonNegativeInt'` | |
 
 ## Concept

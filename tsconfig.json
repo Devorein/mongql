@@ -3,11 +3,15 @@
         "module": "commonjs",
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
-        "target": "es6",
+        "target": "ESNext",
+        "outDir": "dist/types",
+        "lib": ["ESNext"],
         "noImplicitAny": true,
         "moduleResolution": "node",
-        "sourceMap": true,
-        "outDir": "dist",
+        "emitDeclarationOnly": true,
+        "strict": true,
+        "isolatedModules": true,
+        "declaration":true,
         "baseUrl": ".",
         "paths": {
             "*": [
@@ -17,6 +21,6 @@
         }
     },
     "include": [
-        "src/**/*"
+        "./src/**/*"
     ]
 }

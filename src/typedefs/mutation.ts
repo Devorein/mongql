@@ -1,0 +1,112 @@
+import { MutableDocumentNode, MongqlMongooseSchema, ActionEnumString, PartEnumString, TargetEnumString } from "../types";
+
+const pluralize = require('pluralize');
+const S = require('voca');
+const { t, documentApi, objectExtApi } = require('graphql-extra');
+
+interface ArgumentMapFnParam {
+  r: string,
+  cr: string,
+  pr: string,
+  cpr: string
+}
+
+const ArgumentMap = {
+  create: {
+    single: ({ r, cr }: ArgumentMapFnParam) => [
+      {
+        name: `data`,
+        type: `Create${cr}Input!`,
+        description: `input to create single ${r}`
+      }
+    ],
+    multi: ({ pr, cr }: ArgumentMapFnParam) => [
+      {
+        name: `data`,
+        type: `[Create${cr}Input!]!`,
+        description: `input to create multiple ${pr}`
+      }
+    ]
+  },
+  update: {
+    single: ({ r, pr, cr }: ArgumentMapFnParam) => [
+      {
+        name: `data`,
+        type: `Update${cr}Input!`,
+        description: `input to update single ${pr}`
+      },
+      {
+        name: 'id',
+        type: 'ID!',
+        description: `id of the single ${r} to update`
+      }
+    ],
+    multi: ({ pr, cr }: ArgumentMapFnParam) => [
+      {
+        name: `data`,
+        type: `[Update${cr}Input!]!`,
+        description: `input to update multiple ${pr}`
+      },
+      {
+        name: 'ids',
+        type: '[ID!]!',
+        description: `ids of the multiple ${pr} to update`
+      }
+    ]
+  },
+  delete: {
+    single: ({ r }: ArgumentMapFnParam) => [
+      {
+        name: `id`,
+        type: `ID!`,
+        description: `id of the single ${r} to delete`
+      }
+    ],
+    multi: ({ pr }: ArgumentMapFnParam) => [
+      {
+        name: `ids`,
+        type: `[ID!]!`,
+        description: `ids of the multiple ${pr} to delete`
+      }
+    ]
+  }
+};
+
+export default function (Schema: MongqlMongooseSchema, TypedefAST: MutableDocumentNode) {
+  const { mongql: { resource: r, generate: { mutation } } } = Schema;
+  const ast = documentApi().addSDL(TypedefAST);
+  const doesMutationExtExists = ast.hasExt('Mutation');
+  const cr = S.capitalize(r);
+  const pr = pluralize(r, 2);
+  const cpr = pluralize(cr, 2);
+  const actions = Object.keys(mutation);
+  const MutationExt = doesMutationExtExists ? ast.getExt('Mutation') : objectExtApi(
+    t.objectExt({
+      name: 'Mutation',
+      description: `${cr} Mutation`,
+      directives: [],
+      interfaces: [],
+      fields: []
+    }));
+
+  actions.forEach((action) => {
+    const targets = Object.keys(mutation[action as ActionEnumString]).filter((target) => mutation[action as ActionEnumString][target as TargetEnumString]);
+    targets.forEach((target) => {
+      if (target === 'single')
+        MutationExt.createField({
+          name: `${action}${cr}`,
+          type: `Self${cr}Object!`,
+          description: `${S.capitalize(action)} single ${r}`,
+          arguments: ArgumentMap[action as ActionEnumString][target as TargetEnumString]({ r, pr, cr, cpr })
+        });
+      else if (target === 'multi')
+        MutationExt.createField({
+          name: `${action}${cpr}`,
+          type: `[Self${cr}Object!]!`,
+          description: `${S.capitalize(action)} multiple ${r}`,
+          arguments: ArgumentMap[action as ActionEnumString][target as TargetEnumString]({ r, pr, cr, cpr })
+        });
+    });
+  });
+  if (MutationExt.getFields().length && !doesMutationExtExists) TypedefAST.definitions.push(MutationExt.node);
+};

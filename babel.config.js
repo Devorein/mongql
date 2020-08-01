@@ -11,7 +11,7 @@ module.exports = {
     'minify'
   ],
   plugins: [
-    ['@babel/plugin-transform-runtime', { corejs: 3, useESModules: false }],
+    ['@babel/plugin-transform-runtime', { corejs: 3, useESModules: true, noInterop: true }],
     '@babel/plugin-proposal-class-properties',
     '@babel/plugin-proposal-nullish-coalescing-operator'
   ],
@@ -21,5 +21,8 @@ module.exports = {
     }
   },
   sourceMaps: false,
-  comments: false
+  comments: false,
+  "ignore": [
+    "./src/types.ts"
+  ]
 };

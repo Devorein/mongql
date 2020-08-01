@@ -86,7 +86,7 @@ export interface IMongqlGlobalConfigs {
 }
 
 export interface IMongqlGlobalConfigsOption {
-  Schemas?: string | MongqlMongooseSchema[],
+  Schemas: string | MongqlMongooseSchema[],
   Typedefs?: {
     init: string | { [key: string]: DocumentNode },
   },
@@ -97,6 +97,9 @@ export interface IMongqlGlobalConfigsOption {
   output?: IOutputOptions
 }
 
+/**
+ * Mongql Schema Configs
+ */
 export interface IMongqlSchemaConfigs {
   resource: string,
   generate: IGenerateOptions,

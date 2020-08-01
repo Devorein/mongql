@@ -1,12 +1,12 @@
-import { MongqlMongooseSchema, ISchemaInfo, ActionEnumString, PartEnumString, TargetEnumString } from "../types";
+import { MongqlMongooseSchema, ISchemaInfo, ActionEnumString, TargetEnumString } from "../types";
 
-const pluralize = require('pluralize');
+import pluralize from 'pluralize';
 
-const createResource = require('../utils/resource/createResource');
-const updateResource = require('../utils/resource/updateResource');
-const deleteResource = require('../utils/resource/deleteResource');
+import createResource from '../utils/resource/createResource';
+import updateResource from '../utils/resource/updateResource';
+import deleteResource from '../utils/resource/deleteResource';
 
-function generateMutationResolvers(Schema: MongqlMongooseSchema, SchemaInfo: ISchemaInfo): any {
+export default function generateMutationResolvers(Schema: MongqlMongooseSchema, SchemaInfo: ISchemaInfo): any {
   const { mongql: { resource, generate: { mutation } } } = Schema;
 
   const capitalizedResource = resource.charAt(0).toUpperCase() + resource.substr(1);
@@ -38,7 +38,7 @@ function generateMutationResolvers(Schema: MongqlMongooseSchema, SchemaInfo: ISc
     },
     delete: {
       single: async function (parent: any, args: any, ctx: any) {
-        return (await deleteResource(ctx[capitalizedResource], [args.id], ctx.user.id))[0];
+        return ((await deleteResource(ctx[capitalizedResource], [args.id], ctx.user.id)) as Promise<any>[])[0];
       },
       multi: async function (parent: any, args: any, ctx: any) {
         return await deleteResource(ctx[capitalizedResource], args.ids, ctx.user.id);
@@ -56,5 +56,3 @@ function generateMutationResolvers(Schema: MongqlMongooseSchema, SchemaInfo: ISc
   });
   return MutationResolvers;
 };
-
-export default generateMutationResolvers;

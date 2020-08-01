@@ -1,4 +1,3 @@
-import { DocumentNode, DefinitionNode } from "graphql";
 import pluralize from 'pluralize';
 import S from 'voca';
 import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';

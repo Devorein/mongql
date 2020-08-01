@@ -5,11 +5,11 @@ import { resolvers } from 'graphql-scalars';
 import { GraphQLScalarType, DocumentNode, NamedTypeNode } from "graphql";
 
 import { IMongqlSchemaConfigs, IMongqlFieldConfigs, ISpecificTypeInfo, MongqlMongooseSchema, IMongqlSchemaConfigsOption, IMongqlGeneratedTypes, MongqlFieldAttachObjectConfigs, AuthEnumString, InputActionEnumString, MutableDocumentNode, GeneratedFields, FieldInfo, FieldFullInfo } from "../types";
-const Password = require("../utils/gql-types/password");
-const Username = require("../utils/gql-types/username");
+import Password from "../utils/gql-types/password";
+import Username from "../utils/gql-types/username";
 
-const { generateSchemaConfigs, generateFieldConfigs } = require("../utils/generateConfigs");
-const { calculateFieldDepth } = require("../utils/mongoose");
+import { generateSchemaConfigs, generateFieldConfigs } from "../utils/generate/configs";
+import { calculateFieldDepth } from "../utils/mongoose";
 
 const Validators: { [key: string]: GraphQLScalarType["serialize"] } = {
   Password: Password.serialize,
@@ -259,8 +259,9 @@ function parseMongooseSchema(BaseSchema: MongqlMongooseSchema, InitTypedefsAST: 
       });
 
       ['create', 'update'].forEach((action) => {
-        if (GeneratedSchemaConfigs.generate.type.input[action as InputActionEnumString] && attach_to_input[action as InputActionEnumString] && !Inputs[`${S.capitalize(action)}${Type}Input`].hasField(key))
-          Inputs[`${S.capitalize(action)}${Type}Input`].createField({ name: key, type: decorateTypes((generic_type.match(/(object)/) ? action : "") + input_type, nullable_input[action as InputActionEnumString]) });
+        const _action = S.capitalize(action)
+        if (GeneratedSchemaConfigs.generate.type.input[action as InputActionEnumString] && attach_to_input[action as InputActionEnumString] && !Inputs[`${_action}${Type}Input`].hasField(key))
+          Inputs[`${_action}${Type}Input`].createField({ name: key, type: decorateTypes((generic_type.match(/(object)/) ? _action : "") + input_type, nullable_input[action as InputActionEnumString]) });
       })
 
       if (GeneratedSchemaConfigs.generate.type.enum && attach_to_enum && generic_type.match(/(enum)/))

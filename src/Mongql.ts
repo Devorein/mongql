@@ -55,14 +55,13 @@ const BaseTypeDefs = gql`
 `;
 
 class Mongql {
-  private globalConfigs: IMongqlGlobalConfigs;
-  private resources: string[] = [];
+  #globalConfigs: IMongqlGlobalConfigs | IMongqlGlobalConfigsOption = { Schemas: [] };
+  #resources: string[] = [];
 
   constructor(options: IMongqlGlobalConfigsOption) {
-    this.checkSchemaPath(options);
-    this.globalConfigs = this.createDefaultGlobalConfigs(options);
-
-    this.globalConfigs.Schemas.forEach((schema) => {
+    this.#globalConfigs = generateGlobalConfigs(options);
+    this.#globalConfigs.Schemas = this.#populateSchemas(options)
+    this.#globalConfigs.Schemas.forEach((schema) => {
       if (schema.mongql === undefined)
         throw new Error(
           colors.red.bold(`Resource doesnt have a mongql key on the schema`)
@@ -70,16 +69,15 @@ class Mongql {
       const { resource } = schema.mongql;
       if (resource === undefined)
         throw new Error(colors.red.bold(`Provide the mongoose schema resource key for mongql`));
-      else this.resources.push(resource);
-      schema.mongql = this.createDefaultSchemaConfigs(schema.mongql);
+      else this.#resources.push(resource);
+      schema.mongql = this.#createDefaultSchemaConfigs(schema.mongql);
     })
   }
 
-  private checkSchemaPath(options: IMongqlGlobalConfigsOption) {
-    let { Schemas } = options;
-    if (!Array.isArray(Schemas) && typeof Schemas === 'string') {
-      const schemaPath = String(Schemas);
-      Schemas = [];
+  #populateSchemas = (options: IMongqlGlobalConfigsOption): MongqlMongooseSchema[] => {
+    let imported_schemas: MongqlMongooseSchema[] = [];
+    if (typeof options.Schemas === 'string') {
+      const schemaPath = options.Schemas;
       const files = fs.readdirSync(schemaPath);
       files.forEach(file => {
         const schemaFile = path.join(schemaPath, file);
@@ -87,33 +85,28 @@ class Mongql {
         let imported = require(schemaFile);
         imported = imported[fileWithoutExt + "Schema"] === undefined ? imported : imported[fileWithoutExt + "Schema"];
         if (fileWithoutExt !== "index" && imported.mongql.skip !== true) {
-          (Schemas as MongqlMongooseSchema[]).push(imported);
+          imported_schemas.push(imported);
           imported.mongql.resource = S.capitalize(imported.mongql.resource);
         }
-      })
-      this.globalConfigs.Schemas = Schemas;
+      });
     }
-    else {
-      this.globalConfigs.Schemas = this.globalConfigs.Schemas.filter(schema => {
+    else
+      imported_schemas = (options.Schemas as MongqlMongooseSchema[]).filter(schema => {
         if (schema.mongql.skip !== true) {
           schema.mongql.resource = S.capitalize(schema.mongql.resource);
           return true;
         }
       })
-    }
+
+    delete options.Schemas;
+    return imported_schemas;
   }
 
-  getResources = () => this.resources;
+  getResources = () => this.#resources;
 
-  private createDefaultGlobalConfigs(options: IMongqlGlobalConfigsOption): IMongqlGlobalConfigs {
-    return generateGlobalConfigs(options)
-  };
+  #createDefaultSchemaConfigs = (baseSchema: IMongqlSchemaConfigs): IMongqlSchemaConfigs => generateSchemaConfigs(baseSchema, this.#globalConfigs as IMongqlGlobalConfigs)
 
-  private createDefaultSchemaConfigs(baseSchema: IMongqlSchemaConfigs): IMongqlSchemaConfigs {
-    return generateSchemaConfigs(baseSchema, this.globalConfigs)
-  };
-
-  private addExtraTypedefsAndResolvers(TransformedTypedefs: ITransformedPart, TransformedResolvers: ITransformedPart) {
+  #addExtraTypedefsAndResolvers = (TransformedTypedefs: ITransformedPart, TransformedResolvers: ITransformedPart) => {
 
     TransformedTypedefs.obj.External = [...typeDefs, 'scalar Password', 'scalar Username'];
     TransformedTypedefs.arr.push(...typeDefs, 'scalar Password', 'scalar Username');
@@ -137,7 +130,7 @@ class Mongql {
       Typedefs,
       Resolvers,
       Schemas
-    } = this.globalConfigs;
+    } = this.#globalConfigs as IMongqlGlobalConfigs;
 
     const InitTypedefs: { [key: string]: DocumentNode } = typeof Typedefs.init === 'string' ? loadFiles(Typedefs.init) : Typedefs.init;
     const InitResolvers: { [key: string]: Object } = typeof Resolvers.init === 'string' ? loadFiles(Resolvers.init) : Resolvers.init;
@@ -170,7 +163,7 @@ class Mongql {
       TransformedResolvers.arr.push(resolver);
     });
 
-    this.addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
+    this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
 
     return {
       TransformedTypedefs,
@@ -201,7 +194,7 @@ class Mongql {
 
   generateModels(): { [key: string]: Model<any> } {
     const res: { [key: string]: Model<any> } = {};
-    this.globalConfigs.Schemas.forEach((schema) => {
+    (this.#globalConfigs as IMongqlGlobalConfigs).Schemas.forEach((schema) => {
       const { mongql: { resource } } = schema;
       res[resource] = mongoose.model(S.capitalize(resource), schema);
     });

@@ -1,8 +1,8 @@
-import { MutableDocumentNode, MongqlMongooseSchema, ActionEnumString, PartEnumString, TargetEnumString } from "../types";
+import { MutableDocumentNode, MongqlMongooseSchema, ActionEnumString, TargetEnumString } from "../types";
 
-const pluralize = require('pluralize');
-const S = require('voca');
-const { t, documentApi, objectExtApi } = require('graphql-extra');
+import pluralize from 'pluralize';
+import S from 'voca';
+import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
 
 interface ArgumentMapFnParam {
   r: string,
@@ -80,10 +80,9 @@ export default function (Schema: MongqlMongooseSchema, TypedefAST: MutableDocume
   const pr = pluralize(r, 2);
   const cpr = pluralize(cr, 2);
   const actions = Object.keys(mutation);
-  const MutationExt = doesMutationExtExists ? ast.getExt('Mutation') : objectExtApi(
+  const MutationExt = doesMutationExtExists ? ast.getExt('Mutation') as ObjectExtApi : objectExtApi(
     t.objectExt({
       name: 'Mutation',
-      description: `${cr} Mutation`,
       directives: [],
       interfaces: [],
       fields: []

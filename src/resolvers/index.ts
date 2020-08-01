@@ -5,7 +5,7 @@ import resolverCompose from '../utils/resolverCompose';
 import { MongqlMongooseSchema, IResolver, ISchemaInfo } from '../types';
 import { checkDeepNestedProps } from "../utils/objManip";
 
-function transformResolvers(Schema: MongqlMongooseSchema, InitResolver: undefined | Object | IResolver, SchemaInfo: ISchemaInfo) {
+export default function generateResolvers(Schema: MongqlMongooseSchema, InitResolver: undefined | Object | IResolver, SchemaInfo: ISchemaInfo) {
   const { mongql: { generate } } = Schema;
   if (!InitResolver) InitResolver = { Query: {}, Mutation: {} };
   if (!checkDeepNestedProps(generate, false)) {
@@ -24,8 +24,6 @@ function transformResolvers(Schema: MongqlMongooseSchema, InitResolver: undefine
     return resolverCompose(InitResolver);
   } else return resolverCompose(InitResolver);
 }
-
-export default transformResolvers;
 
 export {
   generateQueryResolvers,

@@ -3,7 +3,7 @@
  * @param {any} arg Parameter to evalaute
  * @returns {boolean} Whether or not the parameter is a POJO
  */
-function isPOJO(arg: any) {
+function isPOJO(arg: any): boolean {
   if (arg == null || typeof arg !== 'object') return false;
   const proto = Object.getPrototypeOf(arg);
   if (proto == null) return true;

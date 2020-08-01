@@ -33,7 +33,7 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsOp
  * @param {MongqlGlobalConfig} MongqlGlobalConfig Mongql Global Config
  * @returns {MongqlSchemaConfig} Generated MongqlSchemaConfig
  */
-function generateSchemaConfigs(MongqlSchemaConfig: IMongqlSchemaConfigsOption, MongqlGlobalConfig: IMongqlGlobalConfigs): IMongqlSchemaConfigs {
+function generateSchemaConfigs(MongqlSchemaConfig: IMongqlSchemaConfigsOption, MongqlGlobalConfig: IMongqlGlobalConfigs | IMongqlSchemaConfigs): IMongqlSchemaConfigs {
   const ModifiedMongqlGlobalConfig: { [key: string]: any } = Object.assign({}, MongqlGlobalConfig);
   const ModifiedMongqlSchemaConfig: { [key: string]: any } = Object.assign({}, MongqlSchemaConfig);
   ['Typedefs', 'Resolvers', 'Schemas'].forEach(globalConfigKey => delete ModifiedMongqlGlobalConfig[globalConfigKey]);
@@ -50,7 +50,7 @@ function generateSchemaConfigs(MongqlSchemaConfig: IMongqlSchemaConfigsOption, M
  * @param {MongooseField} MongooseField Field to parse
  * @returns {MongqlFieldConfig} The extracted field options populated with default values
  */
-function generateFieldConfigs(MongooseField: any): IMongqlFieldConfigs {
+function generateFieldConfigs(MongooseField: any, MongqlSchemaConfig: IMongqlSchemaConfigs): IMongqlFieldConfigs {
   const [fieldDepth, InnerMongooseField] = calculateFieldDepth(MongooseField);
 
   const { mongql: MongooseFieldConfig = {} } = InnerMongooseField;

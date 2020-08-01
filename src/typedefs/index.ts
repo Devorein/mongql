@@ -2,7 +2,13 @@ import { MongqlMongooseSchema } from "../types";
 
 import generateQueryTypedefs from './query';
 import generateMutationTypedefs from './mutation';
-import { parseMongooseSchema } from './type';
+import {
+  parseMongooseSchema,
+  decorateTypes,
+  generateGenericType,
+  parseScalarType,
+  generateSpecificType
+} from './type';
 import { DocumentNode } from "graphql";
 
 export default async function (schema: MongqlMongooseSchema, InitTypedefsAST: DocumentNode) {
@@ -12,6 +18,12 @@ export default async function (schema: MongqlMongooseSchema, InitTypedefsAST: Do
   return { typedefsAST: DocumentAST, SchemaInfo };
 };
 
-export * from "./query"
-export * from "./mutation"
-export * from "./type"
+export {
+  generateQueryTypedefs,
+  generateMutationTypedefs,
+  decorateTypes,
+  generateGenericType,
+  parseScalarType,
+  generateSpecificType,
+  parseMongooseSchema
+}

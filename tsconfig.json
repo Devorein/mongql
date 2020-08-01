@@ -4,15 +4,15 @@
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "target": "ESNext",
-        "outDir": "dist/types",
+        "outDir": "dist",
         "lib": ["ESNext"],
         "noImplicitAny": true,
         "moduleResolution": "node",
-        "emitDeclarationOnly": true,
         "strict": true,
         "isolatedModules": true,
         "declaration":true,
         "baseUrl": ".",
+        "sourceMap": true,
         "paths": {
             "*": [
                 "node_modules/*",

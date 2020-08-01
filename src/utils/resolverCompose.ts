@@ -1,6 +1,6 @@
-const { composeResolvers } = require('@graphql-tools/resolvers-composition');
+import { composeResolvers } from '@graphql-tools/resolvers-composition';
 
-const isAuthenticated = require('./authResolver');
+import isAuthenticated from './middleware/auth';
 
 export default function (resolver: any) {
   const resolversComposition: { [key: string]: any } = {};

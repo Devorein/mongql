@@ -2,9 +2,12 @@ import { ISchemaInfo, MongqlMongooseSchema, AuthEnumString, RangeEnumString, Par
 
 import pluralize from 'pluralize';
 import S from 'voca';
-const { difference } = require('lodash');
 
-const parsePagination = require('../utils/query/parsePagination');
+const difference = (source: string[], target: string[]) => {
+  return source.filter(item => !target.includes(item))
+}
+
+import parsePagination from '../utils/query/parsePagination';
 
 export default function (Schema: MongqlMongooseSchema, SchemaInfo: ISchemaInfo) {
   const cr = S.capitalize(Schema.mongql.resource);

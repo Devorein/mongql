@@ -5,21 +5,21 @@ import resolverCompose from '../utils/resolverCompose';
 import { IMongqlMongooseSchemaFull, IResolverPartial, ISchemaInfo } from '../types';
 import { checkDeepNestedProps } from "../utils/objManip";
 
-export default function generateResolvers(Schema: IMongqlMongooseSchemaFull, InitResolver: undefined | Object | IResolverPartial, SchemaInfo: ISchemaInfo) {
+export default function generateResolvers(Schema: IMongqlMongooseSchemaFull, InitResolver: undefined | IResolverPartial, SchemaInfo: ISchemaInfo) {
   const { mongql: { generate } } = Schema;
-  if (!InitResolver) InitResolver = { Query: {}, Mutation: {} };
+  if (!InitResolver) InitResolver = { Query: {}, Mutation: {} } as IResolverPartial;
   if (!checkDeepNestedProps(generate, false)) {
     InitResolver = {
       ...generateTypeResolvers(SchemaInfo),
       ...InitResolver,
     };
-    (InitResolver as IResolverPartial).Query = {
+    InitResolver.Query = {
       ...generateQueryResolvers(Schema, SchemaInfo),
-      ...(InitResolver as IResolverPartial).Query,
+      ...InitResolver.Query,
     };
-    (InitResolver as IResolverPartial).Mutation = {
+    InitResolver.Mutation = {
       ...generateMutationResolvers(Schema, SchemaInfo),
-      ...(InitResolver as IResolverPartial).Mutation,
+      ...InitResolver.Mutation,
     };
     return resolverCompose(InitResolver);
   } else return resolverCompose(InitResolver);

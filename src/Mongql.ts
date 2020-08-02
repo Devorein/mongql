@@ -14,7 +14,7 @@ import { DocumentNode } from "graphql";
 import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
 
-import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlBaseSchemaConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial } from "./types";
+import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlBaseSchemaConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, IResolverPartial } from "./types";
 
 import { generateGlobalConfigs, generateSchemaConfigs } from "./utils/generate/configs";
 import generateTypedefs from './typedefs';
@@ -56,6 +56,7 @@ const BaseTypeDefs = gql`
 class Mongql {
   #globalConfigs: IMongqlGlobalConfigsPartial = { Schemas: [] };
   #resources: string[] = [];
+  #models: { [key: string]: Model<any> } = {}
 
   constructor(options: IMongqlGlobalConfigsPartial) {
     this.#globalConfigs = generateGlobalConfigs(options);
@@ -70,6 +71,7 @@ class Mongql {
         throw new Error(colors.red.bold(`Provide the mongoose schema resource key for mongql`));
       else this.#resources.push(resource);
       schema.mongql = generateSchemaConfigs(schema.mongql, this.#globalConfigs as IMongqlGlobalConfigsFull);
+      this.#models[S.capitalize(resource)] = mongoose.model(S.capitalize(resource), schema);
     });
   }
 
@@ -139,7 +141,7 @@ class Mongql {
         mongql
       } = Schema;
       const { resource, output } = mongql;
-      let typedefsAST: undefined | DocumentNode = InitTypedefs[resource], resolver: undefined | Object = InitResolvers[resource];
+      let typedefsAST: undefined | DocumentNode = mongql.TypeDefs || InitTypedefs[resource], resolver: undefined | IResolverPartial = mongql.Resolvers || InitResolvers[resource];
       const generated = await generateTypedefs(
         Schema,
         typedefsAST,
@@ -191,14 +193,7 @@ class Mongql {
     }
   }
 
-  generateModels(): { [key: string]: Model<any> } {
-    const res: { [key: string]: Model<any> } = {};
-    (this.#globalConfigs as IMongqlGlobalConfigsFull).Schemas.forEach((schema) => {
-      const { mongql: { resource } } = schema;
-      res[resource] = mongoose.model(S.capitalize(resource), schema);
-    });
-    return res;
-  }
+  getModels = () => this.#models;
 }
 
 export default Mongql;

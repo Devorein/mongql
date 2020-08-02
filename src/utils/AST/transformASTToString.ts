@@ -6,7 +6,7 @@ function traverseType(type: TypeNode): IMongqlTypeNode[] {
   function _wrapper(ast: TypeNode) {
     const { kind } = ast;
     if (kind !== 'NamedType') types.push(_wrapper((ast as (ListTypeNode | NonNullTypeNode)).type));
-    return { type, kind, name: (ast as NamedTypeNode).name.value };
+    return { type, kind, name: (ast as NamedTypeNode)?.name?.value };
   }
   types.push(_wrapper(type));
   return types;
@@ -26,7 +26,7 @@ export function argumentsToString(argAst: InputValueDefinitionNode[]) {
   const args: string[] = [];
   if (argAst)
     argAst.forEach((arg) => {
-      let name = arg.name.value;
+      const name = arg.name.value;
       const argStr = convertToString(traverseType(arg.type));
       args.push(`${name}:${argStr}`);
     });

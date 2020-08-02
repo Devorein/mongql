@@ -1,7 +1,7 @@
 import { ISchemaInfo, FieldFullInfo } from "../types";
 
 export default function (SchemaInfo: ISchemaInfo) {
-  let { Types: { objects } } = SchemaInfo;
+  const { Types: { objects } } = SchemaInfo;
   const result: { [key: string]: any } = {};
 
   objects.forEach(object => {
@@ -31,4 +31,4 @@ export default function (SchemaInfo: ISchemaInfo) {
     });
   })
   return result;
-};
+}

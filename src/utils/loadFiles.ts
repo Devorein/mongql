@@ -33,4 +33,4 @@ export default function (_path: string) {
       res[S.capitalize(filename)] = gql(fs.readFileSync(filepath, { encoding: 'utf-8' }));
   });
   return res;
-};
+}

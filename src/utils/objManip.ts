@@ -119,7 +119,7 @@ function scrambler(key: string) {
     if (keys.length > 0) arr.push(keys.join('.'));
     arr.push(first_key);
     for (let i = 1; i < keys.length; i++) {
-      let _arr = [];
+      const _arr = [];
       if (parent.length > 0) _arr.push(parent);
       _arr.push(first_key, keys[i]);
       arr.push(_arr.join('.'));
@@ -147,7 +147,7 @@ function populateObjDefaultValue(Initial: any, Defaults: any) {
   Defaults = { ...Defaults };
   const flattened_initial = flattenObject(Initial);
   const flattened_default = flattenObject(Defaults);
-  let res = { ...flattened_default, ...flattened_initial };
+  const res = { ...flattened_default, ...flattened_initial };
   const reversed_keys = Object.keys(res).sort();
   reversed_keys.forEach((key) => {
     if (key.split(".").length > 1) {

@@ -4,7 +4,7 @@ const gql = require('graphql-tag');
 
 const { Mongql } = require('../../dist');
 
-describe('Proper typedef generation', () => {
+describe.skip('Proper typedef generation', () => {
   let TransformedTypedefs;
 
   const DocumentAPI = {},

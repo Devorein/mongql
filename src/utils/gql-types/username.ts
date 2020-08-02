@@ -5,7 +5,7 @@ function isAlphaNumericOnly(input: string) {
   const letterNumberRegex = /^([0-9a-z]|_|\.)+$/;
   if (input.match(letterNumberRegex)) return true;
   return false;
-};
+}
 
 export default new GraphQLScalarType({
   name: 'Username',

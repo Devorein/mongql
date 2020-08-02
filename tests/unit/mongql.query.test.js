@@ -2,15 +2,12 @@ const mongoose = require('mongoose');
 const { documentApi } = require('graphql-extra');
 const S = require('voca');
 
-const Mongql = require('../../src/MonGql');
-
-const { setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../utils/objManip');
-const { query: { options: QueryOptions, fields: QueryFields } } = require('../../utils/generateOptions');
-const { argumentsToString, outputToString } = require('../../utils/AST/transformASTToString');
+const { generateOptions, Mongql, argumentsToString, outputToString, setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../dist/index');
+const { query: { options: QueryOptions, fields: QueryFields } } = generateOptions();
 
 const queryOpts = [];
 
-const QueryArgs = {
+const QueryMap = {
   getAllSelfUsersWhole: ['', '[SelfUserObject!]!'],
   getAllSelfUsersNameandid: ['', '[NameAndId!]!'],
   getAllSelfUsersCount: ['', 'NonNegativeInt!'],
@@ -43,6 +40,8 @@ const QueryArgs = {
   getIdMixedUsersNameandid: ['id:ID!', 'NameAndId!']
 };
 
+const QueryMapLength = Object.keys(QueryMap).length
+
 Array.prototype.diff = function (a) {
   return this.filter((i) => a.indexOf(i) < 0);
 };
@@ -63,7 +62,7 @@ mixObjectProp(flattenObject(QueryOptions)).sort().forEach((excludeQuery) => {
   });
 });
 
-function QueryChecker(target, { field, excludedQuery }, type) {
+function QueryChecker(target, { excludedQuery }, type) {
   function checker(fields, against) {
     fields.forEach((field) => {
       const [range, auth, part] = field.split('.');
@@ -71,14 +70,16 @@ function QueryChecker(target, { field, excludedQuery }, type) {
       if (type === 'typedef') {
         expect(target.hasField(typename)).toBe(against);
         if (against) {
-          expect(QueryArgs[typename][0]).toBe(argumentsToString(target.getField(typename).node.arguments));
-          expect(QueryArgs[typename][1]).toBe(outputToString(target.getField(typename).node.type));
+          expect(QueryMap[typename][0]).toBe(argumentsToString(target.getField(typename).node.arguments));
+          expect(QueryMap[typename][1]).toBe(outputToString(target.getField(typename).node.type));
         }
       } else expect(Boolean(target[typename])).toBe(against);
     });
   }
-  if (field === 'query' && type === 'typedef') expect(documentApi().addSDL(target).hasExt('Query')).toBe(false);
-  else if (field === 'query' && type === 'resolver') expect(target.Query).toBeFalsy();
+  if (excludedQuery.length === QueryMapLength) {
+    if (type === 'typedef') expect(documentApi().addSDL(target).hasExt('Query')).toBe(false);
+    if (type === 'resolver') expect(target.Query).toBeFalsy()
+  }
   else {
     target = type === 'typedef' ? documentApi().addSDL(target).getExt('Query') : target;
     const includedFields = QueryFields.diff(excludedQuery);
@@ -96,12 +97,18 @@ describe('Query option checker', () => {
           name: String
         });
         Schema.mongql = { resource: 'user' };
-        if (partition === 'local') Schema.mongql.generate = { query };
+        const generate = {
+          query
+        };
+        if (partition === 'local') {
+          Schema.mongql.generate = { query };
+          const GlobalQueryOtps = queryOpts[index !== queryOpts.length - 1 ? index + 1 : 1]
+          generate.query = GlobalQueryOtps.query;
+          queryOpt.excludedQuery = Array.from(new Set(queryOpt.excludedQuery.concat(GlobalQueryOtps.excludedQuery)));
+        }
         const mongql = new Mongql({
           Schemas: [Schema],
-          generate: {
-            query: partition === 'local' ? queryOpts[index !== queryOpts.length - 1 ? index + 1 : 0].query : query
-          }
+          generate
         });
         const { TransformedTypedefs, TransformedResolvers } = await mongql.generate();
         QueryChecker(TransformedTypedefs.obj.User, queryOpt, 'typedef');

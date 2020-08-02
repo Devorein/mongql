@@ -12,4 +12,4 @@ export default async function (model: Model<any>, Ids: string[], userId: string)
     deleted_resources.push(resource);
   }
   return await Promise.all(deleted_resources);
-};
+}

@@ -11,4 +11,4 @@ export default function (sort: string) {
     transformed_sort.name = -1;
   }
   return transformed_sort;
-};
+}

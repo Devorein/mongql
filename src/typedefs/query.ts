@@ -68,4 +68,4 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
   });
   if (QueryExt.getFields().length > 0 && !doesQueryExtExists) TypedefAST.definitions.push(QueryExt.node);
 
-};
+}

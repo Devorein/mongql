@@ -3,6 +3,7 @@ import resolverCompose from "./resolverCompose";
 import createResource from "./resource/createResource";
 import updateResource from "./resource/updateResource";
 import deleteResource from "./resource/deleteResource";
+import generateOptions from "./generate/options";
 
 export * from "./generate/configs";
 export * from "./AST/transformASTToString";
@@ -14,5 +15,6 @@ export {
   resolverCompose,
   createResource,
   updateResource,
-  deleteResource
+  deleteResource,
+  generateOptions
 }

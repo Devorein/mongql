@@ -221,7 +221,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       const generatedFieldConfigs: IMongqlFieldConfigsFull = generateFieldConfigs(value, GeneratedSchemaConfigs);
       const { description, authMapper, nullable: { input: nullable_input, object: nullable_object }, attach: { input: attach_to_input, interface: attach_to_interface, enum: attach_to_enum } } = generatedFieldConfigs;
       const generic_type = generateGenericType(innerValue) + (fieldDepth > 0 ? 's' : '');
-      let { object_type, input_type, ref_type } = generateSpecificType(generic_type, innerValue, key, parentKey, GeneratedSchemaConfigs);
+      const { object_type, input_type, ref_type } = generateSpecificType(generic_type, innerValue, key, parentKey, GeneratedSchemaConfigs);
       const generatedIncludedAuthSegments = generateIncludedAuthSegments(generatedFieldConfigs.attach.object, innerSchema_included_auth_segments);
       const field_excluded_auth_segments = generatedIncludedAuthSegments[0];
       const field_included_auth_segments: AuthEnumString[] = generatedIncludedAuthSegments[1];

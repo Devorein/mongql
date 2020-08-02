@@ -1,11 +1,9 @@
 const mongoose = require('mongoose');
 const { documentApi } = require('graphql-extra');
 
-const Mongql = require('../../src/MonGql');
+const { generateOptions, Mongql, argumentsToString, outputToString, setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../dist/index');
 
-const { setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../utils/objManip');
-const { mutation: { options: MutationOptions, fields: MutationFields } } = require('../../utils/generateOptions');
-const { argumentsToString, outputToString } = require('../../utils/AST/transformASTToString');
+const { mutation: { options: MutationOptions, fields: MutationFields } } = generateOptions();
 
 const mutationOpts = [];
 
@@ -17,6 +15,8 @@ const MutationMap = {
   deleteUser: ['id:ID!', 'SelfUserObject!'],
   deleteUsers: ['ids:[ID!]!', '[SelfUserObject!]!']
 };
+
+const MutationMapLength = Object.keys(MutationMap).length
 
 Array.prototype.diff = function (a) {
   return this.filter((i) => a.indexOf(i) < 0);
@@ -38,19 +38,24 @@ mixObjectProp(flattenObject(MutationOptions)).sort().forEach((excludeMutation) =
   });
 });
 
-function MutationChecker(target, { field, excludedMutation }, type) {
+function MutationChecker(target, { excludedMutation }, type) {
   function checker(fields, against) {
     fields.forEach((field) => {
       const [action, part] = field.split('.');
       const typename = `${action}${part === 'multi' ? 'Users' : 'User'}`;
       if (type === 'typedef') {
         expect(target.hasField(typename)).toBe(against);
-        if (against) expect(MutationMap[typename][0]).toBe(argumentsToString(target.getField(typename).node.arguments));
-        if (against) expect(MutationMap[typename][1]).toBe(outputToString(target.getField(typename).node.type));
+        if (against) {
+          expect(MutationMap[typename][0]).toBe(argumentsToString(target.getField(typename).node.arguments));
+          expect(MutationMap[typename][1]).toBe(outputToString(target.getField(typename).node.type));
+        }
       } else expect(Boolean(target[typename])).toBe(against);
     });
   }
-  if (field === 'mutation' && type === 'typedef') expect(documentApi().addSDL(target).hasExt('Mutation')).toBe(false);
+  if (excludedMutation.length === MutationMapLength) {
+    if (type === 'typedef') expect(documentApi().addSDL(target).hasExt('Mutation')).toBe(false);
+    if (type === 'resolver') expect(target.Mutation).toBeFalsy()
+  }
   else {
     target = type === 'typedef' ? documentApi().addSDL(target).getExt('Mutation') : target;
     const includedFields = MutationFields.diff(excludedMutation);
@@ -68,15 +73,18 @@ describe('Mutation option checker', () => {
           name: String
         });
         Schema.mongql = { resource: 'user' };
-        if (partition === 'local') Schema.mongql.generate = { mutation };
+        const generate = {
+          mutation
+        };
+        if (partition === 'local') {
+          Schema.mongql.generate = { mutation };
+          const GlobalMutationOtps = mutationOpts[index !== mutationOpts.length - 1 ? index + 1 : 1]
+          generate.mutation = GlobalMutationOtps.mutation;
+          mutationOpt.excludedMutation = Array.from(new Set(mutationOpt.excludedMutation.concat(GlobalMutationOtps.excludedMutation)));
+        }
         const mongql = new Mongql({
           Schemas: [Schema],
-          generate: {
-            mutation:
-              partition === 'local'
-                ? mutationOpts[index !== mutationOpts.length - 1 ? index + 1 : 0].mutation
-                : mutation
-          }
+          generate
         });
         const { TransformedTypedefs, TransformedResolvers } = await mongql.generate();
         MutationChecker(TransformedTypedefs.obj.User, mutationOpt, 'typedef');

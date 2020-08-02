@@ -71,7 +71,7 @@ class Mongql {
         throw new Error(colors.red.bold(`Provide the mongoose schema resource key for mongql`));
       else this.#resources.push(resource);
       schema.mongql = generateSchemaConfigs(schema.mongql, this.#globalConfigs as IMongqlGlobalConfigsFull);
-      this.#models[S.capitalize(resource)] = mongoose.model(S.capitalize(resource), schema);
+      // this.#models[S.capitalize(resource)] = mongoose.model(S.capitalize(resource), schema);
     });
   }
 
@@ -161,7 +161,7 @@ class Mongql {
       TransformedTypedefs.arr.push(typedefsAST);
       TransformedResolvers.obj[resource] = resolver;
       TransformedResolvers.arr.push(resolver);
-      delete Schema.mongql;
+      // delete Schema.mongql;
     });
 
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);

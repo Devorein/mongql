@@ -3,7 +3,7 @@ import { IMongqlGlobalConfigsPartial, IGeneratePartial, MongqlSchemaConfigsParti
 import { populateObjDefaultValue, nestedObjPopulation } from '../../utils/objManip';
 import { calculateFieldDepth } from '../mongoose';
 
-import GenerateOptions from "./options";
+import generateOptions from "./options";
 
 /**
  * Generate full Schema config
@@ -11,12 +11,13 @@ import GenerateOptions from "./options";
  * @returns {MongqlGlobalConfig} Generated MongqlSchemaConfig
  */
 function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPartial): IMongqlGlobalConfigsFull {
+  const { mutation, query, type } = generateOptions();
   return populateObjDefaultValue(InitialMongqlGlobalConfig, {
     output: false,
     generate: {
-      mutation: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.mutation, GenerateOptions.mutation.options),
-      type: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.type, GenerateOptions.type.options),
-      query: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.query, GenerateOptions.query.options)
+      mutation: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.mutation, mutation.options),
+      type: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.type, type.options),
+      query: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.query, query.options)
     },
     Typedefs: {
       init: {},

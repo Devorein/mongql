@@ -76,8 +76,8 @@ export interface IGenerateQueryRangeFull {
   id: IGenerateQueryAuthFull
 }
 
-export interface IGenerateQueryPartial extends IGenerateQueryRangePartial, IGenerateQueryAuthPartial, IGenerateQueryPartPartial { };
-export interface IGenerateQueryFull extends IGenerateQueryRangeFull { };
+export interface IGenerateQueryPartial extends IGenerateQueryRangePartial, IGenerateQueryAuthPartial, IGenerateQueryPartPartial { }
+export type IGenerateQueryFull = IGenerateQueryRangeFull;
 
 export interface IGenerateMutationTargetPartial {
   single?: boolean,
@@ -102,7 +102,7 @@ export interface IGenerateMutationActionFull {
 }
 
 export interface IGenerateMutationPartial extends IGenerateMutationActionPartial, IGenerateMutationTargetPartial { }
-export interface IGenerateMutationFull extends IGenerateMutationActionFull { }
+export type IGenerateMutationFull = IGenerateMutationActionFull
 
 export interface IGenerateTypePartial {
   input?: {
@@ -262,7 +262,7 @@ export interface IMongqlFieldConfigsFull {
     enum: boolean
   },
   authMapper: MongqlFieldAuthMapperConfigsFull
-};
+}
 
 export interface IMongqlFieldConfigsPartial {
   description?: string,
@@ -277,7 +277,7 @@ export interface IMongqlFieldConfigsPartial {
     enum?: boolean
   },
   authMapper: MongqlFieldAuthMapperConfigsPartial
-};
+}
 
 export interface FieldInfo {
   input_type: string,

@@ -3,4 +3,4 @@ export default function (page: number | string, limit: number | string): [number
   limit = parseInt(limit as string) || 10;
   const startIndex = (page - 1) * limit;
   return [startIndex, limit];
-};
+}

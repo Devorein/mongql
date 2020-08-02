@@ -16,4 +16,4 @@ export default async function (model: Model<any>, datas: any[], userId: string, 
     updated_resources.push(await resource.save());
   }
   return await Promise.all(updated_resources);
-};
+}

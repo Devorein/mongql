@@ -13,4 +13,4 @@ export default function (pagination: IPaginationInput) {
     page: parsed_page,
     filter: parsed_filter
   };
-};
+}

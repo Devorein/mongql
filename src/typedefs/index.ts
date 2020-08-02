@@ -16,7 +16,7 @@ export default async function (schema: IMongqlMongooseSchemaFull, InitTypedefsAS
   generateQueryTypedefs(schema, DocumentAST);
   generateMutationTypedefs(schema, DocumentAST);
   return { typedefsAST: DocumentAST, SchemaInfo };
-};
+}
 
 export {
   generateQueryTypedefs,

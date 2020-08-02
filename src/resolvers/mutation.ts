@@ -55,4 +55,4 @@ export default function generateMutationResolvers(Schema: IMongqlMongooseSchemaF
     });
   });
   return MutationResolvers;
-};
+}

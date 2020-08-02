@@ -1,4 +1,4 @@
-import { ISchemaInfo, MongqlMongooseSchema, AuthEnumString, RangeEnumString, PartEnumString } from "../types";
+import { ISchemaInfo, IMongqlMongooseSchemaFull, AuthEnumString, RangeEnumString, PartEnumString } from "../types";
 
 import pluralize from 'pluralize';
 import S from 'voca';
@@ -9,7 +9,7 @@ const difference = (source: string[], target: string[]) => {
 
 import parsePagination from '../utils/query/parsePagination';
 
-export default function (Schema: MongqlMongooseSchema, SchemaInfo: ISchemaInfo) {
+export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaInfo) {
   const cr = S.capitalize(Schema.mongql.resource);
   const selfFields: string[] = [],
     mixedFields: string[] = [],

@@ -4,7 +4,7 @@ import { t, objectTypeApi, enumTypeApi, interfaceTypeApi, inputTypeApi, unionTyp
 import { resolvers } from 'graphql-scalars';
 import { GraphQLScalarType, DocumentNode, NamedTypeNode } from "graphql";
 
-import { IMongqlSchemaConfigs, IMongqlFieldConfigs, ISpecificTypeInfo, MongqlMongooseSchema, IMongqlSchemaConfigsOption, IMongqlGeneratedTypes, MongqlFieldAttachObjectConfigs, AuthEnumString, InputActionEnumString, MutableDocumentNode, GeneratedFields, FieldInfo, FieldFullInfo } from "../types";
+import { IMongqlBaseSchemaConfigsFull, IMongqlFieldConfigsFull, ISpecificTypeInfo, IMongqlMongooseSchemaFull, MongqlSchemaConfigsPartial, IMongqlGeneratedTypes, MongqlFieldAttachObjectConfigsFull, AuthEnumString, InputActionEnumString, MutableDocumentNode, FieldsFullInfos, FieldInfo, FieldFullInfo } from "../types";
 import Password from "../utils/gql-types/password";
 import Username from "../utils/gql-types/username";
 
@@ -88,7 +88,7 @@ function parseScalarType(mongooseField: any): string {
  * @param {SchemaConfigs} SchemaConfigs Schema configuration
  * @returns {ISpecificTypeInfo} Generated type from a field
  */
-function generateSpecificType(generic_type: string, value: any, key: string, parentKey: MongqlPath, schemaConfigs: IMongqlSchemaConfigs): ISpecificTypeInfo {
+function generateSpecificType(generic_type: string, value: any, key: string, parentKey: MongqlPath, schemaConfigs: IMongqlBaseSchemaConfigsFull): ISpecificTypeInfo {
   const { resource } = schemaConfigs;
 
   let object_type = '',
@@ -112,7 +112,7 @@ function generateSpecificType(generic_type: string, value: any, key: string, par
 }
 
 const generateIncludedAuthSegments = (schema_object_auth: any, parentSchema_object_auth: string[] | any): [AuthEnumString[], AuthEnumString[]] => {
-  const filterTrueKey = (obj: MongqlFieldAttachObjectConfigs) => Object.entries(obj).filter((entry) => entry[1]).map(([key]) => key);
+  const filterTrueKey = (obj: MongqlFieldAttachObjectConfigsFull) => Object.entries(obj).filter((entry) => entry[1]).map(([key]) => key);
   const parentSchema_auth_segments = Array.isArray(parentSchema_object_auth) ? parentSchema_object_auth : filterTrueKey(parentSchema_object_auth);
   const included_auth_segments = filterTrueKey(schema_object_auth).filter((auth) => parentSchema_auth_segments.includes(auth));
   const excluded_auth_segments = ['self', 'others', 'mixed'].filter(auth => !included_auth_segments.includes(auth));
@@ -130,15 +130,15 @@ type MongqlPath = {
  * @param {DocumentNode} [InitTypedefsAST] initial documentnode to add to 
  * @return {GraphqlDocumentNode} Generated GraphqlDocumentNode
  */
-function parseMongooseSchema(BaseSchema: MongqlMongooseSchema, InitTypedefsAST: DocumentNode | undefined) {
+function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined) {
   const BaseSchemaConfigs = BaseSchema.mongql;
   const cr = S.capitalize(BaseSchemaConfigs.resource);
   const DocumentNode = {
     kind: 'Document',
-    definitions: InitTypedefsAST ? [...InitTypedefsAST.definitions] : []
+    definitions: BaseSchemaConfigs.TypeDefs ? [...BaseSchemaConfigs.TypeDefs.definitions] : InitTypedefsAST ? [...InitTypedefsAST.definitions] : []
   };
 
-  const Fields: GeneratedFields = [];
+  const Fields: FieldsFullInfos = [];
   const Types: IMongqlGeneratedTypes = {
     enums: [],
     unions: [],
@@ -151,9 +151,9 @@ function parseMongooseSchema(BaseSchema: MongqlMongooseSchema, InitTypedefsAST: 
     return (AST.fields || AST.values || AST.types).length > 0;
   }
 
-  function _inner(Schema: MongqlMongooseSchema, Type: string, path: MongqlPath[], ParentSchemaConfigs: IMongqlSchemaConfigs) {
-    const SchemaConfigs: IMongqlSchemaConfigsOption = Schema.mongql || {};
-    const GeneratedSchemaConfigs: IMongqlSchemaConfigs = generateSchemaConfigs(SchemaConfigs, ParentSchemaConfigs)
+  function _inner(Schema: IMongqlMongooseSchemaFull, Type: string, path: MongqlPath[], ParentSchemaConfigs: IMongqlBaseSchemaConfigsFull) {
+    const SchemaConfigs: MongqlSchemaConfigsPartial = Schema.mongql || {};
+    const GeneratedSchemaConfigs: IMongqlBaseSchemaConfigsFull = generateSchemaConfigs(SchemaConfigs, ParentSchemaConfigs)
     const parentKey: MongqlPath = path[path.length - 1];
     const [, innerSchema_included_auth_segments] = generateIncludedAuthSegments(GeneratedSchemaConfigs.generate.type.object, ParentSchemaConfigs.generate.type.object);
 
@@ -218,7 +218,7 @@ function parseMongooseSchema(BaseSchema: MongqlMongooseSchema, InitTypedefsAST: 
     Object.entries(Schema.obj).forEach((entry) => {
       const key = entry[0], value: any = entry[1];
       const [fieldDepth, innerValue] = calculateFieldDepth(value);
-      const generatedFieldConfigs: IMongqlFieldConfigs = generateFieldConfigs(value, GeneratedSchemaConfigs);
+      const generatedFieldConfigs: IMongqlFieldConfigsFull = generateFieldConfigs(value, GeneratedSchemaConfigs);
       const { description, authMapper, nullable: { input: nullable_input, object: nullable_object }, attach: { input: attach_to_input, interface: attach_to_interface, enum: attach_to_enum } } = generatedFieldConfigs;
       const generic_type = generateGenericType(innerValue) + (fieldDepth > 0 ? 's' : '');
       let { object_type, input_type, ref_type } = generateSpecificType(generic_type, innerValue, key, parentKey, GeneratedSchemaConfigs);
@@ -241,12 +241,12 @@ function parseMongooseSchema(BaseSchema: MongqlMongooseSchema, InitTypedefsAST: 
         BaseSchema.path(path.map(({ key }) => key).join('.')).validate((v: any) => {
           const value = Validators[object_type](v);
           return value !== null && value !== undefined;
-        }, (props) => props.reason.message);
+        }, (props: any) => props.reason.message);
 
       field_included_auth_segments.forEach((auth) => {
         path[path.length - 1] = { object_type, key };
         const auth_object_type = generic_type.match(/(ref|object)/)
-          ? authMapper[S.capitalize(auth)] + object_type + "Object"
+          ? authMapper[S.capitalize(auth) as AuthEnumString] + object_type + "Object"
           : object_type;
         const decorated_object_type = decorateTypes(auth_object_type, nullable_object[auth]);
         const object_key = `${S.capitalize(auth)}${Type}Object`;
@@ -279,7 +279,10 @@ function parseMongooseSchema(BaseSchema: MongqlMongooseSchema, InitTypedefsAST: 
       if (generic_type.match(/(object)/))
         _inner(innerValue, object_type, path, GeneratedSchemaConfigs);
       path.pop();
+      if (value.mongql) delete value.mongql;
     });
+    if (Schema.mongql && parentKey)
+      delete Schema.mongql
   }
 
   _inner(BaseSchema, cr, [], BaseSchemaConfigs);

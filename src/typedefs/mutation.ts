@@ -1,4 +1,4 @@
-import { MutableDocumentNode, MongqlMongooseSchema, ActionEnumString, TargetEnumString } from "../types";
+import { MutableDocumentNode, IMongqlMongooseSchemaFull, ActionEnumString, TargetEnumString } from "../types";
 
 import pluralize from 'pluralize';
 import S from 'voca';
@@ -72,7 +72,7 @@ const ArgumentMap = {
   }
 };
 
-export default function (Schema: MongqlMongooseSchema, TypedefAST: MutableDocumentNode) {
+export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableDocumentNode) {
   const { mongql: { resource: r, generate: { mutation } } } = Schema;
   const ast = documentApi().addSDL(TypedefAST);
   const doesMutationExtExists = ast.hasExt('Mutation');

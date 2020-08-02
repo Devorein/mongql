@@ -1,4 +1,4 @@
-import { MongqlMongooseSchema } from "../types";
+import { IMongqlMongooseSchemaFull } from "../types";
 
 import generateQueryTypedefs from './query';
 import generateMutationTypedefs from './mutation';
@@ -11,7 +11,7 @@ import {
 } from './type';
 import { DocumentNode } from "graphql";
 
-export default async function (schema: MongqlMongooseSchema, InitTypedefsAST: DocumentNode) {
+export default async function (schema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode) {
   const { SchemaInfo, DocumentAST } = parseMongooseSchema(schema, InitTypedefsAST);
   generateQueryTypedefs(schema, DocumentAST);
   generateMutationTypedefs(schema, DocumentAST);

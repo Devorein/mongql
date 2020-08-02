@@ -1,4 +1,4 @@
-import { IMongqlGlobalConfigsOption, IGenerateOptions, IMongqlGlobalConfigs, IMongqlSchemaConfigsOption, IMongqlSchemaConfigs, IMongqlFieldConfigs } from "../../types";
+import { IMongqlGlobalConfigsPartial, IGeneratePartial, MongqlSchemaConfigsPartial, IMongqlFieldConfigsFull, IMongqlBaseSchemaConfigsFull, IMongqlGlobalConfigsFull, IMongqlNestedSchemaConfigsFull } from "../../types";
 
 import { populateObjDefaultValue, nestedObjPopulation } from '../../utils/objManip';
 import { calculateFieldDepth } from '../mongoose';
@@ -10,13 +10,13 @@ import GenerateOptions from "./options";
  * @param {MongqlGlobalConfig} InitialMongqlGlobalConfig Initial Mongql Global Config
  * @returns {MongqlGlobalConfig} Generated MongqlSchemaConfig
  */
-function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsOption): IMongqlGlobalConfigs {
+function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPartial): IMongqlGlobalConfigsFull {
   return populateObjDefaultValue(InitialMongqlGlobalConfig, {
     output: false,
     generate: {
-      mutation: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGenerateOptions)?.mutation, GenerateOptions.mutation.options),
-      type: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGenerateOptions)?.type, GenerateOptions.type.options),
-      query: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGenerateOptions)?.query, GenerateOptions.query.options)
+      mutation: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.mutation, GenerateOptions.mutation.options),
+      type: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.type, GenerateOptions.type.options),
+      query: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.query, GenerateOptions.query.options)
     },
     Typedefs: {
       init: {},
@@ -33,7 +33,7 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsOp
  * @param {MongqlGlobalConfig} MongqlGlobalConfig Mongql Global Config
  * @returns {MongqlSchemaConfig} Generated MongqlSchemaConfig
  */
-function generateSchemaConfigs(MongqlSchemaConfig: IMongqlSchemaConfigsOption, MongqlGlobalConfig: IMongqlGlobalConfigs | IMongqlSchemaConfigs): IMongqlSchemaConfigs {
+function generateSchemaConfigs(MongqlSchemaConfig: MongqlSchemaConfigsPartial, MongqlGlobalConfig: IMongqlGlobalConfigsFull | IMongqlBaseSchemaConfigsFull | IMongqlNestedSchemaConfigsFull): IMongqlBaseSchemaConfigsFull {
   const ModifiedMongqlGlobalConfig: { [key: string]: any } = Object.assign({}, MongqlGlobalConfig);
   const ModifiedMongqlSchemaConfig: { [key: string]: any } = Object.assign({}, MongqlSchemaConfig);
   ['Typedefs', 'Resolvers', 'Schemas'].forEach(globalConfigKey => delete ModifiedMongqlGlobalConfig[globalConfigKey]);
@@ -50,7 +50,7 @@ function generateSchemaConfigs(MongqlSchemaConfig: IMongqlSchemaConfigsOption, M
  * @param {MongooseField} MongooseField Field to parse
  * @returns {MongqlFieldConfig} The extracted field options populated with default values
  */
-function generateFieldConfigs(MongooseField: any, MongqlSchemaConfig: IMongqlSchemaConfigs): IMongqlFieldConfigs {
+function generateFieldConfigs(MongooseField: any, MongqlSchemaConfig: IMongqlBaseSchemaConfigsFull): IMongqlFieldConfigsFull {
   const [fieldDepth, InnerMongooseField] = calculateFieldDepth(MongooseField);
 
   const { mongql: MongooseFieldConfig = {} } = InnerMongooseField;

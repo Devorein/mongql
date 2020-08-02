@@ -2,10 +2,10 @@ import generateQueryResolvers from './query';
 import generateMutationResolvers from './mutation';
 import generateTypeResolvers from './type';
 import resolverCompose from '../utils/resolverCompose';
-import { MongqlMongooseSchema, IResolver, ISchemaInfo } from '../types';
+import { IMongqlMongooseSchemaFull, IResolverPartial, ISchemaInfo } from '../types';
 import { checkDeepNestedProps } from "../utils/objManip";
 
-export default function generateResolvers(Schema: MongqlMongooseSchema, InitResolver: undefined | Object | IResolver, SchemaInfo: ISchemaInfo) {
+export default function generateResolvers(Schema: IMongqlMongooseSchemaFull, InitResolver: undefined | Object | IResolverPartial, SchemaInfo: ISchemaInfo) {
   const { mongql: { generate } } = Schema;
   if (!InitResolver) InitResolver = { Query: {}, Mutation: {} };
   if (!checkDeepNestedProps(generate, false)) {
@@ -13,13 +13,13 @@ export default function generateResolvers(Schema: MongqlMongooseSchema, InitReso
       ...generateTypeResolvers(SchemaInfo),
       ...InitResolver,
     };
-    (InitResolver as IResolver).Query = {
+    (InitResolver as IResolverPartial).Query = {
       ...generateQueryResolvers(Schema, SchemaInfo),
-      ...(InitResolver as IResolver).Query,
+      ...(InitResolver as IResolverPartial).Query,
     };
-    (InitResolver as IResolver).Mutation = {
+    (InitResolver as IResolverPartial).Mutation = {
       ...generateMutationResolvers(Schema, SchemaInfo),
-      ...(InitResolver as IResolver).Mutation,
+      ...(InitResolver as IResolverPartial).Mutation,
     };
     return resolverCompose(InitResolver);
   } else return resolverCompose(InitResolver);

@@ -1,4 +1,4 @@
-import { MongqlMongooseSchema, ISchemaInfo, ActionEnumString, TargetEnumString } from "../types";
+import { IMongqlMongooseSchemaFull, ISchemaInfo, ActionEnumString, TargetEnumString } from "../types";
 
 import pluralize from 'pluralize';
 
@@ -6,7 +6,7 @@ import createResource from '../utils/resource/createResource';
 import updateResource from '../utils/resource/updateResource';
 import deleteResource from '../utils/resource/deleteResource';
 
-export default function generateMutationResolvers(Schema: MongqlMongooseSchema, SchemaInfo: ISchemaInfo): any {
+export default function generateMutationResolvers(Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaInfo): any {
   const { mongql: { resource, generate: { mutation } } } = Schema;
 
   const capitalizedResource = resource.charAt(0).toUpperCase() + resource.substr(1);

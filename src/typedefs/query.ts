@@ -2,7 +2,7 @@ import pluralize from 'pluralize';
 import S from 'voca';
 import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
 
-import { MongqlMongooseSchema, RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode } from "../types";
+import { IMongqlMongooseSchemaFull, RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode } from "../types";
 
 const ArgumentMap = {
   paginated: [
@@ -29,7 +29,7 @@ const ArgumentMap = {
   ]
 };
 
-export default function (Schema: MongqlMongooseSchema, TypedefAST: MutableDocumentNode) {
+export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableDocumentNode) {
   const ast = documentApi().addSDL(TypedefAST);
   const doesQueryExtExists = ast.hasExt('Query');
   const { mongql: { resource: r, generate: { query } } } = Schema;

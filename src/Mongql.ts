@@ -5,7 +5,7 @@ import mkdirp from 'mkdirp';
 import fs from 'fs-extra';
 import path from 'path';
 import S from 'voca';
-import { makeExecutableSchema } from '@graphql-tools/schema';
+import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
 import gql from "graphql-tag"
 import mongoose from 'mongoose';
 import { Schema, Model } from "mongoose"
@@ -14,17 +14,16 @@ import { DocumentNode } from "graphql";
 import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
 
-import { IMongqlGlobalConfigsOption, MongqlMongooseSchema, ITransformedPart, IMongqlGlobalConfigs, IMongqlSchemaConfigs } from "./types";
+import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlBaseSchemaConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial } from "./types";
 
 import { generateGlobalConfigs, generateSchemaConfigs } from "./utils/generate/configs";
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
 import loadFiles from "./utils/loadFiles";
 
-const AsyncForEach = async (arr: readonly any[], cb: Function) => {
-  for (let index = 0; index < arr.length; index++) {
-    await cb(arr[index], index, arr);
-  }
+async function AsyncForEach<T>(arr: readonly T[], cb: Function) {
+  for (let index = 0; index < arr.length; index++)
+    await cb(arr[index] as T, index, arr);
 }
 
 const BaseTypeDefs = gql`
@@ -55,12 +54,12 @@ const BaseTypeDefs = gql`
 `;
 
 class Mongql {
-  #globalConfigs: IMongqlGlobalConfigs | IMongqlGlobalConfigsOption = { Schemas: [] };
+  #globalConfigs: IMongqlGlobalConfigsPartial = { Schemas: [] };
   #resources: string[] = [];
 
-  constructor(options: IMongqlGlobalConfigsOption) {
+  constructor(options: IMongqlGlobalConfigsPartial) {
     this.#globalConfigs = generateGlobalConfigs(options);
-    this.#globalConfigs.Schemas = this.#populateSchemas(options)
+    this.#globalConfigs.Schemas = this.#populateSchemas(options);
     this.#globalConfigs.Schemas.forEach((schema) => {
       if (schema.mongql === undefined)
         throw new Error(
@@ -70,12 +69,12 @@ class Mongql {
       if (resource === undefined)
         throw new Error(colors.red.bold(`Provide the mongoose schema resource key for mongql`));
       else this.#resources.push(resource);
-      schema.mongql = this.#createDefaultSchemaConfigs(schema.mongql);
-    })
+      schema.mongql = generateSchemaConfigs(schema.mongql, this.#globalConfigs as IMongqlGlobalConfigsFull);
+    });
   }
 
-  #populateSchemas = (options: IMongqlGlobalConfigsOption): MongqlMongooseSchema[] => {
-    let imported_schemas: MongqlMongooseSchema[] = [];
+  #populateSchemas = (options: IMongqlGlobalConfigsPartial): IMongqlMongooseSchemaPartial[] => {
+    let imported_schemas: IMongqlMongooseSchemaPartial[] = [];
     if (typeof options.Schemas === 'string') {
       const schemaPath = options.Schemas;
       const files = fs.readdirSync(schemaPath);
@@ -87,13 +86,15 @@ class Mongql {
         if (fileWithoutExt !== "index" && imported.mongql.skip !== true) {
           imported_schemas.push(imported);
           imported.mongql.resource = S.capitalize(imported.mongql.resource);
+          if (imported.mongql.TypeDefs && typeof imported.mongql.TypeDefs === 'string') imported.mongql.TypeDefs = gql(imported.mongql.TypeDefs);
         }
       });
     }
     else
-      imported_schemas = (options.Schemas as MongqlMongooseSchema[]).filter(schema => {
+      imported_schemas = (options.Schemas as IMongqlMongooseSchemaPartial[]).filter(schema => {
         if (schema.mongql.skip !== true) {
           schema.mongql.resource = S.capitalize(schema.mongql.resource);
+          if (schema.mongql.TypeDefs && typeof schema.mongql.TypeDefs === 'string') schema.mongql.TypeDefs = gql(schema.mongql.TypeDefs);
           return true;
         }
       })
@@ -103,8 +104,6 @@ class Mongql {
   }
 
   getResources = () => this.#resources;
-
-  #createDefaultSchemaConfigs = (baseSchema: IMongqlSchemaConfigs): IMongqlSchemaConfigs => generateSchemaConfigs(baseSchema, this.#globalConfigs as IMongqlGlobalConfigs)
 
   #addExtraTypedefsAndResolvers = (TransformedTypedefs: ITransformedPart, TransformedResolvers: ITransformedPart) => {
 
@@ -130,16 +129,16 @@ class Mongql {
       Typedefs,
       Resolvers,
       Schemas
-    } = this.#globalConfigs as IMongqlGlobalConfigs;
+    } = this.#globalConfigs as IMongqlGlobalConfigsFull;
 
     const InitTypedefs: { [key: string]: DocumentNode } = typeof Typedefs.init === 'string' ? loadFiles(Typedefs.init) : Typedefs.init;
     const InitResolvers: { [key: string]: Object } = typeof Resolvers.init === 'string' ? loadFiles(Resolvers.init) : Resolvers.init;
 
-    await AsyncForEach(Schemas, async (Schema: MongqlMongooseSchema) => {
+    await AsyncForEach(Schemas, async (Schema: IMongqlMongooseSchemaFull) => {
       const {
         mongql
       } = Schema;
-      const { resource, generate, output } = mongql;
+      const { resource, output } = mongql;
       let typedefsAST: undefined | DocumentNode = InitTypedefs[resource], resolver: undefined | Object = InitResolvers[resource];
       const generated = await generateTypedefs(
         Schema,
@@ -161,6 +160,7 @@ class Mongql {
       TransformedTypedefs.arr.push(typedefsAST);
       TransformedResolvers.obj[resource] = resolver;
       TransformedResolvers.arr.push(resolver);
+      delete Schema.mongql;
     });
 
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
@@ -171,15 +171,14 @@ class Mongql {
     };
   }
 
-  // async generateSchema(additionalOptions) {
-  //   const { TransformedTypedefs, TransformedResolvers } = await this.generate();
-
-  //   return makeExecutableSchema({
-  //     typeDefs: TransformedTypedefs.arr,
-  //     resolvers: TransformedResolvers.arr,
-  //     ...additionalOptions
-  //   });
-  // }
+  async generateSchema(additionalOptions: IExecutableSchemaDefinition) {
+    const { TransformedTypedefs, TransformedResolvers } = await this.generate();
+    return makeExecutableSchema({
+      ...additionalOptions,
+      typeDefs: TransformedTypedefs.arr,
+      resolvers: TransformedResolvers.arr,
+    });
+  }
 
   static async outputSDL(path: string, typedefs: DocumentNode, resource: string) {
     if (path) {
@@ -194,7 +193,7 @@ class Mongql {
 
   generateModels(): { [key: string]: Model<any> } {
     const res: { [key: string]: Model<any> } = {};
-    (this.#globalConfigs as IMongqlGlobalConfigs).Schemas.forEach((schema) => {
+    (this.#globalConfigs as IMongqlGlobalConfigsFull).Schemas.forEach((schema) => {
       const { mongql: { resource } } = schema;
       res[resource] = mongoose.model(S.capitalize(resource), schema);
     });

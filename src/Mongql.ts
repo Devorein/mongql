@@ -93,7 +93,7 @@ class Mongql {
       });
     }
     else
-      imported_schemas = (options.Schemas as IMongqlMongooseSchemaPartial[]).filter(schema => {
+      imported_schemas = (options.Schemas).filter(schema => {
         if (schema.mongql.skip !== true) {
           schema.mongql.resource = S.capitalize(schema.mongql.resource);
           if (schema.mongql.TypeDefs && typeof schema.mongql.TypeDefs === 'string') schema.mongql.TypeDefs = gql(schema.mongql.TypeDefs);
@@ -132,7 +132,6 @@ class Mongql {
       Resolvers,
       Schemas
     } = this.#globalConfigs as IMongqlGlobalConfigsFull;
-
     const InitTypedefs: { [key: string]: DocumentNode } = typeof Typedefs.init === 'string' ? loadFiles(Typedefs.init) : Typedefs.init;
     const InitResolvers: { [key: string]: Object } = typeof Resolvers.init === 'string' ? loadFiles(Resolvers.init) : Resolvers.init;
 

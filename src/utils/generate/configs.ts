@@ -43,7 +43,7 @@ function generateSchemaConfigs(MongqlSchemaConfig: MongqlSchemaConfigsPartial, M
     type: nestedObjPopulation(ModifiedMongqlSchemaConfig?.generate?.type, ModifiedMongqlGlobalConfig.generate.type),
     query: nestedObjPopulation(ModifiedMongqlSchemaConfig?.generate?.query, ModifiedMongqlGlobalConfig.generate.query)
   };
-  return populateObjDefaultValue(ModifiedMongqlSchemaConfig, { ...ModifiedMongqlGlobalConfig, skip: false });
+  return populateObjDefaultValue(ModifiedMongqlSchemaConfig, { ...ModifiedMongqlGlobalConfig, skip: false, uniqueBy: undefined });
 }
 
 /**

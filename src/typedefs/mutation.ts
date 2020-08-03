@@ -22,36 +22,26 @@ const ArgumentMap = {
     ],
     multi: ({ pr, cr }: ArgumentMapFnParam) => [
       {
-        name: `data`,
+        name: `datas`,
         type: `[Create${cr}Input!]!`,
         description: `input to create multiple ${pr}`
       }
     ]
   },
   update: {
-    single: ({ r, pr, cr }: ArgumentMapFnParam) => [
+    single: ({ pr, cr }: ArgumentMapFnParam) => [
       {
         name: `data`,
         type: `Update${cr}Input!`,
         description: `input to update single ${pr}`
       },
-      {
-        name: 'id',
-        type: 'ID!',
-        description: `id of the single ${r} to update`
-      }
     ],
     multi: ({ pr, cr }: ArgumentMapFnParam) => [
       {
-        name: `data`,
+        name: `datas`,
         type: `[Update${cr}Input!]!`,
         description: `input to update multiple ${pr}`
       },
-      {
-        name: 'ids',
-        type: '[ID!]!',
-        description: `ids of the multiple ${pr} to update`
-      }
     ]
   },
   delete: {

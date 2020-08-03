@@ -189,7 +189,8 @@ export interface IMongqlBaseSchemaConfigsFull {
   skip: boolean,
   output: IOutputFull,
   TypeDefs: DocumentNode | undefined,
-  Resolvers: IResolverFull | undefined
+  Resolvers: IResolverFull | undefined,
+  uniqueBy: undefined | string
 }
 
 export interface IMongqlBaseSchemaConfigsPartial {
@@ -198,7 +199,8 @@ export interface IMongqlBaseSchemaConfigsPartial {
   skip?: boolean,
   output?: IOutputPartial,
   TypeDefs?: DocumentNode,
-  Resolvers?: IResolverPartial
+  Resolvers?: IResolverPartial,
+  uniqueBy?: string
 }
 
 export interface IMongqlNestedSchemaConfigsFull extends IMongqlFieldConfigsFull {

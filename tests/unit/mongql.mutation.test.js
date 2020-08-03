@@ -9,9 +9,9 @@ const mutationOpts = [];
 
 const MutationMap = {
   createUser: ['data:CreateUserInput!', 'SelfUserObject!'],
-  createUsers: ['data:[CreateUserInput!]!', '[SelfUserObject!]!'],
-  updateUser: ['data:UpdateUserInput!,id:ID!', 'SelfUserObject!'],
-  updateUsers: ['data:[UpdateUserInput!]!,ids:[ID!]!', '[SelfUserObject!]!'],
+  createUsers: ['datas:[CreateUserInput!]!', '[SelfUserObject!]!'],
+  updateUser: ['data:UpdateUserInput!', 'SelfUserObject!'],
+  updateUsers: ['datas:[UpdateUserInput!]!', '[SelfUserObject!]!'],
   deleteUser: ['id:ID!', 'SelfUserObject!'],
   deleteUsers: ['ids:[ID!]!', '[SelfUserObject!]!']
 };

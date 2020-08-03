@@ -1,11 +1,33 @@
 import { Model } from "mongoose";
-import { ISchemaInfo } from "../../types";
 
-export default async function (model: Model<any>, userId: string, data: any, SchemaInfo: ISchemaInfo) {
-  const { Types } = SchemaInfo;
-  Types.objects.forEach(object => {
-    console.log(object)
-  })
+import { ISchemaInfo, IMongqlBaseSchemaConfigsFull } from "../../types";
+
+async function createResource(model: Model<any>, data: any, userId: string, SchemaInfo: ISchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull) {
+  const { uniqueBy } = SchemaConfig;
+  // Check if previous resource with same uniqueBy key exists
+  if (uniqueBy) {
+    const alreadyExists = await model.countDocuments({
+      [uniqueBy]: data[uniqueBy],
+      user: userId
+    }) > 0;
+    if (alreadyExists)
+      throw new Error(`You already have an environment named ${data.name}`);
+  }
+
   data.user = userId;
-  return await model.create(data);
+  // Call the precreate and postcreate static methods on the schema if they exists
+  if (typeof model.schema.statics.precreate === 'function') await model.schema.statics.precreate(data, SchemaInfo);
+  const resource = await model.create(data);
+  if (typeof model.schema.statics.postcreate === 'function') await model.schema.statics.postcreate(data, SchemaInfo);
+  return resource;
+}
+
+export default async function (model: Model<any>, datas: any | any[], userId: string, SchemaInfo: ISchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull) {
+  if (Array.isArray(datas)) {
+    const created_resources = [];
+    for (let i = 0; i < datas.length; i++)
+      created_resources.push(await createResource(model, datas[i], userId, SchemaInfo, SchemaConfig));
+    return created_resources
+  }
+  else return await createResource(model, datas, userId, SchemaInfo, SchemaConfig)
 }

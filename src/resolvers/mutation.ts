@@ -14,34 +14,28 @@ export default function generateMutationResolvers(Schema: IMongqlMongooseSchemaF
 
   const MutationResolvers: { [key: string]: any } = {};
   const MutationResolversMapper = {
-    'create': {
+    create: {
       single: async function (parent: any, args: any, ctx: any) {
-        return await createResource(ctx[capitalizedResource], ctx.user.id, args.data, SchemaInfo);
+        return await createResource(ctx[capitalizedResource], args.data, ctx.user.id, SchemaInfo, Schema.mongql);
       },
       multi: async function (parent: any, args: any, ctx: any) {
-        return await createResource(ctx[capitalizedResource], ctx.user.id, args.data, SchemaInfo);
+        return await createResource(ctx[capitalizedResource], args.datas, ctx.user.id, SchemaInfo, Schema.mongql);
       }
     },
     update: {
       single: async function (parent: any, args: any, ctx: any) {
-        args.data.id = args.id;
-        return (await updateResource(ctx[capitalizedResource], [args.data], ctx.user.id, (err: Error) => {
-          throw err;
-        }))[0];
+        return (await updateResource(ctx[capitalizedResource], args.data, ctx.user.id, SchemaInfo));
       },
       multi: async function (parent: any, args: any, ctx: any) {
-        (args.ids as string[]).forEach((id, i) => (args.data[i].id = id));
-        return await updateResource(ctx[capitalizedResource], args.data, ctx.user.id, (err: Error) => {
-          throw err;
-        });
+        return await updateResource(ctx[capitalizedResource], args.datas, ctx.user.id, SchemaInfo);
       }
     },
     delete: {
       single: async function (parent: any, args: any, ctx: any) {
-        return ((await deleteResource(ctx[capitalizedResource], [args.id], ctx.user.id)) as Promise<any>[])[0];
+        return await deleteResource(ctx[capitalizedResource], args.id, ctx.user.id, SchemaInfo);
       },
       multi: async function (parent: any, args: any, ctx: any) {
-        return await deleteResource(ctx[capitalizedResource], args.ids, ctx.user.id);
+        return await deleteResource(ctx[capitalizedResource], args.ids, ctx.user.id, SchemaInfo);
       }
     }
   };

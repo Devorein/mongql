@@ -2,6 +2,9 @@ import { Schema, } from "mongoose";
 import { DocumentNode, DefinitionNode, TypeNode } from "graphql";
 import { EnumTypeApi, UnionTypeApi, InterfaceTypeApi, ObjectTypeApi, InputTypeApi } from "graphql-extra";
 
+/**
+ * Mongql.generate() interface for TransformedTypedefs and TransformedResolvers
+ */
 export interface ITransformedPart {
   obj: {
     [key: string]: any
@@ -10,18 +13,21 @@ export interface ITransformedPart {
 }
 
 /**
- * Mongql Mongoose schema Interfaace with additional mongql field
+ * Mongql Mongoose partial schema Interface with additional partial mongql field
  */
 export interface IMongqlMongooseSchemaPartial extends Schema {
   mongql: IMongqlBaseSchemaConfigsPartial,
 }
 
+/**
+ * Mongql Mongoose full schema Interface with additional full mongql field
+ */
 export interface IMongqlMongooseSchemaFull extends Schema {
   mongql: IMongqlBaseSchemaConfigsFull,
 }
 
 /**
- * Partial interface of Query part generate config
+ * Partial interface for Query part in generate option
  */
 export interface IGenerateQueryPartPartial {
   whole?: boolean,
@@ -30,7 +36,7 @@ export interface IGenerateQueryPartPartial {
 }
 
 /**
- * FuLL interface of Query part generate config
+ * FuLL interface for Query part in generate option
  */
 export interface IGenerateQueryPartFull {
   whole: boolean,
@@ -39,7 +45,7 @@ export interface IGenerateQueryPartFull {
 }
 
 /**
- * Partial interface of Query auth generate config
+ * Partial interface for Query auth in generate option
  */
 export interface IGenerateQueryAuthPartial {
   self?: boolean | IGenerateQueryPartPartial,
@@ -48,7 +54,7 @@ export interface IGenerateQueryAuthPartial {
 }
 
 /**
- * Full interface of Query auth generate config
+ * Full interface for Query auth in generate option
  */
 export interface IGenerateQueryAuthFull {
   self: IGenerateQueryPartFull,
@@ -57,7 +63,7 @@ export interface IGenerateQueryAuthFull {
 }
 
 /**
- * partial interface of Query range generate config
+ * partial interface for Query range in generate option
  */
 export interface IGenerateQueryRangePartial {
   all?: boolean | IGenerateQueryAuthPartial,
@@ -67,7 +73,7 @@ export interface IGenerateQueryRangePartial {
 }
 
 /**
- * Full interface of Query range generate config
+ * Full interface for Query range in generate option
  */
 export interface IGenerateQueryRangeFull {
   all: IGenerateQueryAuthFull,
@@ -76,34 +82,61 @@ export interface IGenerateQueryRangeFull {
   id: IGenerateQueryAuthFull
 }
 
+/**
+ * Partial interface for Query in generate option
+ */
 export interface IGenerateQueryPartial extends IGenerateQueryRangePartial, IGenerateQueryAuthPartial, IGenerateQueryPartPartial { }
+/**
+ * Full interface for Query in generate option
+ */
 export type IGenerateQueryFull = IGenerateQueryRangeFull;
 
+/**
+ * Partial interface for Mutation target in generate option
+ */
 export interface IGenerateMutationTargetPartial {
   single?: boolean,
   multi?: boolean
 }
 
+/**
+ * Full interface for Mutation target in generate option
+ */
 export interface IGenerateMutationTargetFull {
   single: boolean,
   multi: boolean
 }
 
+/**
+ * Partial interface for Mutation action in generate option
+ */
 export interface IGenerateMutationActionPartial {
   create?: boolean | IGenerateMutationTargetPartial,
   update?: boolean | IGenerateMutationTargetPartial,
   delete?: boolean | IGenerateMutationTargetPartial,
 }
 
+/**
+ * Full interface for Mutation action in generate option
+ */
 export interface IGenerateMutationActionFull {
   create: IGenerateMutationTargetFull,
   update: IGenerateMutationTargetFull,
   delete: IGenerateMutationTargetFull,
 }
 
+/**
+ * Partial interface for Mutation in generate option
+ */
 export interface IGenerateMutationPartial extends IGenerateMutationActionPartial, IGenerateMutationTargetPartial { }
+/**
+ * Full interface for Mutation in generate option
+ */
 export type IGenerateMutationFull = IGenerateMutationActionFull
 
+/**
+ * Partial interface for Type in generate option
+ */
 export interface IGenerateTypePartial {
   input?: {
     create?: boolean,
@@ -119,6 +152,9 @@ export interface IGenerateTypePartial {
   }
 }
 
+/**
+ * Full interface for Type in generate option
+ */
 export interface IGenerateTypeFull {
   input: {
     create: boolean,
@@ -134,28 +170,43 @@ export interface IGenerateTypeFull {
   }
 }
 
+/**
+ * Partial interface for generate in generate option
+ */
 export interface IGeneratePartial {
   query?: boolean | IGenerateQueryPartial,
   mutation?: boolean | IGenerateMutationPartial,
   type?: boolean | IGenerateTypePartial
 }
 
+/**
+ * Full interface for generate in generate option
+ */
 export interface IGenerateFull {
   query: IGenerateQueryFull,
   mutation: IGenerateMutationFull,
   type: IGenerateTypeFull
 }
 
+/**
+ * Partial type for Global and baseschema output config 
+ */
 export type IOutputPartial = {
   SDL?: string,
   AST?: string
 }
 
+/**
+ * Full type for Global and baseschema output config 
+ */
 export type IOutputFull = {
-  SDL: string,
-  AST: string
+  SDL: string | undefined,
+  AST: string | undefined
 }
 
+/**
+ * Partial interface for Mongql Global configs
+ */
 export interface IMongqlGlobalConfigsPartial {
   Schemas: ReadonlyArray<IMongqlMongooseSchemaPartial>,
   readonly Typedefs?: {
@@ -168,6 +219,9 @@ export interface IMongqlGlobalConfigsPartial {
   output?: IOutputPartial
 }
 
+/**
+ * Full interface for Mongql Global configs
+ */
 export interface IMongqlGlobalConfigsFull {
   Schemas: ReadonlyArray<IMongqlMongooseSchemaFull>,
   readonly Typedefs: {
@@ -181,7 +235,7 @@ export interface IMongqlGlobalConfigsFull {
 }
 
 /**
- * Mongql Schema Configs
+ * Full interface for Mongql BaseSchema Configs
  */
 export interface IMongqlBaseSchemaConfigsFull {
   resource: string,
@@ -193,6 +247,9 @@ export interface IMongqlBaseSchemaConfigsFull {
   uniqueBy: undefined | string
 }
 
+/**
+ * Partial interface for Mongql BaseSchema Configs
+ */
 export interface IMongqlBaseSchemaConfigsPartial {
   resource: string,
   generate?: IGeneratePartial,
@@ -203,54 +260,93 @@ export interface IMongqlBaseSchemaConfigsPartial {
   uniqueBy?: string
 }
 
+/**
+ * Full interface for Mongql NestedSchema Configs extending Mongql Field Config
+ */
 export interface IMongqlNestedSchemaConfigsFull extends IMongqlFieldConfigsFull {
   generate: IGenerateFull,
 }
 
+/**
+ * Partial interface for Mongql NestedSchema Configs extending Mongql Field Config
+ */
 export interface IMongqlNestedSchemaConfigsPartial extends IMongqlFieldConfigsPartial {
   generate?: IGeneratePartial,
 }
 
+/**
+ * Full type for Field config attach.object option
+ */
 export type MongqlFieldAttachObjectConfigsFull = {
   [key in AuthEnumString]: boolean
 }
 
+/**
+ * Partial type for Field config attach.object option
+ */
 export type MongqlFieldAttachObjectConfigsPartial = {
   [key in AuthEnumString]?: boolean
 }
 
+/**
+ * Full type for Field config attach.input option
+ */
 export type MongqlFieldAttachInputConfigsFull = {
   [key in InputActionEnumString]: boolean
 }
 
+/**
+ * Partial type for Field config attach.input option
+ */
 export type MongqlFieldAttachInputConfigsPartial = {
   [key in InputActionEnumString]?: boolean
 }
 
+/**
+ * Full type for Field config nullable.object option
+ */
 export type MongqlFieldNullableObjectConfigsFull = {
   [key in AuthEnumString]: boolean[]
 }
 
+/**
+ * Partial type for Field config nullable.object option
+ */
 export type MongqlFieldNullableObjectConfigsPartial = {
   [key in AuthEnumString]?: boolean[]
 }
 
+/**
+ * Full type for Field config nullable.input option
+ */
 export type MongqlFieldNullableInputConfigsFull = {
   [key in InputActionEnumString]: boolean[]
 }
 
+/**
+ * Partial type for Field config nullable.input option
+ */
 export type MongqlFieldNullableInputConfigsPartial = {
   [key in InputActionEnumString]?: boolean[]
 }
 
+/**
+ * Partial type for Field config authMapper option
+ */
 export type MongqlFieldAuthMapperConfigsPartial = {
   [key in AuthEnumString]?: key
 }
 
+/**
+ * Full type for Field config authMapper option
+ */
 export type MongqlFieldAuthMapperConfigsFull = {
   [key in AuthEnumString]: key
 }
 
+/**
+ * Full interface for Mongql Field Configs
+ */
 export interface IMongqlFieldConfigsFull {
   description: string | undefined,
   nullable: {
@@ -266,6 +362,9 @@ export interface IMongqlFieldConfigsFull {
   authMapper: MongqlFieldAuthMapperConfigsFull
 }
 
+/**
+ * Partial interface for Mongql Field Configs
+ */
 export interface IMongqlFieldConfigsPartial {
   description?: string,
   nullable?: {
@@ -281,27 +380,39 @@ export interface IMongqlFieldConfigsPartial {
   authMapper?: MongqlFieldAuthMapperConfigsPartial
 }
 
-export interface FieldInfo {
-  input_type: string,
+/**
+ * Generated info for mongoose field
+ */
+export interface FieldInfo extends ISpecificTypeInfo {
   generic_type: string,
-  ref_type: string,
-  object_type: string,
   excludedAuthSegments: string[],
   fieldDepth: number
 }
 
+/**
+ * Mongoose field generated config and info
+ */
 export interface FieldFullInfo extends IMongqlFieldConfigsFull, FieldInfo { }
 
+/**
+ * Mongoose field generated specific type info
+ */
 export interface ISpecificTypeInfo {
   object_type: string,
   input_type: string,
   ref_type: string
 }
 
+/**
+ * Extended ObjectTypeApi having fields key
+ */
 interface ExtendedObjectTypeApi extends ObjectTypeApi {
   fields: { [key: string]: FieldFullInfo }
 }
 
+/**
+ * Generated types by mongql types generation
+ */
 export interface IMongqlGeneratedTypes {
   enums: { [key: string]: EnumTypeApi }[],
   unions: { [key: string]: UnionTypeApi }[],
@@ -350,10 +461,6 @@ export enum PartEnum {
 
 export type PartEnumString = keyof typeof PartEnum;
 
-export interface MutableDocumentNode extends DocumentNode {
-  definitions: DefinitionNode[]
-}
-
 export enum TargetEnum {
   single,
   multi
@@ -361,12 +468,25 @@ export enum TargetEnum {
 
 export type TargetEnumString = keyof typeof TargetEnum;
 
+/**
+ * Mutable document node by making definitions key mutable
+ */
+export interface MutableDocumentNode extends DocumentNode {
+  definitions: DefinitionNode[]
+}
+
+/**
+ * Full Resolver implementation
+ */
 export interface IResolverFull {
   Query: { [key: string]: any },
   Mutation: { [key: string]: any },
   [key: string]: any
 }
 
+/**
+ * Partial Resolver implementation
+ */
 export interface IResolverPartial {
   Query?: { [key: string]: any },
   Mutation?: { [key: string]: any },
@@ -379,6 +499,9 @@ export type FieldsFullInfo = {
 
 export type FieldsFullInfos = FieldsFullInfo[];
 
+/**
+ * Generated Schema Info containing Fields and Types info
+ */
 export interface ISchemaInfo {
   Fields: FieldsFullInfos,
   Types: IMongqlGeneratedTypes
@@ -390,6 +513,9 @@ export interface IMongqlTypeNode {
   name: string
 }
 
+/**
+ * Mongql pagination input for resolvers
+ */
 export interface IPaginationInput {
   page: number,
   limit: number,
@@ -402,5 +528,12 @@ export interface IMongqlGenerateOptions {
   fields: string[]
 }
 
+/**
+ * Mongql Partial type for base or nested Schema config
+ */
 export type MongqlSchemaConfigsPartial = IMongqlBaseSchemaConfigsPartial | IMongqlNestedSchemaConfigsPartial;
+
+/**
+ * Mongql Full type for base or nested Schema config
+ */
 export type MongqlSchemaConfigsFull = IMongqlBaseSchemaConfigsFull | IMongqlNestedSchemaConfigsFull; 

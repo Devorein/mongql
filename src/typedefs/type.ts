@@ -167,7 +167,8 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
     const Inputs = Types.inputs[path.length];
     const Unions = Types.unions[path.length];
 
-    const UnionsObjTypes: NamedTypeNode[] = []
+    const UnionsObjTypes: NamedTypeNode[] = [];
+
     innerSchema_included_auth_segments.forEach((auth) => {
       const ObjectName = `${S.capitalize(auth)}${Type}Object`;
       Objects[ObjectName] = Object.assign({}, objectTypeApi(
@@ -178,6 +179,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
           interfaces: GeneratedSchemaConfigs.generate.type.interface ? [`${Type}Interface`] : []
         })
       ), { fields: {} });
+      if (!parentKey) Objects[ObjectName].createField({ name: 'id', type: 'ID!' });
       UnionsObjTypes.push({
         kind: 'NamedType',
         name: {
@@ -203,6 +205,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
           fields: []
         })
       );
+      if (action === 'Update' && !parentKey) Inputs[`${action}${Type}Input`].createField({ name: 'id', type: 'ID!' });
     })
 
     Interfaces[`${Type}Interface`] = interfaceTypeApi(
@@ -212,6 +215,8 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
         fields: []
       })
     );
+
+    if (!parentKey) Interfaces[`${Type}Interface`].createField({ name: 'id', type: 'ID!' });
 
     if (!Fields[path.length]) Fields.push({});
 

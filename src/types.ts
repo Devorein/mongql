@@ -278,7 +278,7 @@ export interface IMongqlFieldConfigsPartial {
     interface?: boolean,
     enum?: boolean
   },
-  authMapper: MongqlFieldAuthMapperConfigsPartial
+  authMapper?: MongqlFieldAuthMapperConfigsPartial
 }
 
 export interface FieldInfo {

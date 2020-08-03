@@ -4,6 +4,11 @@ import S from 'voca';
 import gql from "graphql-tag";
 import { DocumentNode } from 'graphql';
 
+/**
+ * Loads typedefs and resolvers from a path
+ * **WARNING** This part of the API might be replaced with `@graphql-tools/load-files`
+ * @param _path Path to load files from
+ */
 export default function (_path: string) {
   const res: { [key: string]: DocumentNode } = {};
   fs.readdirSync(_path).forEach((file) => {

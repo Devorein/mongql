@@ -2,11 +2,12 @@ import mongoose, { Schema } from 'mongoose';
 
 /**
  * Calculate the depth of a mongoose field
- * @param {Object} InitSchema initital mongooseSchema to merge to 
- * @param {Object} AdditionalSchema Additional mongooseSchema to merge to
- * @returns {Schema} newly generated mongooseSchema
+ * @param InitSchema initital mongooseSchema to merge to 
+ * @param AdditionalSchema Additional mongooseSchema to merge to
+ * @param option option to pass to mongoose.schema
+ * @returns newly generated mongooseSchema
  */
-function extendSchema(InitSchema: any, AdditionalSchema: any, options: any): Schema {
+function extendSchema(InitSchema: { [key: string]: any }, AdditionalSchema: { [key: string]: any }, options: any): Schema {
   return new mongoose.Schema(
     Object.assign({}, InitSchema.obj, AdditionalSchema),
     options
@@ -14,9 +15,9 @@ function extendSchema(InitSchema: any, AdditionalSchema: any, options: any): Sch
 }
 
 /**
- * Calculate the depth of a mongoose field
- * @param {MongooseField} MongooseField MongooseField to calculate depth of
- * @returns {int} Depth of the mongoose field
+ * Calculate the depth of a mongoose field and extract it
+ * @param MongooseField MongooseField to calculate depth of
+ * @returns Depth of the mongoose field and the nested mongoose field
  */
 function calculateFieldDepth(MongooseField: any): [number, any] {
   let fieldDepth = 0;

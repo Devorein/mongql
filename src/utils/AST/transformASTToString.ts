@@ -1,6 +1,11 @@
 import { TypeNode, InputValueDefinitionNode, NonNullTypeNode, ListTypeNode, NamedTypeNode } from 'graphql/language/ast';
 import { IMongqlTypeNode } from "../../types";
 
+/**
+ * Traverses a typenode and extracts necessary information as an array
+ * @param type Typenode to traverse
+ * @returns extracted info object
+ */
 function traverseType(type: TypeNode): IMongqlTypeNode[] {
   const types = [];
   function _wrapper(ast: TypeNode) {
@@ -12,16 +17,26 @@ function traverseType(type: TypeNode): IMongqlTypeNode[] {
   return types;
 }
 
-function convertToString(args: IMongqlTypeNode[]): string {
-  const name = args[0].name;
+/**
+ * Convert generated Typenode array to string
+ * @param typenodes Convert generated Typenode array
+ * @return String representation of type node
+ */
+function convertToString(typenodes: IMongqlTypeNode[]): string {
+  const name = typenodes[0].name;
   let res = name;
-  args.forEach((arg: IMongqlTypeNode) => {
-    if (arg.kind === 'NonNullType') res = `${res}!`;
-    else if (arg.kind === 'ListType') res = `[${res}]`;
+  typenodes.forEach((typenode: IMongqlTypeNode) => {
+    if (typenode.kind === 'NonNullType') res = `${res}!`;
+    else if (typenode.kind === 'ListType') res = `[${res}]`;
   })
   return res;
 }
 
+/**
+ * Converts argument nodes to string representation
+ * @param argAst Argument node to convert to string
+ * @return String representation of arguments
+ */
 export function argumentsToString(argAst: InputValueDefinitionNode[]) {
   const args: string[] = [];
   if (argAst)
@@ -33,6 +48,11 @@ export function argumentsToString(argAst: InputValueDefinitionNode[]) {
   return args.join(',');
 }
 
+/**
+ * Converts a typenode to string representation
+ * @param outputAst Typenode to convert
+ * @return String representation of type
+ */
 export function outputToString(outputAst: TypeNode) {
   return convertToString(traverseType(outputAst));
 }

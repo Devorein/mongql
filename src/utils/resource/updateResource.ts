@@ -9,6 +9,14 @@ async function updateResource(model: Model<any>, data: any, userId: string, Sche
   return updated_resource;
 }
 
+/**
+ * Updates and returns the updated resource
+ * @param model Model to update document from
+ * @param datas Data required to update
+ * @param userId Id of the user thats deleting the resource
+ * @param SchemaInfo Information related to the MongooseSchema
+ * @returns updated resource(s)
+ */
 export default async function (model: Model<any>, datas: any | any[], userId: string, SchemaInfo: ISchemaInfo) {
   if (Array.isArray(datas)) {
     const updated_resources = [];

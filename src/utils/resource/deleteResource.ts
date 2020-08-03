@@ -13,6 +13,14 @@ async function deleteResource(model: Model<any>, id: string, userId: string, Sch
   return deleted_resource;
 }
 
+/**
+ * Deletes and returns the deleted resource
+ * @param model Model to delete document from
+ * @param datas Data required to delete
+ * @param userId Id of the user thats deleting the resource
+ * @param SchemaInfo Information related to the MongooseSchema
+ * @returns deleted resource(s)
+ */
 export default async function (model: Model<any>, ids: string | string[], userId: string, SchemaInfo: ISchemaInfo) {
   if (Array.isArray(ids)) {
     const deleted_resources = [];

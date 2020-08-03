@@ -1,3 +1,8 @@
+/**
+ * Parses and returns the sort string
+ * @param sort The sort string to parse
+ * @returns extracted sort
+ */
 export default function (sort: string) {
   const transformed_sort: { [key: string]: -1 | 1 } = {};
   if (sort && sort !== '') {

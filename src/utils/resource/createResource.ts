@@ -22,6 +22,15 @@ async function createResource(model: Model<any>, data: any, userId: string, Sche
   return resource;
 }
 
+/**
+ * Creates and returns the created resource
+ * @param model Model to create document from
+ * @param datas Data required to create
+ * @param userId Id of the user thats creating the resource
+ * @param SchemaInfo Information related to the MongooseSchema
+ * @param SchemaConfig Configuration of the BaseMongqlMongooseSchema
+ * @returns created resource(s)
+ */
 export default async function (model: Model<any>, datas: any | any[], userId: string, SchemaInfo: ISchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull) {
   if (Array.isArray(datas)) {
     const created_resources = [];

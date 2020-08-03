@@ -7,6 +7,9 @@ function isAlphaNumericOnly(input: string) {
   return false;
 }
 
+/**
+ * A custom graphql scalar type representating username
+ */
 export default new GraphQLScalarType({
   name: 'Username',
   description: 'A custom scalar type to represent a well formatted username',

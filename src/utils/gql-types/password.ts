@@ -6,6 +6,9 @@ function isStrongPassword(input: string) {
   return regex.test(input);
 }
 
+/**
+ * A custom graphql scalar type representating password
+ */
 export default new GraphQLScalarType({
   name: 'Password',
   description: 'A custom scalar type to represent strong password',

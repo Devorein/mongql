@@ -2,6 +2,10 @@ import { composeResolvers } from '@graphql-tools/resolvers-composition';
 
 import isAuthenticated from './middleware/auth';
 
+/**
+ * Adds authentication protection middleware to specific queries and mutations
+ * @param resolver Resolver to compose
+ */
 export default function (resolver: any) {
   const resolversComposition: { [key: string]: any } = {};
 

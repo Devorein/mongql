@@ -7,7 +7,7 @@ module.exports = {
     'jest/globals': true
   },
   parser: '@typescript-eslint/parser',
-  // extends: ["plugin:@typescript-eslint/recommended"],
+  extends: ["plugin:@typescript-eslint/recommended"],
   globals: {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly'
@@ -21,6 +21,9 @@ module.exports = {
     'no-mixed-spaces-and-tabs': 'off',
     'jest/valid-expect': 'error',
     'jest/no-identical-title': 'error',
-    'jest/no-standalone-expect': 'error'
+    'jest/no-standalone-expect': 'error',
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-var-requires": "off"
   }
 };

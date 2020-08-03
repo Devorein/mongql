@@ -162,7 +162,7 @@ export interface IMongqlGlobalConfigsPartial {
     init?: string | { [key: string]: string | DocumentNode },
   },
   readonly Resolvers?: {
-    init?: string | { [key: string]: Object },
+    init?: string | { [key: string]: IResolverPartial },
   },
   generate?: boolean | IGeneratePartial,
   output?: IOutputPartial
@@ -174,7 +174,7 @@ export interface IMongqlGlobalConfigsFull {
     init: { [key: string]: DocumentNode },
   },
   readonly Resolvers: {
-    init: { [key: string]: Object },
+    init: { [key: string]: IResolverFull },
   },
   generate: IGenerateFull,
   output: IOutputFull

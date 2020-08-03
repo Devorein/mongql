@@ -2,7 +2,7 @@ import S from 'voca';
 import { Schema } from 'mongoose';
 import { t, objectTypeApi, enumTypeApi, interfaceTypeApi, inputTypeApi, unionTypeApi, TypeDefinitonApi } from 'graphql-extra';
 import { resolvers } from 'graphql-scalars';
-import { GraphQLScalarType, DocumentNode, NamedTypeNode } from "graphql";
+import { GraphQLScalarType, NamedTypeNode, DocumentNode } from "graphql";
 
 import { IMongqlBaseSchemaConfigsFull, IMongqlFieldConfigsFull, ISpecificTypeInfo, IMongqlMongooseSchemaFull, MongqlSchemaConfigsPartial, IMongqlGeneratedTypes, MongqlFieldAttachObjectConfigsFull, AuthEnumString, InputActionEnumString, MutableDocumentNode, FieldsFullInfos, FieldInfo, FieldFullInfo } from "../types";
 import Password from "../utils/gql-types/password";
@@ -133,7 +133,7 @@ type MongqlPath = {
 function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined) {
   const BaseSchemaConfigs = BaseSchema.mongql;
   const cr = S.capitalize(BaseSchemaConfigs.resource);
-  const DocumentNode = {
+  const ResultDocumentNode = {
     kind: 'Document',
     definitions: InitTypedefsAST ? [...InitTypedefsAST.definitions] : []
   };
@@ -290,13 +290,13 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
   Object.values(Types).forEach((types) => {
     types.forEach((type: TypeDefinitonApi) => {
       Object.values(type).forEach((value) => {
-        if (hasFields(value.node)) DocumentNode.definitions.push(value.node || value);
+        if (hasFields(value.node)) ResultDocumentNode.definitions.push(value.node || value);
       });
     })
   });
 
   return {
-    DocumentAST: DocumentNode as MutableDocumentNode,
+    DocumentAST: ResultDocumentNode as MutableDocumentNode,
     SchemaInfo: {
       Types,
       Fields,

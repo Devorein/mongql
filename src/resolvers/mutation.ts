@@ -16,10 +16,10 @@ export default function generateMutationResolvers(Schema: IMongqlMongooseSchemaF
   const MutationResolversMapper = {
     'create': {
       single: async function (parent: any, args: any, ctx: any) {
-        return await createResource(ctx[capitalizedResource], ctx.user.id, args.data);
+        return await createResource(ctx[capitalizedResource], ctx.user.id, args.data, SchemaInfo);
       },
       multi: async function (parent: any, args: any, ctx: any) {
-        return await createResource(ctx[capitalizedResource], ctx.user.id, args.data);
+        return await createResource(ctx[capitalizedResource], ctx.user.id, args.data, SchemaInfo);
       }
     },
     update: {

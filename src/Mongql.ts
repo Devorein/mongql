@@ -7,21 +7,20 @@ import path from 'path';
 import S from 'voca';
 import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
 import gql from "graphql-tag"
-import mongoose from 'mongoose';
-import { Schema, Model } from "mongoose"
+import { Model } from "mongoose"
 import { DocumentNode } from "graphql";
 
 import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
 
-import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlBaseSchemaConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, IResolverPartial } from "./types";
+import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, IResolverPartial } from "./types";
 
 import { generateGlobalConfigs, generateSchemaConfigs } from "./utils/generate/configs";
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
 import loadFiles from "./utils/loadFiles";
 
-async function AsyncForEach<T>(arr: readonly T[], cb: Function) {
+async function AsyncForEach<T>(arr: readonly T[], cb: any) {
   for (let index = 0; index < arr.length; index++)
     await cb(arr[index] as T, index, arr);
 }
@@ -133,7 +132,7 @@ class Mongql {
       Schemas
     } = this.#globalConfigs as IMongqlGlobalConfigsFull;
     const InitTypedefs: { [key: string]: DocumentNode } = typeof Typedefs.init === 'string' ? loadFiles(Typedefs.init) : Typedefs.init;
-    const InitResolvers: { [key: string]: Object } = typeof Resolvers.init === 'string' ? loadFiles(Resolvers.init) : Resolvers.init;
+    const InitResolvers: { [key: string]: IResolverPartial } = typeof Resolvers.init === 'string' ? loadFiles(Resolvers.init) : Resolvers.init;
 
     await AsyncForEach(Schemas, async (Schema: IMongqlMongooseSchemaFull) => {
       const {

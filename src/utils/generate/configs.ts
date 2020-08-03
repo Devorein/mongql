@@ -56,7 +56,7 @@ function generateFieldConfigs(MongooseField: any, MongqlSchemaConfig: IMongqlBas
 
   const { mongql: MongooseFieldConfig = {} } = InnerMongooseField;
 
-  const GeneratedMongooseFieldConfig = populateObjDefaultValue(MongooseFieldConfig, {
+  const GeneratedMongooseFieldConfig = populateObjDefaultValue(MongooseFieldConfig, Object.assign({}, {
     nullable: {
       object: {
         mixed: [],
@@ -86,7 +86,7 @@ function generateFieldConfigs(MongooseField: any, MongqlSchemaConfig: IMongqlBas
       Others: 'Others',
       Self: 'Self',
     }
-  });
+  }, MongqlSchemaConfig));
 
   ['mixed', 'self', 'others'].forEach(auth => {
     let initialObjNullable = GeneratedMongooseFieldConfig.nullable.object[auth].length;

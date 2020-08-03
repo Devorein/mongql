@@ -16,9 +16,9 @@ function isPOJO(arg: any): boolean {
  * @param {any} setvalue Value to set to 
  * @returns {Object} Newly Manipulated object 
  */
-function populateNestedFields(obj: object, setvalue: any) {
+function populateNestedFields(obj: Record<string, any>, setvalue: any) {
   const temp: { [key: string]: any } = { ...obj };
-  function traverser(obj: object) {
+  function traverser(obj: Record<string, any>) {
     Object.entries(obj).forEach(([key, value]) => {
       if (!isPOJO(value)) temp[key] = setvalue;
       else traverser(value);
@@ -35,7 +35,7 @@ function populateNestedFields(obj: object, setvalue: any) {
  * @param {any} value Value to set to the nested path
  * @returns {Object} Object with nested props set
  */
-const setNestedProps = (object: any, path: string, value: any): object => {
+const setNestedProps = (object: Record<string, any>, path: string, value: any): Record<string, any> => {
   const root = object;
   const pathArray = path.split('.');
   for (let i = 0; i < pathArray.length; i++) {
@@ -88,7 +88,7 @@ function matchFlattenedObjProps(flattened_query_prop: any, flattened_merger_prop
  * @param {Object} merger Object to merge with init
  * @returns {Object} Flattened, nested props populated and merged object
  */
-function nestedObjPopulation(init: any = {}, merger: any) {
+function nestedObjPopulation(init: boolean | Record<string, any> = {}, merger: Record<string, any>) {
   merger = { ...merger };
   if (init === false) init = populateNestedFields(merger, false);
   const flattened_merger = flattenObject(merger);
@@ -134,7 +134,7 @@ function scrambler(key: string) {
   return arr;
 }
 
-function mixObjectProp(obj: any) {
+function mixObjectProp(obj: Record<string, any>) {
   const set = new Set();
   Object.entries(obj).forEach(([key]) => {
     scrambler(key).forEach((scramble) => set.add(scramble));
@@ -142,7 +142,7 @@ function mixObjectProp(obj: any) {
   return Array.from(set);
 }
 
-function populateObjDefaultValue(Initial: any, Defaults: any) {
+function populateObjDefaultValue(Initial: Record<string, any>, Defaults: Record<string, any>) {
   Initial = { ...Initial };
   Defaults = { ...Defaults };
   const flattened_initial = flattenObject(Initial);
@@ -158,10 +158,10 @@ function populateObjDefaultValue(Initial: any, Defaults: any) {
   return res;
 }
 
-function checkDeepNestedProps(object: any, check_against: any) {
+function checkDeepNestedProps(object: Record<string, any>, check_against: any) {
   const temp = { ...object };
   let res = false;
-  function traverser(obj: any) {
+  function traverser(obj: Record<string, any>) {
     Object.entries(obj).forEach(([key, value]) => {
       if (!isPOJO(value)) res = temp[key] === check_against;
       else if (!res) traverser(value);

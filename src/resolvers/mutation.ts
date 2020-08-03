@@ -6,6 +6,14 @@ import createResource from '../utils/resource/createResource';
 import updateResource from '../utils/resource/updateResource';
 import deleteResource from '../utils/resource/deleteResource';
 
+/**
+ * Generates mutation resolvers from a mongoose schema
+ * 1. Merges the Intital Mutation resolvers given via GlobalConfig or from the schema
+ * 2. Checks the generate.mutation options to figure out what needs to be generated
+ * 3. Generates based on action(CUD) and target(single, multi)
+ * @param Schema Schema to generate mutation resolvers from
+ * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
+ */
 export default function generateMutationResolvers(Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaInfo): any {
   const { mongql: { resource, generate: { mutation } } } = Schema;
 

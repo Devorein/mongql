@@ -1,5 +1,11 @@
 import { ISchemaInfo, FieldFullInfo } from "../types";
 
+/**
+ * Generates type (except query and mutation) resolvers from the Schemainfo
+ * 1. For types that are related ie `mongoose.ref` it gets the resource by its id
+ * 2. For types that are not related, it just gets the same type from its parent 
+ * @param SchemaInfo Schema related info
+ */
 export default function (SchemaInfo: ISchemaInfo) {
   const { Types: { objects } } = SchemaInfo;
   const result: { [key: string]: any } = {};

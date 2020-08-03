@@ -7,7 +7,7 @@ import path from 'path';
 import S from 'voca';
 import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
 import gql from "graphql-tag"
-import { Model } from "mongoose"
+import { Model, model } from "mongoose"
 import { DocumentNode } from "graphql";
 
 import Password from "./utils/gql-types/password"
@@ -59,7 +59,7 @@ class Mongql {
 
   constructor(options: IMongqlGlobalConfigsPartial) {
     this.#globalConfigs = generateGlobalConfigs(options);
-    this.#globalConfigs.Schemas = this.#populateSchemas(options);
+    this.#globalConfigs.Schemas = this.#populateAndFilterSchemas(options);
     this.#globalConfigs.Schemas.forEach((schema) => {
       if (schema.mongql === undefined)
         throw new Error(
@@ -70,11 +70,19 @@ class Mongql {
         throw new Error(colors.red.bold(`Provide the mongoose schema resource key for mongql`));
       else this.#resources.push(resource);
       schema.mongql = generateSchemaConfigs(schema.mongql, this.#globalConfigs as IMongqlGlobalConfigsFull);
-      // this.#models[S.capitalize(resource)] = mongoose.model(S.capitalize(resource), schema);
     });
   }
 
-  #populateSchemas = (options: IMongqlGlobalConfigsPartial): IMongqlMongooseSchemaPartial[] => {
+  /**
+   * Populates the schemas inside global configs
+   * 1. **if** Checks if the schema is a path, 
+   *    Get all the Schemas from the path
+   *    Filters all the Schemas using mongql.skip
+   * 2. **else** just filters the Schemas using mongql.skip
+   * @param {IMongqlGlobalConfigsPartial} options User given partial Mongql Global config
+   * @returns {IMongqlMongooseSchemaPartial[]} An array of partial Mongoose Schema
+   */
+  #populateAndFilterSchemas = (options: IMongqlGlobalConfigsPartial): IMongqlMongooseSchemaPartial[] => {
     let imported_schemas: IMongqlMongooseSchemaPartial[] = [];
     if (typeof options.Schemas === 'string') {
       const schemaPath = options.Schemas;
@@ -104,8 +112,16 @@ class Mongql {
     return imported_schemas;
   }
 
+  /**
+   * Returns all the Resources obtained from the Schemas
+   */
   getResources = () => this.#resources;
 
+  /**
+   * Injects additional typedefs and resolvers to TransformedTypedefs and TransformedResolvers
+   * @param TransformedTypedefs Generated Typedefs
+   * @param TransformedResolvers Generated Resolvers
+   */
   #addExtraTypedefsAndResolvers = (TransformedTypedefs: ITransformedPart, TransformedResolvers: ITransformedPart) => {
 
     TransformedTypedefs.obj.External = [...typeDefs, 'scalar Password', 'scalar Username'];
@@ -123,6 +139,12 @@ class Mongql {
     TransformedResolvers.arr.push(BaseResolver);
   }
 
+  /**
+   * Generates the Typedefs and Resolvers using Global Configs and individual schema
+   * 1. Generates the typedefs (type, query & mutation)
+   * 2. Generates the resolvers (type, query & mutation)
+   * 3. Injects additional typedefs and resolvers
+   */
   async generate() {
     const TransformedTypedefs: ITransformedPart = { obj: {}, arr: [] },
       TransformedResolvers: ITransformedPart = { obj: {}, arr: [] };
@@ -180,18 +202,34 @@ class Mongql {
     });
   }
 
-  static async outputSDL(path: string, typedefs: DocumentNode, resource: string) {
+  /**
+   * Outputs the SDL by converting the TypedefsAST
+   * @param path Output path
+   * @param TypedefsAST The AST to convert to SDL
+   * @param resource Name of the resource
+   */
+  static async outputSDL(path: string, TypedefsAST: DocumentNode, resource: string) {
     if (path) {
       try {
         await mkdirp(path);
-        await fs.writeFile(`${path}\\${resource}.graphql`, documentApi().addSDL(typedefs).toSDLString(), 'UTF-8');
+        await fs.writeFile(`${path}\\${resource}.graphql`, documentApi().addSDL(TypedefsAST).toSDLString(), 'UTF-8');
       } catch (err) {
         console.log(err.message)
       }
     }
   }
 
-  getModels = () => this.#models;
+  /**
+   * Generates models from the Schemas passed to Global Configs
+   */
+  generateModels() {
+    const res: { [key: string]: Model<any> } = {};
+    this.#globalConfigs.Schemas.forEach((schema) => {
+      const { mongql: { resource } } = schema;
+      res[resource] = model(S.capitalize(resource), schema);
+    });
+    return res;
+  }
 }
 
 export default Mongql;

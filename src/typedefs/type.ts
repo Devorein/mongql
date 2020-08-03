@@ -26,11 +26,11 @@ function snakeCapitalize(type: string): string {
 
 /**
  * Adds graphql nullable and list information to the type
- * @param {string} type The type to decorate
- * @param {boolean[]} reference reference array for decorating with list and null
- * @returns {string} Decorated type
+ * @param type The type to decorate
+ * @param reference reference array for decorating with list and null
+ * @returns Decorated type
  */
-function decorateTypes(type: string, reference: boolean[]): string {
+function decorateTypes(type: string, reference: boolean[]) {
   let currentNested = 0;
   while (currentNested < reference.length - 1) {
     type = `[${type}${!reference[currentNested] ? '!' : ''}]`;
@@ -41,9 +41,9 @@ function decorateTypes(type: string, reference: boolean[]): string {
 }
 
 /**
- * Generate the generic_type for the field
- * @param {MongooseField} value Mongoose Field to parse
- * @returns {string} The generated type generic_type of the field 
+ * Generate the generic type for the field
+ * @param value Mongoose Field to parse
+ * @returns The generated type generic type of the field 
  */
 function generateGenericType(value: any): string {
   let generic_type = 'mongoose';
@@ -57,8 +57,11 @@ function generateGenericType(value: any): string {
 
 /**
  * Parses and returns the Mongoose field GQL scalar type
- * @param {MongooseField} mongooseField Mongoose field to parse
- * @returns {string} parsed type
+ * 1. Checks mongql.scalar `name: {mongql:{scalar: PositiveInt}}`
+ * 2. Checks type.name `name: {type:String} }`
+ * 3. Field.name `name: String`
+ * @param mongooseField Mongoose field to parse
+ * @returns parsed scalar type
  */
 function parseScalarType(mongooseField: any): string {
   const scalar = mongooseField.mongql?.scalar;
@@ -80,13 +83,13 @@ function parseScalarType(mongooseField: any): string {
 }
 
 /**
- * Generate object, input and resource type without adding nullable or List syntax
- * @param {string} generic_type generic_type of the field
- * @param {MongooseField} value Mongoose field to generate type from
- * @param {string} key The name of the field
- * @param {string} parentKey The name of the parent of the field
- * @param {SchemaConfigs} SchemaConfigs Schema configuration
- * @returns {ISpecificTypeInfo} Generated type from a field
+ * Generate object, input and ref type without adding nullable or List syntax
+ * @param generic_type generic_type of the field
+ * @param value Mongoose field to generate type from
+ * @param key The name of the field
+ * @param parentKey The name of the parent of the field
+ * @param SchemaConfigs Schema configuration
+ * @returns Generated type from a field
  */
 function generateSpecificType(generic_type: string, value: any, key: string, parentKey: MongqlPath, schemaConfigs: IMongqlBaseSchemaConfigsFull): ISpecificTypeInfo {
   const { resource } = schemaConfigs;
@@ -126,9 +129,9 @@ type MongqlPath = {
 
 /**
  * Parse the MongooseSchema and populate the Graphql AST
- * @param {MongooseSchema} BaseSchema Mongoose Schema to parse
- * @param {DocumentNode} [InitTypedefsAST] initial documentnode to add to 
- * @return {GraphqlDocumentNode} Generated GraphqlDocumentNode
+ * @param BaseSchema Mongoose Schema to parse
+ * @param InitTypedefsAST initial documentnode to add to 
+ * @return Generated GraphqlDocumentNode and SchemaInfo
  */
 function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined) {
   const BaseSchemaConfigs = BaseSchema.mongql;

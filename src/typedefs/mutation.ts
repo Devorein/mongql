@@ -62,6 +62,14 @@ const ArgumentMap = {
   }
 };
 
+/**
+ * Generates mutation typedefs from a mongoose schema
+ * 1. Merges the Intital Mutation typedefs given via GlobalConfig or from the schema
+ * 2. Checks the generate.mutation options to figure out what needs to be generated
+ * 3. Generates based on action(CUD) and target(single, multi)
+ * @param Schema Schema to generate mutation typedefs from
+ * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
+ */
 export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableDocumentNode) {
   const { mongql: { resource: r, generate: { mutation } } } = Schema;
   const ast = documentApi().addSDL(TypedefAST);

@@ -29,6 +29,15 @@ const ArgumentMap = {
   ]
 };
 
+/**
+ * Generates query typedefs from a mongoose schema
+ * 1. Merges the Intital Mutation typedefs given via GlobalConfig or from the schema
+ * 2. Checks the generate.query options to figure out what needs to be generated
+ * 3. Generates based on range, auth and part
+ * @param Schema Schema to generate query typedefs from
+ * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
+ */
+
 export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableDocumentNode) {
   const ast = documentApi().addSDL(TypedefAST);
   const doesQueryExtExists = ast.hasExt('Query');

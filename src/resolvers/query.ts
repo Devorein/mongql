@@ -9,6 +9,16 @@ const difference = (source: string[], target: string[]) => {
 
 import parsePagination from '../utils/query/parsePagination';
 
+/**
+ * Generates query typedefs from a mongoose schema
+ * 1. Merges the Intital Mutation typedefs given via GlobalConfig or from the schema
+ * 2. Checks the generate.query options to figure out what needs to be generated
+ * 3. Generates based on range, auth and part
+ * 4. Filters out excluded fields
+ * @param Schema Schema to generate query typedefs from
+ * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
+ */
+
 export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaInfo) {
   const cr = S.capitalize(Schema.mongql.resource);
   const selfFields: string[] = [],

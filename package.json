@@ -17,9 +17,9 @@
   "main": "dist/index",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run clean && npm run emit-declarations && npm run transpile",
+    "build": "npm run clean && npm run emit-declarations && npx tsc --removeComments",
     "clean": "npx rimraf ./dist",
-    "emit-declarations": "npx tsc",
+    "emit-declarations": "npx tsc --declaration",
     "lint": "npx eslint --ext .ts,.js src/ --fix --color",
     "prepack": "npm run test_build",
     "prepublishOnly": "npm run test_build",

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { documentApi } = require('graphql-extra');
 const S = require('voca');
 
-const { generateOptions, Mongql, argumentsToString, outputToString, setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../dist/index');
+const { generateOptions, Mongql, argumentsToString, outputToString, setNestedFields, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../dist/index');
 const { query: { options: QueryOptions, fields: QueryFields } } = generateOptions();
 
 const queryOpts = [];
@@ -53,7 +53,7 @@ queryOpts.push({
 });
 
 mixObjectProp(flattenObject(QueryOptions)).sort().forEach((excludeQuery) => {
-  const query = setNestedProps({}, excludeQuery, false);
+  const query = setNestedFields({}, excludeQuery, false);
   const excludedQuery = matchFlattenedObjProps(excludeQuery, QueryFields);
   queryOpts.push({
     field: excludeQuery,

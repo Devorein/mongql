@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { documentApi } = require('graphql-extra');
 
-const { generateOptions, Mongql, argumentsToString, outputToString, setNestedProps, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../dist/index');
+const { generateOptions, Mongql, argumentsToString, outputToString, setNestedFields, mixObjectProp, flattenObject, matchFlattenedObjProps } = require('../../dist/index');
 
 const { mutation: { options: MutationOptions, fields: MutationFields } } = generateOptions();
 
@@ -29,7 +29,7 @@ mutationOpts.push({
 });
 
 mixObjectProp(flattenObject(MutationOptions)).sort().forEach((excludeMutation) => {
-  const mutation = setNestedProps({}, excludeMutation, false);
+  const mutation = setNestedFields({}, excludeMutation, false);
   const excludedMutation = matchFlattenedObjProps(excludeMutation, MutationFields);
   mutationOpts.push({
     field: excludeMutation,

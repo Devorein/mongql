@@ -13,18 +13,21 @@ import generateOptions from "./options";
 function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPartial): IMongqlGlobalConfigsFull {
   const { mutation, query, type } = generateOptions();
   return populateObjDefaultValue(InitialMongqlGlobalConfig, {
-    output: false,
+    output: {
+      AST: undefined,
+      SDL: undefined
+    },
     generate: {
       mutation: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.mutation, mutation.options),
       type: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.type, type.options),
       query: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.query, query.options)
     },
     Typedefs: {
-      init: {},
+      init: undefined,
     },
     Resolvers: {
-      init: {}
-    }
+      init: undefined
+    },
   });
 }
 

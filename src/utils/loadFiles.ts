@@ -2,7 +2,6 @@ import fs from 'fs-extra';
 import path from 'path';
 import S from 'voca';
 import gql from "graphql-tag";
-import { DocumentNode } from 'graphql';
 
 /**
  * Loads typedefs and resolvers from a path
@@ -10,7 +9,7 @@ import { DocumentNode } from 'graphql';
  * @param _path Path to load files from
  */
 export default function (_path: string) {
-  const res: { [key: string]: DocumentNode } = {};
+  const res: Record<string, any> = {};
   fs.readdirSync(_path).forEach((file) => {
     const extension = path.extname(file)
     const filename = path.basename(file, extension);

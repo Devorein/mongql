@@ -13,12 +13,13 @@ import { DocumentNode } from "graphql";
 import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
 
-import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, IResolverPartial } from "./types";
+import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial } from "./types";
 
 import { generateGlobalConfigs, generateSchemaConfigs } from "./utils/generate/configs";
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
 import loadFiles from "./utils/loadFiles";
+import { convertToDocumentNodes } from "./utils/AST"
 
 async function AsyncForEach<T>(arr: readonly T[], cb: any) {
   for (let index = 0; index < arr.length; index++)
@@ -53,36 +54,28 @@ const BaseTypeDefs = gql`
 `;
 
 class Mongql {
-  #globalConfigs: IMongqlGlobalConfigsPartial = { Schemas: [] };
   #resources: string[] = [];
-  #models: { [key: string]: Model<any> } = {}
+  #globalConfigs: IMongqlGlobalConfigsFull;
 
   constructor(options: IMongqlGlobalConfigsPartial) {
     this.#globalConfigs = generateGlobalConfigs(options);
     this.#globalConfigs.Schemas = this.#populateAndFilterSchemas(options);
-    this.#globalConfigs.Schemas.forEach((schema) => {
-      if (schema.mongql === undefined)
-        throw new Error(
-          colors.red.bold(`Resource doesnt have a mongql key on the schema`)
-        )
-      const { resource } = schema.mongql;
-      if (resource === undefined)
-        throw new Error(colors.red.bold(`Provide the mongoose schema resource key for mongql`));
-      else this.#resources.push(resource);
-      schema.mongql = generateSchemaConfigs(schema.mongql, this.#globalConfigs as IMongqlGlobalConfigsFull);
-    });
+    this.#globalConfigs.Typedefs.init = typeof this.#globalConfigs.Typedefs.init === 'string' ? loadFiles(this.#globalConfigs.Typedefs.init) : convertToDocumentNodes(this.#globalConfigs.Typedefs.init);
+    if (typeof this.#globalConfigs.Resolvers.init === 'string')
+      this.#globalConfigs.Resolvers.init = loadFiles(this.#globalConfigs.Resolvers.init)
   }
 
   /**
-   * Populates the schemas inside global configs
+   * Populates the schemas inside global configs and generated appropriate BaseConfig for each schema
    * 1. **if** Checks if the schema is a path, 
    *    Get all the Schemas from the path
    *    Filters all the Schemas using mongql.skip
    * 2. **else** just filters the Schemas using mongql.skip
-   * @param {IMongqlGlobalConfigsPartial} options User given partial Mongql Global config
-   * @returns {IMongqlMongooseSchemaPartial[]} An array of partial Mongoose Schema
+   * 3. Generates base configs for each imported schema
+   * @param options User given partial Mongql Global config
+   * @returns An array of partial Mongoose Schema
    */
-  #populateAndFilterSchemas = (options: IMongqlGlobalConfigsPartial): IMongqlMongooseSchemaPartial[] => {
+  #populateAndFilterSchemas = (options: IMongqlGlobalConfigsPartial) => {
     let imported_schemas: IMongqlMongooseSchemaPartial[] = [];
     if (typeof options.Schemas === 'string') {
       const schemaPath = options.Schemas;
@@ -107,9 +100,22 @@ class Mongql {
           return true;
         }
       })
-
-    delete options.Schemas;
-    return imported_schemas;
+    if (imported_schemas.length === 0)
+      throw new Error(
+        colors.red.bold(`No schemas provided`)
+      )
+    return imported_schemas.map((schema) => {
+      if (schema.mongql === undefined)
+        throw new Error(
+          colors.red.bold(`Resource doesnt have a mongql key on the schema`)
+        )
+      const { resource } = schema.mongql;
+      if (resource === undefined)
+        throw new Error(colors.red.bold(`Provide the mongoose schema resource key for mongql`));
+      else this.#resources.push(resource);
+      schema.mongql = generateSchemaConfigs(schema.mongql, this.#globalConfigs as IMongqlGlobalConfigsFull);
+      return schema as IMongqlMongooseSchemaFull
+    });
   }
 
   /**
@@ -152,24 +158,23 @@ class Mongql {
       Typedefs,
       Resolvers,
       Schemas
-    } = this.#globalConfigs as IMongqlGlobalConfigsFull;
-    const InitTypedefs: { [key: string]: DocumentNode } = typeof Typedefs.init === 'string' ? loadFiles(Typedefs.init) : Typedefs.init;
-    const InitResolvers: { [key: string]: IResolverPartial } = typeof Resolvers.init === 'string' ? loadFiles(Resolvers.init) : Resolvers.init;
-
+    } = this.#globalConfigs;
+    const InitTypedefs = Typedefs.init || {};
+    const InitResolvers = Resolvers.init || {};
     await AsyncForEach(Schemas, async (Schema: IMongqlMongooseSchemaFull) => {
       const {
         mongql
       } = Schema;
       const { resource, output } = mongql;
-      let typedefsAST: undefined | DocumentNode = mongql.TypeDefs || InitTypedefs[resource], resolver: undefined | IResolverPartial = mongql.Resolvers || InitResolvers[resource];
+      let typedefsAST = mongql.TypeDefs || InitTypedefs[resource], resolver = mongql.Resolvers || InitResolvers[resource];
       const generated = await generateTypedefs(
         Schema,
         typedefsAST,
       );
       typedefsAST = generated.typedefsAST;
-      if (output.SDL && typedefsAST)
+      if (typeof output.SDL === 'string' && typedefsAST)
         await Mongql.outputSDL(output.SDL, typedefsAST, resource);
-      if (typeof output.AST as any === 'string') {
+      if (typeof output.AST === 'string') {
         await mkdirp(output.AST as string);
         await fs.writeFile(path.join(output.AST as string, `${Schema.mongql.resource}.json`), JSON.stringify(typedefsAST), 'UTF-8');
       }
@@ -224,7 +229,7 @@ class Mongql {
    */
   generateModels() {
     const res: { [key: string]: Model<any> } = {};
-    this.#globalConfigs.Schemas.forEach((schema) => {
+    this.#globalConfigs.Schemas.forEach((schema: IMongqlMongooseSchemaFull) => {
       const { mongql: { resource } } = schema;
       res[resource] = model(S.capitalize(resource), schema);
     });

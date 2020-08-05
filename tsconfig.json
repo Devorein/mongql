@@ -12,9 +12,9 @@
         "moduleResolution": "node",
         "strict": true,
         "isolatedModules": true,
-        "declaration": false,
+        "declaration": true,
         "baseUrl": ".",
-        "sourceMap": false,
+        "sourceMap": true,
         "paths": {
             "*": [
                 "node_modules/*",

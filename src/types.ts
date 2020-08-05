@@ -208,27 +208,27 @@ export type IOutputFull = {
  * Partial interface for Mongql Global configs
  */
 export interface IMongqlGlobalConfigsPartial {
-  Schemas: ReadonlyArray<IMongqlMongooseSchemaPartial>,
-  readonly Typedefs?: {
-    init?: string | { [key: string]: string | DocumentNode },
+  Schemas: IMongqlMongooseSchemaPartial[],
+  Typedefs?: {
+    init?: string | Record<string, string | DocumentNode>,
   },
-  readonly Resolvers?: {
-    init?: string | { [key: string]: IResolverPartial },
+  Resolvers?: {
+    init?: string | Record<string, IResolverPartial>,
   },
   generate?: boolean | IGeneratePartial,
-  output?: IOutputPartial
+  output?: boolean | IOutputPartial
 }
 
 /**
  * Full interface for Mongql Global configs
  */
 export interface IMongqlGlobalConfigsFull {
-  Schemas: ReadonlyArray<IMongqlMongooseSchemaFull>,
-  readonly Typedefs: {
-    init: { [key: string]: DocumentNode },
+  Schemas: IMongqlMongooseSchemaFull[],
+  Typedefs: {
+    init: undefined | Record<string, DocumentNode>,
   },
-  readonly Resolvers: {
-    init: { [key: string]: IResolverFull },
+  Resolvers: {
+    init: undefined | Record<string, IResolverFull>,
   },
   generate: IGenerateFull,
   output: IOutputFull
@@ -254,7 +254,7 @@ export interface IMongqlBaseSchemaConfigsPartial {
   resource: string,
   generate?: IGeneratePartial,
   skip?: boolean,
-  output?: IOutputPartial,
+  output?: boolean | IOutputPartial,
   TypeDefs?: DocumentNode,
   Resolvers?: IResolverPartial,
   uniqueBy?: string

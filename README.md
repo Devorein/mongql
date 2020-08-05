@@ -9,21 +9,22 @@ A package to convert your mongoose schema to graphql schema
   - [Features](#features)
   - [Motivation](#motivation)
   - [Usage](#usage)
-    - [Basic Usage (Without initial typedef and resolvers)](#basic-usage-without-initial-typedef-and-resolvers)
-    - [Intermediate Usage (With initial typedef and resolvers)](#intermediate-usage-with-initial-typedef-and-resolvers)
-    - [Intermediate Usage (Output SDL and AST)](#intermediate-usage-output-sdl-and-ast)
-    - [Intermediate Usage (Fine grain Mutation configuration)](#intermediate-usage-fine-grain-mutation-configuration)
-    - [Intermediate Usage (Fine grain Query configuration)](#intermediate-usage-fine-grain-query-configuration)
-    - [Intermediate Usage (Extra Powerful Fine grain Query configuration)](#intermediate-usage-extra-powerful-fine-grain-query-configuration)
-    - [Advanced Usage (generating Schema and Models)](#advanced-usage-generating-schema-and-models)
-    - [Advanced Usage (Using local folders)](#advanced-usage-using-local-folders)
-  - [Configs](#configs)
-    - [Global Configs](#global-configs)
-    - [Schema configs](#schema-configs)
-    - [Field configs](#field-configs)
+    - [Without initial typedef and resolvers](#without-initial-typedef-and-resolvers)
+    - [With initial typedef and resolvers](#with-initial-typedef-and-resolvers)
+    - [Output SDL and AST](#output-sdl-and-ast)
+    - [Using Schema config typedefs and resolvers](#using-schema-config-typedefs-and-resolvers)
+    - [FieldSchema Configs](#fieldschema-configs)
+    - [Fine grain Mutation configuration](#fine-grain-mutation-configuration)
+    - [Fine grain Query configuration](#fine-grain-query-configuration)
+    - [Fine grain Type configuration](#fine-grain-type-configuration)
+    - [generating Models](#generating-models)
+    - [Using local folders](#using-local-folders)
+    - [Controlling nullability](#controlling-nullability)
   - [Concept](#concept)
+    - [Generation of Query](#generation-of-query)
+    - [Generation of Mutation](#generation-of-mutation)
+    - [Generation of Types](#generation-of-types)
   - [API](#api)
-  - [FAQ](#faq)
   - [TODO](#todo)
 
 ## Features
@@ -31,7 +32,7 @@ A package to convert your mongoose schema to graphql schema
 1. Create graphql schema (typedef and resolvers) from mongoose schema
 2. Stitch already created typedef and resolvers
 3. Easily configurable (any of the typedef and resolvers can be turned off)
-4. View the generated SDL
+4. Output the generated SDL
 5. Auto addition of graphql validators with mongoose
 
 ## Motivation
@@ -42,23 +43,25 @@ A package to convert your mongoose schema to graphql schema
 
 ## Usage
 
-### Basic Usage (Without initial typedef and resolvers)
+### Without initial typedef and resolvers
 
 ``` js
 // User.schema.js
 const mongoose = require('mongoose');
 
 const UserSchema = mongoose.Schema({
-    name: {
-        type: String,
-        mongql: {
-            writable: false // field level config
-        }
+  name: {
+    type: String,
+    mongql: {
+      nullable: {
+        object: [true]
+      } // field level config
     }
+  }
 });
 
 UserSchema.mongql = {
-    resource: 'user'
+  resource: 'user'
 }; // schema level config
 
 module.exports = UserSchema;
@@ -67,39 +70,39 @@ module.exports = UserSchema;
 ``` js
 // index.js
 const {
-    makeExecutableSchema
+  makeExecutableSchema
 } = require('@graphql-tools/schema');
 const {
-    ApolloServer
+  ApolloServer
 } = require('apollo-server-express');
 const Mongql = require('MonGql');
 
 const UserSchema = require('./User.schema.js');
 
 (async function() {
-    const mongql = new Mongql({
-        Schemas: [UserSchema],
-    });
+  const mongql = new Mongql({
+    Schemas: [UserSchema], // Global level config
+  });
 
-    // Calling the generate method generates the typedefs and resolvers
-    const {
-        TransformedResolvers,
-        TransformedTypedefs, // Contains both arr and obj representation
-    } = await mongql.generate();
+  // Calling the generate method generates the typedefs and resolvers
+  const {
+    TransformedResolvers,
+    TransformedTypedefs, // Contains both arr and obj representation
+  } = await mongql.generate();
 
-    const GRAPHQL_SERVER = new ApolloServer({
-        schema: makeExecutableSchema({
-            typeDefs: TransformedTypedefs.arr,
-            resolvers: TransformedResolvers.arr,
-        }),
-        context: () => ({
-            user: req.user
-        })
-    });
+  const GRAPHQL_SERVER = new ApolloServer({
+    schema: makeExecutableSchema({
+      typeDefs: TransformedTypedefs.arr,
+      resolvers: TransformedResolvers.arr,
+    }),
+    context: () => ({
+      user: req.user
+    })
+  });
 })();
 ```
 
-### Intermediate Usage (With initial typedef and resolvers)
+### With initial typedef and resolvers
 
 ``` js
 // user.typedef.js
@@ -113,9 +116,9 @@ module.exports = gql `
 ``` js
 // user.resolver.js
 module.exports = {
-    Mutation: {
-        updateUserSettings: ...
-    }
+  Mutation: {
+    updateUserSettings: ...
+  }
 }
 ```
 
@@ -124,195 +127,265 @@ const UserAST = require('./user.typedef.js');
 const UserResolver = require('./user.resolver.js');
 
 const PreTransformedTypeDefsASTs = {
-    user: UserAST // This has to match with the resource name added in the mongoose schema
+  user: UserAST // This has to match with the resource name added in the mongoose schema
 }
 
 const PreTransformedResolvers = {
-    user: UserResolver
+  user: UserResolver
 }
 
 const mongql = new Mongql({
-    Schemas: [UserSchema, SettingsSchema],
-    Typedefs: {
-        init: PreTransformedTypeDefsASTs
-    },
-    Resolvers: {
-        init: PreTransformedResolvers
-    }
+  Schemas: [UserSchema, SettingsSchema],
+  Typedefs: {
+    init: PreTransformedTypeDefsASTs
+  },
+  Resolvers: {
+    init: PreTransformedResolvers
+  }
 });
 ```
 
-### Intermediate Usage (Output SDL and AST)
+### Output SDL and AST
 
 ``` js
   const mongql = new Mongql({
-      Schemas: [],
-      output: {
-          SDL: path.resolve(__dirname, "./SDL"),
-          AST: path.resolve(__dirname, "./AST")
-      }
+    Schemas: [],
+    output: {
+      SDL: path.resolve(__dirname, "./SDL"),
+      AST: path.resolve(__dirname, "./AST")
+    }
   });
 
   await mongql.generate()
 ```
 
-### Intermediate Usage (Fine grain Mutation configuration)
+### Using Schema config typedefs and resolvers
+
+``` js
+  const UserSchema = new mongoose.model({
+    name: String
+  });
+  UserSchema.mongql = {
+    TypeDefs: `type userinfo{
+      name: String!
+    }`,
+    Resolvers: {
+      Query: {
+        getUserInfo() {}
+      }
+    }
+  }
+  const mongql = new Mongql({
+    Schemas: [UserSchema],
+  });
+
+  await mongql.generate()
+```
+
+### FieldSchema Configs
+
+``` js
+  const NestedSchema = new mongoose.model({
+    nested: Boolean
+  });
+
+  NestedSchema.mongql = {
+    // FieldSchema configs
+  }
+
+  const UserSchema = new mongoose.model({
+    name: String,
+    nested: NestedSchema
+  });
+
+  UserSchema.mongql = {
+    TypeDefs: `type userinfo{
+      name: String!
+    }`,
+    Resolvers: {
+      Query: {
+        getUserInfo() {}
+      }
+    }
+  }
+  const mongql = new Mongql({
+    Schemas: [UserSchema],
+  });
+
+  await mongql.generate()
+```
+
+### Fine grain Mutation configuration
 
 ``` js
 const mongql = new Mongql({
-    Schemas: [UserSchema, SettingsSchema],
-    generate: {
-        mutation: false, // will not generate any mutation typedef and resolver,
-        mutation: {
-            create: false, // Will not generate any create mutation typedef and resolver,
-            update: {
-                multi: false // Will not generate any update multi mutation typedef and resolver
-            },
-            single: false // Will not generate any single mutation typedef and resolver
-        }
+  Schemas: [UserSchema, SettingsSchema],
+  generate: {
+    mutation: false, // will not generate any mutation typedef and resolver,
+    mutation: {
+      create: false, // Will not generate any create mutation typedef and resolver,
+      update: {
+        multi: false // Will not generate any update multi mutation typedef and resolver
+      },
+      single: false // Will not generate any single mutation typedef and resolver
     }
+  }
 });
 ```
 
-### Intermediate Usage (Fine grain Query configuration)
+### Fine grain Query configuration
 
 ``` js
 const mongql = new Mongql({
-    Schemas: [UserSchema, SettingsSchema],
-    generate: {
-        query: false,
-        query: {
-            all: false
-        },
-        query: {
-            paginated: {
-                self: false
-            }
-        },
-        query: {
-            filtered: {
-                others: {
-                    whole: false
-                }
-            }
+  Schemas: [UserSchema, SettingsSchema],
+  generate: {
+    query: false,
+    query: {
+      all: false
+    },
+    query: {
+      paginated: {
+        self: false
+      }
+    },
+    query: {
+      filtered: {
+        others: {
+          whole: false
         }
+      }
+    },
+    query: {
+      self: false, // remove all self related typedefs and resolvers,
+      self: {
+        whole: false // remove all selfwhole related typedefs and resolvers,
+      },
+      count: false, // remove all count related typedefs and resolvers,
     }
+  }
 });
 ```
 
-### Intermediate Usage (Extra Powerful Fine grain Query configuration)
+### Fine grain Type configuration
 
 ``` js
 const mongql = new Mongql({
-    Schemas: [UserSchema, SettingsSchema],
-    generate: {
-        query: {
-            self: false, // remove all self related typedefs and resolvers,
-            self: {
-                whole: false // remove all selfwhole related typedefs and resolvers,
-            },
-            count: false, // remove all count related typedefs and resolvers,
-        }
+  Schemas: [UserSchema, SettingsSchema],
+  generate: {
+    input: {
+      update: false
+    },
+    interface: false,
+    enum: false,
+    union: false,
+    object: {
+      self: false
     }
+  }
 });
 ```
 
-### Advanced Usage (generating Schema and Models)
+### generating Models
+
+``` js
+const {
+  makeExecutableSchema
+} = require('@graphql-tools/schema');
+const Mongql = require('mongql');
+const {
+  ApolloServer
+} = require('apollo-server');
+
+(async function() {
+  const mongql = new Mongql({
+    Schemas: [
+      /* Your schema array here */
+    ],
+  });
+  const {
+    TransformedTypedefs,
+    TransformedResolvers
+  } = await mongql.generate();
+  const server = new ApolloServer({
+    schema: makeExecutableSchema({
+      typeDefs: TransformedTypedefs.arr,
+      resolvers: TransformedResolvers.arr,
+    }),
+    context: mongql.generateModels()
+  });
+  await server.listen();
+})();
+```
+
+### Using local folders
 
 ``` js
 const Mongql = require('mongql');
 const {
-    ApolloServer
+  ApolloServer
 } = require('apollo-server');
 
 (async function() {
-    const mongql = new Mongql({
-        Schemas: [
-            /* Your schema array here */
-        ],
-
-    });
-    const server = new ApolloServer({
-        schema: await mongql.generateSchema(), // there is a known issue with this use makeExecutableSchema
-        context: mongql.generateModels()
-    });
-    await server.listen();
+  const mongql = new Mongql({
+    Schemas: path.resolve(__dirname, './schemas'),
+    output: {
+      dir: __dirname + '\\SDL'
+    },
+    Typedefs: {
+      init: path.resolve(__dirname, './typedefs')
+    },
+    Resolvers: {
+      init: path.resolve(__dirname, './resolvers')
+    }
+  });
+  const server = new ApolloServer({
+    schema: makeExecutableSchema({
+      typeDefs: TransformedTypedefs.arr,
+      resolvers: TransformedResolvers.arr,
+    }),
+    context: mongql.generateModels()
+  });
+  await server.listen();
 })();
 ```
 
-### Advanced Usage (Using local folders)
+### Controlling nullability
 
 ``` js
-const Mongql = require('mongql');
-const {
-    ApolloServer
-} = require('apollo-server');
-
-(async function() {
-    const mongql = new Mongql({
-        Schemas: path.resolve(__dirname, './schemas'),
-        output: {
-            dir: __dirname + '\\SDL'
-        },
-        Typedefs: path.resolve(__dirname, './typedefs'),
-        Resolvers: path.resolve(__dirname, './resolvers')
-    });
-    const server = new ApolloServer({
-        schema: await mongql.generateSchema(), // there is a known issue with this use makeExecutableSchema
-        context: mongql.generateModels()
-    });
-    await server.listen();
-})();
+const UserSchema = new mongoose.model({
+  name: {
+    type: String,
+    mongql {
+      nullable: {
+        object: [true]
+      } // name: String
+    }
+  },
+  age: {
+    type: [Number],
+    mongql: {
+      nullable: {
+        input: [false, true]
+      } // age: [Int!]
+    }
+  }
+});
 ```
 
-Mongql contains 3 level of configs
+Mongql contains 4 levels of configs
 
 1. **Constructor/global level config**: passed to the ctor during Mongql instantiation
 2. **Schema level config**: Attached to the schema via mongql key
 3. **Field level config**: Attached to the field via mongql key
+4. **FieldSchema level config**: Contains both field and schema configs
 
-Precedence of same config option is global < Schema < field. That is for the same option the one with the highest precedence will be used.
-
-## Configs
-
-& refers to the whole key declared just right above.
-
-### Global Configs
-
-| Name  | Description  | Type | Default Value | Usage | Available in |
-|---|---|---|---|---|---|
-| output  | output related configuration | `boolean \| Object` | false | `{output: false}`  `{output: { dir: process.cwd()}}` | Schema |
-| &. SDL  | SDL Output directory | `string` | `undefined` | `{output: { S: process.cwd()}}` | Schema |
-| &. AST  | AST Output directory | `string` | `undefined` | `{output: { AST: process.cwd()}}` | Schema |
-| generate  | Controls generation of type, query and mutations typedefs and resolvers | `Object` \| `boolean` | `true` | `generate: true` | Schema |
-| &.query  | Controls generation of query typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query: true}` | Schema |
-| &.(range)  | Controls generation of query range typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query:{  all: false}}` Take a look at concepts to see all ranges | Schema |
-| &.(auth)  | Controls generation of query range auth typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query:{  all: {self: false}}}` Take a look at concepts to see all auth | Schema |
-| &.(part)  | Controls generation of query range auth part typedefs and resolvers | `Object` \| `boolean` | `Object` | `generate :{query:{  all: {self: {whole: false}}}}` Take a look at concepts to see all part | Schema |
-| &.mutation  | Controls generation of mutations typedefs and resolvers | `Object` \| `boolean` | `true` | `generate :{mutation: true}` | Schema |
-| &.(action)  | Controls generation of mutations typedefs and resolvers action| `Object` \| `boolean` | `true` | `generate :{mutation: {create: {multi:true}, update: {single: false}}}` Take a look at concepts to see all mutation action | Schema |
-| &.(target)  | Controls generation of mutations typedefs and resolvers target| `Object` \| `boolean` | `true` | `generate :{mutation: {create: {multi:true}, update: {single: false}}}` Take a look at concepts to see all mutation targets | Schema |
-| Schemas  | Array of schemas generate by mongoose or path to schema folder | `Schema[]` \| `String` | `[]` | `Schemas: [UserSchema, ...]` | |
-| Typedefs  | Typedefs related configuration or path to typedefs folder | `Object` \| `String` | `{init: undefined}` | `Typedefs: {init: {User: InitialUserTypedef}}` | |
-| &.init  | Initial typedefs to be attached to resultant typedef | `Object` | `undefined` | `init: {User: InitialUserTypedef}` | |
-| Resolvers  | Resolvers related configuration or path to resolvers folders| `Object` \| `String` | `{init: undefined}` | `Resolvers: {init: {User: InitialUserResolvers}}` | |
-| &.init  | Initial resolvers to be attached to resultant resolver | `Object` | `undefined` | `init: {User: InitialUserResolver}` | |
-
-### Schema configs
-
-| Name  | Description  | Type | Default Value | Usage | Available in |
-|---|---|---|---|---|---|
-| resource  | name of the resource  | `string` | **Required** | `resource: User` | |
-
-### Field configs
-
-| Name  | Description  | Type | Default Value | Usage | Available in |
-|---|---|---|---|---|---|
-| scalar  | Custom graphql scalar to be used (atm all graphql-scalars scalars are included)  | `string` | parsed type from mongoose | `scalar: 'NonNegativeInt'` | |
+Precedence of same config option is global < Schema < FieldSchema < field. That is for the same option the one with the highest precedence will be used.
 
 ## Concept
 
 During the generation of schema, a few concepts are followed
+
+### Generation of Query
 
 1. Each Resource query object type contains four parts
 
@@ -337,56 +410,32 @@ During the generation of schema, a few concepts are followed
        2. NameAndId: get the name and id of the resource
        3. Count: get the count of resource
 
-2. Each resource mutation object type contains 2 parts
+Generated Query Examples: `getSelfSettingsWhole, getOthersSettingsNameAndId` ; 
+
+**NOTE**: Count part is not generate in paginated and id range as for paginated query the user already knows the count and id returns just one
+
+### Generation of Mutation
+
+1. Each resource mutation object type contains 2 parts
 
    1. Action: One of create|update|delete
    2. Target: resource for targeting single resource, resources for targeting multiple resources
 
-3. Each resource types contains the following parts
+Generated Mutation Examples: `createSetting, updateSettings`
 
-   1. Based on the permitted auths types will be generated with the following syntax auth resource type and type, eg SelfUserType
-   2. All the **embedded mongoose schema** will be converted into its own type
-   3. mongoose Enums fields will be converted into enums
-   4. Based on the `generateInterface` option interface will be generated
-   5. Inputs will be created based on the generated type
+### Generation of Types
 
-Generated Query Examples: getSelfSettingsWhole, getOthersSettingsNameAndId
+1. Each resource types contains the following parts
 
-Generated Mutation Examples: createSetting, updateSettings
-
-**NOTE**: Count part is not generate in paginated and id range as for paginated query the user already knows the count and id returns just one
+   1. For each schema (base and nested), based on the permitted auth, object will be created, and based on generate config interface, input and union will be created
 
 ## API
 
-These methods are available in the created Mongql instance
-
-| Name  | Description  | Params | Returned |
-|---|---|---|---|
-| `generate()` | Generate the Typedefs and resolvers from the schemas| | `{TransformedTypedefs, TransformedResolvers}`
-| `getResources()` | Gets all the resources collected from all schemas| | `(Schema.mongql.resource)[]`
-| `generateModels()` | Generates models from the schema provided | | `Object:{[Schema.mongql.resource]: MongooseModel}`
-| `generateSchema()` | Generates a schema by calling `makeExecutableSchema` internally | options passed to `makeExecutableSchema` expect for typedefs and resolvers | `GraphQLSchema`
-| `static outputSDL()` | Outputs the SDL from the given typedef| <div> **path**: String *// SDL output dir* </div>  <div> **typedefs**: GraphqlAST \| String *// String or AST to convert* </div> <div> **resource**: String *// name of file or resource* </div>| |
-
-## FAQ
-
-1. Why do I need to use resource key?
-
-Answer.
-
-  1. Resource key is used to merge the initial query, mutation and types in the correct place
-
-  2. Its used as the Model name, in the generated resolvers
-  3. Its used to derive relation between resources, (not yet supported), for eg in the mutation resolver, dependant resources can be created and deleted
+All of the methods and configs have been commented along with their types
 
 ## TODO
 
 1. Add more well rounded tests
-2. Migrate the whole project to TS
-3. Using babel to transpile to transform modern featues
-4. Standard liniting configuration
-5. Provide ES modules to make the library tree-shakable
-6. More enriched API
-7. Better documentation
+2. Provide ES modules to make the library tree-shakable
 
 **PRS are more than welcome and highly appreciated!!!!**

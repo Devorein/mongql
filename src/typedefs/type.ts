@@ -4,7 +4,7 @@ import { t, objectTypeApi, enumTypeApi, interfaceTypeApi, inputTypeApi, unionTyp
 import { resolvers } from 'graphql-scalars';
 import { GraphQLScalarType, NamedTypeNode, DocumentNode } from "graphql";
 
-import { ISpecificTypeInfo, IMongqlMongooseSchemaFull, IMongqlGeneratedTypes, AuthEnumString, InputActionEnumString, MutableDocumentNode, FieldsFullInfos, FieldFullInfo, MongqlSchemaConfigsFull, MongqlFieldAttachObjectConfigsFull } from "../types";
+import { ISpecificTypeInfo, IMongqlMongooseSchemaFull, IMongqlGeneratedTypes, AuthEnumString, InputActionEnumString, MutableDocumentNode, FieldsFullInfos, FieldFullInfo, MongqlSchemaConfigsFull, MongqlFieldAttachObjectConfigsFull, MongqlFieldPath } from "../types";
 import Password from "../utils/gql-types/password";
 import Username from "../utils/gql-types/username";
 
@@ -91,7 +91,7 @@ function parseScalarType(mongooseField: any): string {
  * @param resource Capitalized Resource name
  * @returns Generated type from a field
  */
-function generateSpecificType(generic_type: string, value: any, key: string, parentKey: MongqlPath, resource: string): ISpecificTypeInfo {
+function generateSpecificType(generic_type: string, value: any, key: string, parentKey: MongqlFieldPath, resource: string): ISpecificTypeInfo {
   let object_type = '',
     input_type = null,
     ref_type = null;
@@ -118,11 +118,6 @@ const generateIncludedAuthSegments = (schema_object_auth: any, parentSchema_obje
   const included_auth_segments = filterTrueKey(schema_object_auth).filter((auth) => parentSchema_auth_segments.includes(auth));
   const excluded_auth_segments = ['self', 'others', 'mixed'].filter(auth => !included_auth_segments.includes(auth));
   return [excluded_auth_segments as AuthEnumString[], included_auth_segments as AuthEnumString[]]
-}
-
-type MongqlPath = {
-  object_type: string,
-  key: string
 }
 
 /**
@@ -152,7 +147,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
     return (AST.fields || AST.values || AST.types).length > 0;
   }
 
-  function _inner(Schema: IMongqlMongooseSchemaFull, Type: string, path: MongqlPath[], ParentSchemaConfigs: MongqlSchemaConfigsFull) {
+  function _inner(Schema: IMongqlMongooseSchemaFull, Type: string, path: MongqlFieldPath[], ParentSchemaConfigs: MongqlSchemaConfigsFull) {
     const parentKey = path[path.length - 1];
     const CurrentSchemaConfigs = parentKey ? generateNestedSchemaConfigs(Schema.mongql || {}, ParentSchemaConfigs) : BaseSchemaConfigs;
     const [, currentSchema_included_auth_segments] = generateIncludedAuthSegments(CurrentSchemaConfigs.generate.type.object, ParentSchemaConfigs.generate.type.object);
@@ -237,7 +232,8 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
         ref_type,
         object_type,
         excludedAuthSegments: field_excluded_auth_segments,
-        fieldDepth
+        fieldDepth,
+        path: [...path]
       })
 
       Fields[path.length - 1][key] = generatedFieldFullInfo;

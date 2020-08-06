@@ -371,7 +371,13 @@ export interface IMongqlFieldConfigsPartial {
 export interface FieldInfo extends ISpecificTypeInfo {
   generic_type: string,
   excludedAuthSegments: string[],
-  fieldDepth: number
+  fieldDepth: number,
+  path: MongqlFieldPath[]
+}
+
+export interface MongqlFieldPath {
+  object_type: string,
+  key: string
 }
 
 /**

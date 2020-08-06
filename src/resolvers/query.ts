@@ -3,11 +3,13 @@ import { ISchemaInfo, IMongqlMongooseSchemaFull, AuthEnumString, RangeEnumString
 import pluralize from 'pluralize';
 import S from 'voca';
 
-const difference = (source: string[], target: string[]) => {
-  return source.filter(item => !target.includes(item))
-}
-
 import parsePagination from '../utils/query/parsePagination';
+
+type TExcludedFields = {
+  self: string
+  others: string
+  mixed: string
+}
 
 /**
  * Generates query typedefs from a mongoose schema
@@ -23,31 +25,29 @@ export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaI
   if (!InitResolver.Query) InitResolver.Query = {};
 
   const cr = S.capitalize(Schema.mongql.resource);
-  const selfFields: string[] = [],
-    mixedFields: string[] = [],
-    othersFields: string[] = [];
+
   const { mongql: { generate: { query } } } = Schema;
 
-  Object.entries(SchemaInfo.Fields[0]).forEach(([key, { excludedAuthSegments }]) => {
-    if (!excludedAuthSegments.includes('mixed')) mixedFields.push(key);
-    if (!excludedAuthSegments.includes('others')) othersFields.push(key);
-    if (!excludedAuthSegments.includes('self')) selfFields.push(key);
+  const ExcludedFields: TExcludedFields = {
+    self: '',
+    others: '',
+    mixed: ''
+  }
+
+  SchemaInfo.Fields.forEach((fields) => {
+    Object.values(fields).forEach(({ excludedAuthSegments, path }) => {
+      const fullpath = path.map(p => p.key).join(".");
+      excludedAuthSegments.forEach(excludedAuthSegment => {
+        const current_excluded = ExcludedFields[excludedAuthSegment as AuthEnumString];
+        ExcludedFields[excludedAuthSegment as AuthEnumString] = (`${current_excluded ? current_excluded + " " : ""}-${fullpath}`)
+      })
+    })
   });
 
-  const exlcudedMixedFields: string[] = difference(selfFields, mixedFields);
-  const exlcudedOthersFields: string[] = difference(selfFields, othersFields);
-  const exlcudedMixedFieldsStr: string = exlcudedMixedFields.map((item: string) => `-${item}`).join(' ');
-  const exlcudedOthersFieldsStr: string = exlcudedOthersFields.map((item: string) => `-${item}`).join(' ');
-
-  const AuthSelection = {
-    self: '',
-    others: exlcudedOthersFieldsStr,
-    mixed: exlcudedMixedFieldsStr
-  };
 
   const Selection = (auth: AuthEnumString, part: string) => {
     if (part === 'nameandind') return 'name';
-    else if (part === 'whole') return AuthSelection[auth];
+    else if (part === 'whole') return ExcludedFields[auth];
   };
 
   const AuthFilters = {
@@ -72,11 +72,11 @@ export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaI
     });
   };
 
-  const ranges = Object.keys(query);
+  const ranges = Object.keys(query) as RangeEnumString[];
   ranges.forEach((range) => {
-    const auths = Object.keys(query[range as RangeEnumString]);
+    const auths = Object.keys(query[range]) as AuthEnumString[];
     auths.forEach((auth) => {
-      const parts = Object.keys(query[range as RangeEnumString][auth as AuthEnumString]).filter((part) => query[range as RangeEnumString][auth as AuthEnumString][part as PartEnumString] !== false);
+      const parts = Object.keys(query[range][auth]).filter((part) => query[range][auth as AuthEnumString][part as PartEnumString] !== false);
       parts.forEach((part) => {
         const key = `get${S.capitalize(range)}${S.capitalize(auth)}${pcr}${S.capitalize(part)}`;
         if (!QueryResolvers[key])
@@ -85,13 +85,13 @@ export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaI
             args: any,
             ctx: any
           ) {
-            const AuthFilter = AuthFilters[auth as AuthEnumString](ctx);
-            if (part === 'Count') {
-              if (range === 'All')
+            const AuthFilter = AuthFilters[auth](ctx);
+            if (part === 'count') {
+              if (range === 'all')
                 return await ctx[cr].countDocuments({
                   ...AuthFilter
                 });
-              else if (range === 'Filtered')
+              else if (range === 'filtered')
                 return await ctx[cr].countDocuments({
                   ...AuthFilter,
                   ...(args.filter || '{}')
@@ -100,17 +100,17 @@ export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaI
 
             let query = null;
 
-            if (range === 'All') query = ctx[cr].find({ ...AuthFilter });
-            else if (range === 'Paginated') query = Pagination(auth as AuthEnumString, args, ctx);
-            else if (range === 'Filter') query = Filter(auth as AuthEnumString, args, ctx);
-            else if (range === 'Id')
+            if (range === 'all') query = ctx[cr].find({ ...AuthFilter });
+            else if (range === 'paginated') query = Pagination(auth, args, ctx);
+            else if (range === 'filtered') query = Filter(auth, args, ctx);
+            else if (range === 'id')
               query = ctx[cr].find({
                 ...AuthFilter,
                 _id: args.id
               });
 
-            const res = await query.select(Selection(auth as AuthEnumString, part));
-            return range === 'Id' ? res[0] : res;
+            const res = await query.select(Selection(auth, part));
+            return range === 'id' ? res[0] : res;
           };
       });
     });

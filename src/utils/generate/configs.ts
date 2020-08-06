@@ -1,4 +1,4 @@
-import { IMongqlGlobalConfigsPartial, IGeneratePartial, MongqlSchemaConfigsPartial, IMongqlFieldConfigsFull, IMongqlBaseSchemaConfigsFull, IMongqlGlobalConfigsFull, IMongqlNestedSchemaConfigsFull } from "../../types";
+import { IMongqlGlobalConfigsPartial, IGeneratePartial, MongqlSchemaConfigsPartial, IMongqlFieldConfigsFull, IMongqlBaseSchemaConfigsFull, IMongqlGlobalConfigsFull, IMongqlNestedSchemaConfigsFull, MongqlSchemaConfigsFull, IMongqlBaseSchemaConfigsPartial } from "../../types";
 
 import { populateObjDefaultValue, nestedObjPopulation } from '../../utils/objManip';
 import { calculateFieldDepth } from '../mongoose';
@@ -37,7 +37,7 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPa
  * @param ExtensionSchema Schema to extend
  * @returns Generated MongqlSchemaConfig
  */
-function generateSchemaConfigs(MongqlSchemaConfig: MongqlSchemaConfigsPartial, ExtensionSchema: IMongqlGlobalConfigsFull | IMongqlBaseSchemaConfigsFull | IMongqlNestedSchemaConfigsFull): IMongqlBaseSchemaConfigsFull {
+function generateBaseSchemaConfigs(MongqlSchemaConfig: IMongqlBaseSchemaConfigsPartial, ExtensionSchema: IMongqlGlobalConfigsFull): IMongqlBaseSchemaConfigsFull {
   const ModifiedMongqlGlobalConfig: { [key: string]: any } = Object.assign({}, ExtensionSchema);
   const ModifiedMongqlSchemaConfig: { [key: string]: any } = Object.assign({}, MongqlSchemaConfig);
   ['Typedefs', 'Resolvers', 'Schemas'].forEach(globalConfigKey => delete ModifiedMongqlGlobalConfig[globalConfigKey]);
@@ -46,33 +46,61 @@ function generateSchemaConfigs(MongqlSchemaConfig: MongqlSchemaConfigsPartial, E
     type: nestedObjPopulation(ModifiedMongqlSchemaConfig?.generate?.type, ModifiedMongqlGlobalConfig.generate.type),
     query: nestedObjPopulation(ModifiedMongqlSchemaConfig?.generate?.query, ModifiedMongqlGlobalConfig.generate.query)
   };
-  return populateObjDefaultValue(ModifiedMongqlSchemaConfig, { ...ModifiedMongqlGlobalConfig, skip: false, uniqueBy: undefined });
+  return populateObjDefaultValue(ModifiedMongqlSchemaConfig, Object.assign({}, ModifiedMongqlGlobalConfig, { skip: false, uniqueBy: undefined }));
+}
+
+/**
+ * Generate full Schema config
+ * @param MongqlSchemaConfig Mongql Schema Config
+ * @param ExtensionSchema Schema to extend
+ * @returns Generated MongqlSchemaConfig
+ */
+function generateNestedSchemaConfigs(MongqlSchemaConfig: MongqlSchemaConfigsPartial, ParentSchema: MongqlSchemaConfigsFull): IMongqlNestedSchemaConfigsFull {
+  const ModifiedMongqlParentSchemaConfig: { [key: string]: any } = Object.assign({}, ParentSchema);
+  const ModifiedMongqlNestedSchemaConfig: { [key: string]: any } = Object.assign({}, MongqlSchemaConfig);
+  ModifiedMongqlNestedSchemaConfig.generate = {
+    mutation: nestedObjPopulation(ModifiedMongqlNestedSchemaConfig?.generate?.mutation, ModifiedMongqlParentSchemaConfig.generate.mutation),
+    type: nestedObjPopulation(ModifiedMongqlNestedSchemaConfig?.generate?.type, ModifiedMongqlParentSchemaConfig.generate.type),
+    query: nestedObjPopulation(ModifiedMongqlNestedSchemaConfig?.generate?.query, ModifiedMongqlParentSchemaConfig.generate.query)
+  };
+  delete ModifiedMongqlNestedSchemaConfig.attach;
+
+  return populateObjDefaultValue(ModifiedMongqlNestedSchemaConfig, { type: undefined });
 }
 
 /**
  * Generate full field config
  * @param MongooseField Field to parse
- * @param ExtensionSchema Schema to extend
+ * @param ParentSchema Schema to extend
  * @returns The extracted field options populated with default values
  */
-function generateFieldConfigs(MongooseField: any, ExtensionSchema: IMongqlBaseSchemaConfigsFull | IMongqlNestedSchemaConfigsFull): IMongqlFieldConfigsFull {
+function generateFieldConfigs(MongooseField: any, ParentSchema: MongqlSchemaConfigsFull): IMongqlFieldConfigsFull {
   const [fieldDepth, InnerMongooseField] = calculateFieldDepth(MongooseField);
 
-  const { mongql: MongooseFieldConfig = {} } = InnerMongooseField;
+  if (Array.isArray(InnerMongooseField?.mongql?.nullable?.object)) {
+    const arr = [...InnerMongooseField.mongql.nullable.object];
+    InnerMongooseField.mongql.nullable.object = {};
+    ['mixed', 'self', 'others'].forEach(auth => InnerMongooseField.mongql.nullable.object[auth] = arr)
+  }
+  if (Array.isArray(InnerMongooseField?.mongql?.nullable?.input)) {
+    const arr = [...InnerMongooseField.mongql.nullable.input];
+    InnerMongooseField.mongql.nullable.input = {};
+    ['create', 'update'].forEach(action => InnerMongooseField.mongql.nullable.input[action] = arr)
+  }
 
-  const GeneratedMongooseFieldConfig = populateObjDefaultValue(MongooseFieldConfig, Object.assign({}, {
+  const GeneratedMongooseFieldConfig = populateObjDefaultValue(InnerMongooseField.mongql || {}, {
     nullable: {
       object: {
-        mixed: [],
-        others: [],
-        self: []
+        mixed: [false],
+        others: [false],
+        self: [false]
       },
       input: {
-        create: [],
-        update: []
+        create: [false],
+        update: [true]
       }
     },
-    attach: {
+    attach: populateObjDefaultValue(InnerMongooseField?.mongql?.generate?.type || ParentSchema.generate.type, {
       object: {
         mixed: true,
         others: true,
@@ -84,13 +112,14 @@ function generateFieldConfigs(MongooseField: any, ExtensionSchema: IMongqlBaseSc
       },
       interface: true,
       enum: true
-    },
+    }),
     authMapper: {
       Mixed: 'Mixed',
       Others: 'Others',
       Self: 'Self',
-    }
-  }, ExtensionSchema));
+    },
+    description: undefined
+  });
 
   ['mixed', 'self', 'others'].forEach(auth => {
     let initialObjNullable = GeneratedMongooseFieldConfig.nullable.object[auth].length;
@@ -108,5 +137,6 @@ function generateFieldConfigs(MongooseField: any, ExtensionSchema: IMongqlBaseSc
 export {
   generateFieldConfigs,
   generateGlobalConfigs,
-  generateSchemaConfigs
+  generateBaseSchemaConfigs,
+  generateNestedSchemaConfigs
 };

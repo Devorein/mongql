@@ -160,8 +160,11 @@ function populateObjDefaultValue(Initial: Record<string, any>, Defaults: Record<
   const flattened_initial = flattenObject(Initial);
   const flattened_default = flattenObject(Defaults);
   const res: any = { ...flattened_default, ...flattened_initial };
-  const reversed_keys = Object.keys(res).sort();
-  reversed_keys.forEach((key) => {
+  const sorted_keys = Object.keys(res).filter(key => {
+    if (!key) delete res[key];
+    else return true;
+  }).sort();
+  sorted_keys.forEach((key) => {
     if (key.split(".").length > 1) {
       setNestedFields(res, key, res[key]);
       delete res[key];

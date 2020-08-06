@@ -15,7 +15,7 @@ import Username from "./utils/gql-types/username"
 
 import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial } from "./types";
 
-import { generateGlobalConfigs, generateSchemaConfigs } from "./utils/generate/configs";
+import { generateGlobalConfigs, generateBaseSchemaConfigs } from "./utils/generate/configs";
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
 import loadFiles from "./utils/loadFiles";
@@ -113,7 +113,7 @@ class Mongql {
       if (resource === undefined)
         throw new Error(colors.red.bold(`Provide the mongoose schema resource key for mongql`));
       else this.#resources.push(resource);
-      schema.mongql = generateSchemaConfigs(schema.mongql, this.#globalConfigs as IMongqlGlobalConfigsFull);
+      schema.mongql = generateBaseSchemaConfigs(schema.mongql, this.#globalConfigs as IMongqlGlobalConfigsFull);
       return schema as IMongqlMongooseSchemaFull
     });
   }

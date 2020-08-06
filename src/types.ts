@@ -265,6 +265,7 @@ export interface IMongqlBaseSchemaConfigsPartial {
  */
 export interface IMongqlNestedSchemaConfigsFull extends IMongqlFieldConfigsFull {
   generate: IGenerateFull,
+  type: undefined | string
 }
 
 /**
@@ -272,6 +273,7 @@ export interface IMongqlNestedSchemaConfigsFull extends IMongqlFieldConfigsFull 
  */
 export interface IMongqlNestedSchemaConfigsPartial extends IMongqlFieldConfigsPartial {
   generate?: IGeneratePartial,
+  type?: string
 }
 
 /**
@@ -293,13 +295,6 @@ export type MongqlFieldAttachObjectConfigsPartial = {
  */
 export type MongqlFieldAttachInputConfigsFull = {
   [key in InputActionEnumString]: boolean
-}
-
-/**
- * Partial type for Field config attach.input option
- */
-export type MongqlFieldAttachInputConfigsPartial = {
-  [key in InputActionEnumString]?: boolean
 }
 
 /**
@@ -353,12 +348,7 @@ export interface IMongqlFieldConfigsFull {
     object: MongqlFieldNullableObjectConfigsFull,
     input: MongqlFieldNullableInputConfigsFull
   },
-  attach: {
-    object: MongqlFieldAttachObjectConfigsFull,
-    input: MongqlFieldAttachInputConfigsFull,
-    interface: boolean,
-    enum: boolean
-  },
+  attach: IGenerateTypeFull,
   authMapper: MongqlFieldAuthMapperConfigsFull
 }
 
@@ -371,12 +361,7 @@ export interface IMongqlFieldConfigsPartial {
     object?: MongqlFieldNullableObjectConfigsPartial,
     input?: MongqlFieldNullableInputConfigsPartial
   },
-  attach?: {
-    object?: MongqlFieldAttachObjectConfigsPartial,
-    input?: MongqlFieldAttachInputConfigsPartial,
-    interface?: boolean,
-    enum?: boolean
-  },
+  attach?: IGenerateTypePartial,
   authMapper?: MongqlFieldAuthMapperConfigsPartial
 }
 

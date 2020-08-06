@@ -19,7 +19,9 @@ import parsePagination from '../utils/query/parsePagination';
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
 
-export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaInfo) {
+export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaInfo, InitResolver: Record<string, any>) {
+  if (!InitResolver.Query) InitResolver.Query = {};
+
   const cr = S.capitalize(Schema.mongql.resource);
   const selfFields: string[] = [],
     mixedFields: string[] = [],
@@ -55,7 +57,7 @@ export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaI
   };
 
   const pcr = pluralize(cr, 2);
-  const QueryResolvers: { [key: string]: any } = {};
+  const QueryResolvers: { [key: string]: any } = InitResolver.Query;
 
   const Pagination = async (auth: AuthEnumString, args: any, ctx: any) => {
     const { page, limit, sort, filter } = parsePagination(args.pagination);
@@ -76,42 +78,41 @@ export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaI
     auths.forEach((auth) => {
       const parts = Object.keys(query[range as RangeEnumString][auth as AuthEnumString]).filter((part) => query[range as RangeEnumString][auth as AuthEnumString][part as PartEnumString] !== false);
       parts.forEach((part) => {
-        QueryResolvers[`get${S.capitalize(range)}${S.capitalize(auth)}${pcr}${S.capitalize(part)}`] = async function (
-          parent: any,
-          args: any,
-          ctx: any
-        ) {
-          const AuthFilter = AuthFilters[auth as AuthEnumString](ctx);
-          if (part === 'Count') {
-            if (range === 'All')
-              return await ctx[cr].countDocuments({
-                ...AuthFilter
-              });
-            else if (range === 'Filtered')
-              return await ctx[cr].countDocuments({
+        const key = `get${S.capitalize(range)}${S.capitalize(auth)}${pcr}${S.capitalize(part)}`;
+        if (!QueryResolvers[key])
+          QueryResolvers[key] = async function (
+            parent: any,
+            args: any,
+            ctx: any
+          ) {
+            const AuthFilter = AuthFilters[auth as AuthEnumString](ctx);
+            if (part === 'Count') {
+              if (range === 'All')
+                return await ctx[cr].countDocuments({
+                  ...AuthFilter
+                });
+              else if (range === 'Filtered')
+                return await ctx[cr].countDocuments({
+                  ...AuthFilter,
+                  ...(args.filter || '{}')
+                });
+            }
+
+            let query = null;
+
+            if (range === 'All') query = ctx[cr].find({ ...AuthFilter });
+            else if (range === 'Paginated') query = Pagination(auth as AuthEnumString, args, ctx);
+            else if (range === 'Filter') query = Filter(auth as AuthEnumString, args, ctx);
+            else if (range === 'Id')
+              query = ctx[cr].find({
                 ...AuthFilter,
-                ...(args.filter || '{}')
+                _id: args.id
               });
-          }
 
-          let query = null;
-
-          if (range === 'All') query = ctx[cr].find({ ...AuthFilter });
-          else if (range === 'Paginated') query = Pagination(auth as AuthEnumString, args, ctx);
-          else if (range === 'Filter') query = Filter(auth as AuthEnumString, args, ctx);
-          else if (range === 'Id')
-            query = ctx[cr].find({
-              ...AuthFilter,
-              _id: args.id
-            });
-
-          query = query.select(Selection(auth as AuthEnumString, part));
-          const res = await query;
-          return range === 'Id' ? res[0] : res;
-        };
+            const res = await query.select(Selection(auth as AuthEnumString, part));
+            return range === 'Id' ? res[0] : res;
+          };
       });
     });
   });
-
-  return QueryResolvers;
 }

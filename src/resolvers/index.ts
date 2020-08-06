@@ -6,18 +6,9 @@ import { IMongqlMongooseSchemaFull, IResolverPartial, ISchemaInfo } from '../typ
 
 export default function generateResolvers(Schema: IMongqlMongooseSchemaFull, InitResolver: undefined | IResolverPartial, SchemaInfo: ISchemaInfo) {
   if (!InitResolver) InitResolver = { Query: {}, Mutation: {} } as IResolverPartial;
-  InitResolver = {
-    ...generateTypeResolvers(SchemaInfo),
-    ...InitResolver,
-  };
-  InitResolver.Query = {
-    ...generateQueryResolvers(Schema, SchemaInfo),
-    ...InitResolver.Query,
-  };
-  InitResolver.Mutation = {
-    ...generateMutationResolvers(Schema, SchemaInfo),
-    ...InitResolver.Mutation,
-  };
+  generateTypeResolvers(SchemaInfo, InitResolver);
+  generateQueryResolvers(Schema, SchemaInfo, InitResolver);
+  generateMutationResolvers(Schema, SchemaInfo, InitResolver);
   return resolverCompose(InitResolver);
 }
 

@@ -6,9 +6,9 @@ import { ISchemaInfo, FieldFullInfo } from "../types";
  * 2. For types that are not related, it just gets the same type from its parent 
  * @param SchemaInfo Schema related info
  */
-export default function (SchemaInfo: ISchemaInfo) {
+export default function (SchemaInfo: ISchemaInfo, InitResolver: Record<string, any>) {
   const { Types: { objects } } = SchemaInfo;
-  const result: { [key: string]: any } = {};
+  const result: { [key: string]: any } = InitResolver;
 
   objects.forEach(object => {
     Object.entries(object).forEach(([object_key, value]) => {
@@ -18,23 +18,24 @@ export default function (SchemaInfo: ISchemaInfo) {
         const field_info: FieldFullInfo = entry[1];
 
         const { generic_type, ref_type, fieldDepth } = field_info;
-        if (generic_type.match(/(ref|refs)/)) {
-          result[object_key][field] = async function (parent: any, _: any, ctx: any) {
-            const model = ctx[ref_type];
-            const id = parent[field];
-            let result = null;
-            if (fieldDepth > 0) {
-              result = [];
-              for (let i = 0; i < id.length; i++)
-                result.push(await model.findById(id[i]));
-            } else
-              result = await model.findById(id)
-            return result;
-          };
-        } else if (generic_type.match(/(enum|object)/))
-          result[object_key][field] = (parent: any) => parent[field];
+        if (!result[object_key][field]) {
+          if (generic_type.match(/(ref|refs)/)) {
+            result[object_key][field] = async function (parent: any, _: any, ctx: any) {
+              const model = ctx[ref_type];
+              const id = parent[field];
+              let result = null;
+              if (fieldDepth > 0) {
+                result = [];
+                for (let i = 0; i < id.length; i++)
+                  result.push(await model.findById(id[i]));
+              } else
+                result = await model.findById(id)
+              return result;
+            };
+          } else if (generic_type.match(/(enum|object)/))
+            result[object_key][field] = (parent: any) => parent[field];
+        }
       })
     });
-  })
-  return result;
+  });
 }

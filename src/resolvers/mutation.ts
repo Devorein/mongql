@@ -14,13 +14,14 @@ import deleteResource from '../utils/resource/deleteResource';
  * @param Schema Schema to generate mutation resolvers from
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
-export default function generateMutationResolvers(Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaInfo): any {
+export default function generateMutationResolvers(Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaInfo, InitResolver: Record<string, any>) {
+  if (!InitResolver.Mutation) InitResolver.Mutation = {};
   const { mongql: { resource, generate: { mutation } } } = Schema;
 
   const capitalizedResource = resource.charAt(0).toUpperCase() + resource.substr(1);
   const pluralizedcapitalizedResource = pluralize(capitalizedResource, 2);
 
-  const MutationResolvers: { [key: string]: any } = {};
+  const MutationResolvers: { [key: string]: any } = InitResolver.Mutation;
   const MutationResolversMapper = {
     create: {
       single: async function (parent: any, args: any, ctx: any) {
@@ -52,9 +53,10 @@ export default function generateMutationResolvers(Schema: IMongqlMongooseSchemaF
   actions.forEach((action) => {
     const targets = Object.keys(mutation[action as ActionEnumString]).filter((target) => mutation[action as ActionEnumString][target as TargetEnumString]);
     targets.forEach((target) => {
-      MutationResolvers[`${action}${target === 'single' ? capitalizedResource : pluralizedcapitalizedResource}`] =
-        MutationResolversMapper[(action as ActionEnumString)][target as TargetEnumString];
+      const key = `${action}${target === 'single' ? capitalizedResource : pluralizedcapitalizedResource}`;
+      if (!MutationResolvers[key])
+        MutationResolvers[key] =
+          MutationResolversMapper[(action as ActionEnumString)][target as TargetEnumString];
     });
   });
-  return MutationResolvers;
 }

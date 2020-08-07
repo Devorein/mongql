@@ -95,12 +95,13 @@ function generateSpecificType(generic_type: string, value: any, key: string, par
   let object_type = '',
     input_type = null,
     ref_type = null;
+  const enum_type = (parentKey ? parentKey.enum_type + "_" : resource + '_').toUpperCase() + key.toUpperCase();
   if (generic_type.match(/(object)/)) {
-    object_type = resource + S.capitalize(value.mongql?.type || key);
+    object_type = (parentKey ? parentKey.object_type : S.capitalize(resource)) + S.capitalize(value.mongql?.type || key);
     input_type = object_type + 'Input'
   }
   else if (generic_type === 'enum')
-    object_type = (parentKey ? parentKey.object_type + "_" : resource + '_').toUpperCase() + key.toUpperCase();
+    object_type = enum_type
   else if (generic_type.match('ref')) {
     object_type = value.ref;
     input_type = `ID`;
@@ -109,7 +110,7 @@ function generateSpecificType(generic_type: string, value: any, key: string, par
     object_type = parseScalarType(value);
 
   input_type = input_type ? input_type : object_type;
-  return { object_type, input_type, ref_type };
+  return { object_type, input_type, ref_type, enum_type };
 }
 
 const generateIncludedAuthSegments = (schema_object_auth: any, parentSchema_object_auth: string[] | any): [AuthEnumString[], AuthEnumString[]] => {
@@ -220,12 +221,12 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       const generic_type = generateGenericType(innerValue) + (fieldDepth > 0 ? 's' : '');
       const generatedFieldConfigs = generateFieldConfigs(value, CurrentSchemaConfigs);
       const { description, authMapper, nullable: { input: nullable_input, object: nullable_object }, attach: { input: attach_to_input, interface: attach_to_interface, enum: attach_to_enum } } = generatedFieldConfigs;
-      const { object_type, input_type, ref_type } = generateSpecificType(generic_type, innerValue, key, parentKey, cr);
+      const { object_type, input_type, ref_type, enum_type } = generateSpecificType(generic_type, innerValue, key, parentKey, cr);
       const generatedIncludedAuthSegments = generateIncludedAuthSegments(generatedFieldConfigs.attach.object, currentSchema_included_auth_segments);
       const field_excluded_auth_segments = generatedIncludedAuthSegments[0];
       const field_included_auth_segments: AuthEnumString[] = generatedIncludedAuthSegments[1];
 
-      path = parentKey ? [...path, { object_type, key }] : [{ object_type, key }];
+      path = parentKey ? [...path, { object_type, key, enum_type }] : [{ object_type, key, enum_type }];
       const generatedFieldFullInfo: FieldFullInfo = Object.assign({}, generatedFieldConfigs, {
         input_type,
         generic_type,
@@ -233,6 +234,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
         object_type,
         excludedAuthSegments: field_excluded_auth_segments,
         fieldDepth,
+        enum_type,
         path: [...path]
       })
 
@@ -241,10 +243,10 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
         BaseSchema.path(path.map(({ key }) => key).join('.')).validate((v: any) => {
           const value = Validators[object_type](v);
           return value !== null && value !== undefined;
-        }, (props: any) => props.reason.message);
+        }/*, (props: any) => props.reason.message */);
 
       field_included_auth_segments.forEach((auth) => {
-        path[path.length - 1] = { object_type, key };
+        path[path.length - 1] = { object_type, key, enum_type };
         const auth_object_type = generic_type.match(/(ref|object)/)
           ? authMapper[S.capitalize(auth) as AuthEnumString] + object_type + "Object"
           : object_type;

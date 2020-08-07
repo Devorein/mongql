@@ -1,155 +1,61 @@
 const mongoose = require('mongoose');
-const { isDocumentNode, documentApi } = require('graphql-extra');
-const gql = require('graphql-tag');
+const { documentApi } = require('graphql-extra');
 
 const { Mongql } = require('../../dist');
 
-describe.skip('Proper typedef generation', () => {
-  let TransformedTypedefs;
+const NestedSchema12 = new mongoose.Schema({
+  field321: {
+    type: [Number]
+  },
+});
 
-  const DocumentAPI = {},
-    SchemaFields = {},
-    Schemas = {},
-    resources = ['User', 'Settings'];
+const NestedSchema1 = new mongoose.Schema({
+  field31: {
+    type: Number,
+  },
+  field32: [NestedSchema12],
+  field33: {
+    type: String,
+    enum: ['enum1', 'enum2', 'enum3']
+  },
+});
 
-  const UserSchema = new mongoose.Schema({
-    name: String,
-    ROLE: {
-      type: String,
-      enum: ['ADMIN', 'ORGANIZER', 'ATTENDEE']
+const BaseSchema = new mongoose.Schema({
+  field1: String,
+  field2: {
+    type: String,
+    enum: ['enum1', 'enum2', 'enum3']
+  },
+  field3: NestedSchema1,
+  field4: {
+    type: Number,
+    mongql: {
+      scalar: 'PositiveInt'
     }
-  });
+  }
+});
 
-  UserSchema.mongql = {
-    resource: 'User'
-  };
+BaseSchema.mongql = {
+  resource: 'User'
+};
 
-  const SettingsSchema = new mongoose.Schema({
-    created_at: {
-      type: Date,
-      mongql: {
-        scalar: 'Date'
-      }
-    },
-    ROLE: {
-      type: String,
-      enum: ['BASIC', 'INTERMEDIATE', 'ADVANCED']
-    }
-  });
-
-  const InitUserTypedef = gql`
-		type UserData {
-			name: String!
-		}
-	`;
-
-  const InitSettingsTypedef = gql`
-		type SettingsData {
-			name: String!
-		}
-	`;
-
-  SettingsSchema.mongql = {
-    resource: 'Settings'
-  };
-
+describe('Proper typedef types generation', () => {
   const mongql = new Mongql({
-    Schemas: [UserSchema, SettingsSchema],
-    Typedefs: {
-      init: {
-        User: InitUserTypedef,
-        Settings: InitSettingsTypedef
-      }
-    }
+    Schemas: [BaseSchema]
   });
 
-  Schemas.User = UserSchema;
-  Schemas.Settings = SettingsSchema;
-
-  resources.forEach((resource) => {
-    SchemaFields[resource] = Object.keys(Schemas[resource].paths).filter((key) => key !== '_id');
-    SchemaFields[resource].push('id');
+  it('Interface Validation', async () => {
+    const { TransformedTypedefs } = await mongql.generate();
+    const DocumentApi = documentApi().addSDL(TransformedTypedefs.obj.User);
+    expect(DocumentApi.getInterfaceType(`UserInterface`)).toBeTruthy();
+    expect(DocumentApi.getInterfaceType(`UserField3Interface`)).toBeTruthy();
+    expect(DocumentApi.getInterfaceType(`UserField3Field32Interface`)).toBeTruthy();
   });
 
-  beforeEach(async () => {
-    const res = await mongql.generate();
-    TransformedTypedefs = res.TransformedTypedefs;
-    resources.forEach((resource) => {
-      DocumentAPI[resource] = documentApi().addSDL(TransformedTypedefs.obj[resource]);
-    });
-  });
-
-  describe('Document generation', () => {
-    it('Should create document node', () => {
-      expect(isDocumentNode(TransformedTypedefs.obj.User)).toBe(true);
-      expect(isDocumentNode(TransformedTypedefs.obj.Settings)).toBe(true);
-    });
-  });
-
-  describe('Interface generation', () => {
-    it('Should create interface node', () => {
-      resources.forEach((resource) => {
-        expect(DocumentAPI[resource].getInterfaceType(resource).node).toBeTruthy();
-      });
-    });
-
-    it('Should create interface with appropriate fields', () => {
-      resources.forEach((resource) => {
-        SchemaFields[resource].forEach((field) => {
-          expect(DocumentAPI[resource].getInterfaceType(resource).hasField(field)).toBe(true);
-        });
-      });
-    });
-  });
-
-  describe('Type generation', () => {
-    it('Should create auth based resource', () => {
-      ['Self', 'Others', 'Mixed'].forEach((auth) => {
-        resources.forEach((resource) => {
-          expect(DocumentAPI[resource].hasType(`${auth}${resource}Type`)).toBe(true);
-        });
-      });
-    });
-
-    it('Should have all fields on created auth based resource', () => {
-      ['Self', 'Others', 'Mixed'].forEach((auth) => {
-        resources.forEach((resource) => {
-          SchemaFields[resource].forEach((field) => {
-            expect(DocumentAPI[resource].getObjectType(`${auth}${resource}Type`).hasField(field)).toBe(true);
-          });
-        });
-      });
-    });
-
-    it('Should contain pre existing types', () => {
-      resources.forEach((resource) => {
-        expect(DocumentAPI[resource].hasType(`${resource}Data`)).toBeTruthy();
-      });
-    });
-  });
-
-  // Input generation
-  describe('Input generation', () => {
-    it('Should create inputs', () => {
-      resources.forEach((resource) => {
-        expect(DocumentAPI[resource].getInputType(`${resource}Input`)).toBeTruthy();
-      });
-    });
-
-    it('Should have all keys in created inputs', () => {
-      resources.forEach((resource) => {
-        SchemaFields[resource].slice(0, SchemaFields[resource].length - 1).forEach((field) => {
-          expect(DocumentAPI[resource].getInputType(`${resource}Input`).hasField(field)).toBe(true);
-        });
-      });
-    });
-  });
-
-  // Enum generation
-  describe('Enum generation', () => {
-    it('Should generate enums', () => {
-      expect(DocumentAPI.User.getEnumType(`USER_ROLE`)).toBeTruthy();
-      expect(DocumentAPI.Settings.getEnumType(`SETTINGS_ROLE`)).toBeTruthy();
-    });
-  });
+  it('Enum validation', async () => {
+    const { TransformedTypedefs } = await mongql.generate();
+    const DocumentApi = documentApi().addSDL(TransformedTypedefs.obj.User);
+    expect(DocumentApi.getEnumType(`USER_FIELD2`)).toBeTruthy();
+    expect(DocumentApi.getEnumType(`USER_FIELD3_FIELD33`)).toBeTruthy();
+  })
 });

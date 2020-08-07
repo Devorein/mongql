@@ -377,6 +377,7 @@ export interface FieldInfo extends ISpecificTypeInfo {
 
 export interface MongqlFieldPath {
   object_type: string,
+  enum_type: null | string,
   key: string
 }
 
@@ -391,7 +392,8 @@ export interface FieldFullInfo extends IMongqlFieldConfigsFull, FieldInfo { }
 export interface ISpecificTypeInfo {
   object_type: string,
   input_type: string,
-  ref_type: string
+  ref_type: string,
+  enum_type: null | string
 }
 
 /**

@@ -44,7 +44,7 @@ describe('Proper typedef types generation', () => {
     Schemas: [BaseSchema]
   });
 
-  it('Interface Validation', async () => {
+  it('Interface type Validation', async () => {
     const { TransformedTypedefs } = await mongql.generate();
     const DocumentApi = documentApi().addSDL(TransformedTypedefs.obj.User);
     expect(DocumentApi.getInterfaceType(`UserInterface`)).toBeTruthy();
@@ -52,10 +52,38 @@ describe('Proper typedef types generation', () => {
     expect(DocumentApi.getInterfaceType(`UserField3Field32Interface`)).toBeTruthy();
   });
 
-  it('Enum validation', async () => {
+  it('Enum type validation', async () => {
     const { TransformedTypedefs } = await mongql.generate();
     const DocumentApi = documentApi().addSDL(TransformedTypedefs.obj.User);
     expect(DocumentApi.getEnumType(`USER_FIELD2`)).toBeTruthy();
     expect(DocumentApi.getEnumType(`USER_FIELD3_FIELD33`)).toBeTruthy();
-  })
+  });
+
+  it('Object type validation', async () => {
+    const { TransformedTypedefs } = await mongql.generate();
+    const DocumentApi = documentApi().addSDL(TransformedTypedefs.obj.User);
+    ['User', 'UserField3', 'UserField3Field32'].forEach(object_type => {
+      ['Mixed', 'Others', 'Self'].forEach(auth => {
+        expect(DocumentApi.getObjectType(`${auth}${object_type}Object`)).toBeTruthy();
+      })
+    })
+  });
+
+  it('Input type validation', async () => {
+    const { TransformedTypedefs } = await mongql.generate();
+    const DocumentApi = documentApi().addSDL(TransformedTypedefs.obj.User);
+    ['User', 'UserField3', 'UserField3Field32'].forEach(object_type => {
+      ['Create', 'Update'].forEach(action => {
+        expect(DocumentApi.getInputType(`${action}${object_type}Input`)).toBeTruthy();
+      })
+    })
+  });
+
+  it('Union type validation', async () => {
+    const { TransformedTypedefs } = await mongql.generate();
+    const DocumentApi = documentApi().addSDL(TransformedTypedefs.obj.User);
+    ['User', 'UserField3', 'UserField3Field32'].forEach(object_type => {
+      expect(DocumentApi.getUnionType(`${object_type}Union`)).toBeTruthy();
+    })
+  });
 });

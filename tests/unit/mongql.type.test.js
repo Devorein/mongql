@@ -4,14 +4,14 @@ const { outputToString, enumToString, unionToString } = require('../../dist/util
 
 const { Mongql } = require('../../dist');
 
-function CheckInputType (InputType, Inputs, DocumentApi) {
+function CheckTypeFields (Inputs, TypeApiCb) {
 	Inputs.forEach(([ InputStr, InputFields ]) => {
-		const InputApi = DocumentApi.getInputType(`${InputType}${InputStr}Input`);
-		const fieldNodes = InputApi.getFields().map((api) => api.node);
+		const TypeApi = TypeApiCb(InputStr);
+		const fieldNodes = TypeApi.getFields().map((api) => api.node);
 		InputFields.reduce((acc, InputField) => {
 			return acc.concat(outputToString(fieldNodes[acc.length]) === InputField);
 		}, []).forEach((match) => expect(match).toBe(true));
-		expect(InputApi).toBeTruthy();
+		expect(TypeApi).toBeTruthy();
 	});
 }
 
@@ -63,19 +63,14 @@ describe('Proper typedef types generation', () => {
 	});
 
 	it('Interface type Validation', async () => {
-		[
-			[ `UserInterface`, [ 'ID!', '[String!]!', 'USER_FIELD2!', 'UserField3Union!', 'PositiveInt!' ] ],
-			[ `UserField3Interface`, [ 'Int!', '[UserField3Field32Union!]!', 'USER_FIELD3_FIELD33!' ] ],
-			[ `UserField3Field32Interface`, [ '[Int!]!' ] ]
-		].forEach(([ interfaceStr, FieldsMatchers ]) => {
-			const interfaceApi = DocumentApi.getInterfaceType(interfaceStr);
-			const fieldNodes = interfaceApi.getFields().map((api) => api.node);
-			FieldsMatchers.reduce(
-				(acc, FieldsMatcher) => acc.concat(outputToString(fieldNodes[acc.length]) === FieldsMatcher),
-				[]
-			).forEach((match) => expect(match).toBe(true));
-			expect(interfaceApi).toBeTruthy();
-		});
+		CheckTypeFields(
+			[
+				[ ``, [ 'ID!', '[String!]!', 'USER_FIELD2!', 'UserField3Union!', 'PositiveInt!' ] ],
+				[ `Field3`, [ 'Int!', '[UserField3Field32Union!]!', 'USER_FIELD3_FIELD33!' ] ],
+				[ `Field3Field32`, [ '[Int!]!' ] ]
+			],
+			(Type) => DocumentApi.getInterfaceType(`User${Type}Interface`)
+		);
 	});
 
 	it('Enum type validation', async () => {
@@ -90,31 +85,34 @@ describe('Proper typedef types generation', () => {
 	});
 
 	it('Object type validation', async () => {
-		[ 'User', 'UserField3', 'UserField3Field32' ].forEach((object_type) => {
-			[ 'Mixed', 'Others', 'Self' ].forEach((auth) => {
-				expect(DocumentApi.getObjectType(`${auth}${object_type}Object`)).toBeTruthy();
-			});
+		[ 'Mixed', 'Others', 'Self' ].forEach((auth) => {
+			CheckTypeFields(
+				[
+					[ `User`, [ 'ID!', '[String!]!', 'USER_FIELD2!', `${auth}UserField3Object!`, 'PositiveInt!' ] ],
+					[ `UserField3`, [ 'Int!', `[${auth}UserField3Field32Object!]!`, 'USER_FIELD3_FIELD33!' ] ],
+					[ `UserField3Field32`, [ '[Int!]!' ] ]
+				],
+				(Type) => DocumentApi.getObjectType(`${auth}${Type}Object`)
+			);
 		});
 	});
 
 	it('Input type validation', async () => {
-		CheckInputType(
-			'Create',
+		CheckTypeFields(
 			[
 				[ 'User', [ '[String!]!', 'USER_FIELD2!', 'CreateUserField3Input!', 'PositiveInt!' ] ],
 				[ 'UserField3', [ 'Int!', '[CreateUserField3Field32Input!]!', 'USER_FIELD3_FIELD33!' ] ],
 				[ 'UserField3Field32', [ '[Int!]!' ] ]
 			],
-			DocumentApi
+			(Type) => DocumentApi.getInputType(`Create${Type}Input`)
 		);
-		CheckInputType(
-			'Update',
+		CheckTypeFields(
 			[
 				[ 'User', [ 'ID!', '[String]!', 'USER_FIELD2', 'UpdateUserField3Input', 'PositiveInt' ] ],
 				[ 'UserField3', [ 'Int', '[UpdateUserField3Field32Input]!', 'USER_FIELD3_FIELD33' ] ],
 				[ 'UserField3Field32', [ '[Int]!' ] ]
 			],
-			DocumentApi
+			(Type) => DocumentApi.getInputType(`Update${Type}Input`)
 		);
 	});
 

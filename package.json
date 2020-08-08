@@ -18,6 +18,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run clean && npm run emit-declarations && npx tsc --removeComments",
+    "build:watch": "npx tsc --incremental true -w",
     "clean": "npx rimraf ./dist",
     "emit-declarations": "npx tsc --declaration",
     "lint": "npx eslint --ext .ts,.js src/ --fix --color",

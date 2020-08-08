@@ -1,4 +1,4 @@
-import { TypeNode, InputValueDefinitionNode, NonNullTypeNode, ListTypeNode, NamedTypeNode } from 'graphql/language/ast';
+import { TypeNode, InputValueDefinitionNode, NonNullTypeNode, ListTypeNode, NamedTypeNode, EnumValueDefinitionNode } from 'graphql/language/ast';
 import { IMongqlTypeNode } from "../../types";
 
 /**
@@ -55,4 +55,14 @@ export function argumentsToString(argAst: InputValueDefinitionNode[]) {
  */
 export function outputToString(outputAst: TypeNode) {
   return convertToString(traverseType(outputAst));
+}
+
+
+/**
+ * Converts a enum value to string representation
+ * @param enumValues Enum value nodes array
+ * @return String representation of enum value
+ */
+export function enumToString(enumValues: EnumValueDefinitionNode[]) {
+  return enumValues.reduce((acc: string[], node) => acc.concat(node.name.value), []).join(",");
 }

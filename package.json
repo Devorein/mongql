@@ -35,9 +35,6 @@
   "lint-staged": {
     "*.js": [
       "npm run lint"
-    ],
-    "*.json": [
-      "npx sort-package-json"
     ]
   },
   "dependencies": {

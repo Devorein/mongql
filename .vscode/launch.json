@@ -12,6 +12,6 @@
         "<node_internals>/**"
       ],
       "program": "${workspaceFolder}\\experiment\\index.js"
-    }
+    },
   ]
 }

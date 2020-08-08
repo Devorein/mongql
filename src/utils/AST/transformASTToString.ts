@@ -57,7 +57,6 @@ export function outputToString(outputAst: TypeNode) {
   return convertToString(traverseType(outputAst));
 }
 
-
 /**
  * Converts a enum value to string representation
  * @param enumValues Enum value nodes array
@@ -65,4 +64,8 @@ export function outputToString(outputAst: TypeNode) {
  */
 export function enumToString(enumValues: EnumValueDefinitionNode[]) {
   return enumValues.reduce((acc: string[], node) => acc.concat(node.name.value), []).join(",");
+}
+
+export function unionToString(unionTypes: NamedTypeNode[]) {
+  return unionTypes.reduce((acc: string[], node) => acc.concat(node.name.value), []).join("|");
 }

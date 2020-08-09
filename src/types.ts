@@ -529,4 +529,9 @@ export type MongqlSchemaConfigsPartial = IMongqlBaseSchemaConfigsPartial | IMong
 /**
  * Mongql Full type for base or nested Schema config
  */
-export type MongqlSchemaConfigsFull = IMongqlBaseSchemaConfigsFull | IMongqlNestedSchemaConfigsFull; 
+export type MongqlSchemaConfigsFull = IMongqlBaseSchemaConfigsFull | IMongqlNestedSchemaConfigsFull;
+
+export type TSchemaInfo = {
+  Types: IMongqlGeneratedTypes,
+  Fields: FieldsFullInfos,
+}

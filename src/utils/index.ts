@@ -10,6 +10,11 @@ export * from "./AST/transformASTToString";
 export * from "./mongoose";
 export * from "./objManip";
 
+export async function AsyncForEach<T>(arr: readonly T[], cb: any) {
+  for (let index = 0; index < arr.length; index++)
+    await cb(arr[index] as T, index, arr);
+}
+
 export {
   loadFiles,
   resolverCompose,

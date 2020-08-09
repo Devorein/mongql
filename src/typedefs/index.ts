@@ -11,7 +11,7 @@ import {
 } from './type';
 import { DocumentNode } from "graphql";
 
-export default async function (schema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined) {
+export default function (schema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined) {
   const { SchemaInfo, DocumentAST } = parseMongooseSchema(schema, InitTypedefsAST);
   generateQueryTypedefs(schema, DocumentAST);
   generateMutationTypedefs(schema, DocumentAST);

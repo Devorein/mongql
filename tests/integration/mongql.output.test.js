@@ -6,81 +6,64 @@ const rimraf = require('rimraf');
 const { Mongql } = require('../../dist');
 
 const rimrafAsync = async function (path) {
-  return new Promise((resolve) => {
-    rimraf(path, () => {
-      resolve(true);
-    });
-  });
+	return new Promise((resolve) => {
+		rimraf(path, () => {
+			resolve(true);
+		});
+	});
 };
 
 const OutputDir = {
-  SDL: path.resolve(__dirname, '../../outputs/SDL'),
-  AST: path.resolve(__dirname, '../../outputs/AST')
+	SDL: path.resolve(__dirname, '../../outputs/SDL'),
+	AST: path.resolve(__dirname, '../../outputs/AST')
 };
 
 rimraf.sync(OutputDir.SDL);
 rimraf.sync(OutputDir.AST);
 
-async function cleanOutputs() {
-  await rimrafAsync(OutputDir.SDL);
-  await rimrafAsync(OutputDir.AST);
+async function cleanOutputs () {
+	await rimrafAsync(OutputDir.SDL);
+	await rimrafAsync(OutputDir.AST);
 }
 
 const UserSchema = new mongoose.Schema({
-  name: String
+	name: String
 });
 
-
 const SettingSchema = new mongoose.Schema({
-  name: String
+	name: String
 });
 
 describe('Correct AST and SDL output', () => {
-  beforeEach(() => {
-    UserSchema.mongql = { resource: 'user' };
-    SettingSchema.mongql = { resource: 'setting' };
-  });
+	beforeEach(() => {
+		UserSchema.mongql = { resource: 'user' };
+		SettingSchema.mongql = { resource: 'setting' };
+	});
 
-  ['AST', 'SDL'].forEach(part => {
-    it(`Shouldn't output ${part} when option not provided`, async () => {
-      new Mongql({
-        Schemas: [UserSchema, SettingSchema],
-      });
-      await expect(fs.readdir(OutputDir[part])).rejects.toThrow();
-    });
+	[ 'AST', 'SDL' ].forEach((part) => {
+		it(`Shouldn't output ${part} when option not provided`, async () => {
+			const mongql = new Mongql({
+				Schemas: [ UserSchema, SettingSchema ]
+			});
+			await mongql.generate();
+			await expect(fs.readdir(OutputDir[part])).rejects.toThrow();
+		});
 
-    it(`Should create multiple output SDL when option ${part} is provided`, async () => {
-      const mongql = new Mongql({
-        Schemas: [UserSchema, SettingSchema],
-        output: {
-          [part]: OutputDir[part]
-        }
-      });
-      await cleanOutputs();
-      await mongql.generate();
-      const resources = mongql.getResources();
-      const files = await fs.readdir(OutputDir[part]);
-      expect(files.length).toBe(2);
-      resources.forEach((resource) => {
-        expect(files.includes(`${resource}.${part === 'SDL' ? 'graphql' : 'json'}`)).toBe(true);
-      });
-    });
-  })
-});
-
-describe('Correct outputSDL', () => {
-  UserSchema.mongql = { resource: 'user' };
-  SettingSchema.mongql = { resource: 'setting' };
-  it('Should create SDL using outputSDL', async () => {
-    UserSchema.mongql = { resource: 'user' };
-    const mongql = new Mongql({
-      Schemas: [UserSchema]
-    });
-    await cleanOutputs();
-    const { TransformedTypedefs } = await mongql.generate();
-    await Mongql.outputSDL(OutputDir.SDL, TransformedTypedefs.obj.User, 'User');
-    const sdls = await fs.readdir(OutputDir.SDL);
-    expect(sdls.length).toBe(1);
-    expect(sdls.includes(`User.graphql`)).toBe(true);
-  });
+		it(`Should create multiple output SDL when option ${part} is provided`, async () => {
+			const mongql = new Mongql({
+				Schemas: [ UserSchema, SettingSchema ],
+				output: {
+					[part]: OutputDir[part]
+				}
+			});
+			await cleanOutputs();
+			await mongql.generate();
+			const resources = mongql.getResources();
+			const files = await fs.readdir(OutputDir[part]);
+			expect(files.length).toBe(2);
+			resources.forEach((resource) => {
+				expect(files.includes(`${resource}.${part === 'SDL' ? 'graphql' : 'json'}`)).toBe(true);
+			});
+		});
+	});
 });

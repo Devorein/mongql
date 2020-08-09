@@ -4,7 +4,7 @@ import { t, objectTypeApi, enumTypeApi, interfaceTypeApi, inputTypeApi, unionTyp
 import { resolvers } from 'graphql-scalars';
 import { GraphQLScalarType, NamedTypeNode, DocumentNode } from "graphql";
 
-import { ISpecificTypeInfo, IMongqlMongooseSchemaFull, IMongqlGeneratedTypes, AuthEnumString, InputActionEnumString, MutableDocumentNode, FieldsFullInfos, FieldFullInfo, MongqlSchemaConfigsFull, MongqlFieldAttachObjectConfigsFull, MongqlFieldPath } from "../types";
+import { ISpecificTypeInfo, IMongqlMongooseSchemaFull, IMongqlGeneratedTypes, AuthEnumString, InputActionEnumString, MutableDocumentNode, FieldsFullInfos, FieldFullInfo, MongqlSchemaConfigsFull, MongqlFieldAttachObjectConfigsFull, MongqlFieldPath, TSchemaInfo } from "../types";
 import Password from "../utils/gql-types/password";
 import Username from "../utils/gql-types/username";
 
@@ -296,13 +296,13 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       });
     })
   });
-
+  const SchemaInfo: TSchemaInfo = {
+    Types,
+    Fields,
+  };
   return {
     DocumentAST: ResultDocumentNode as MutableDocumentNode,
-    SchemaInfo: {
-      Types,
-      Fields,
-    }
+    SchemaInfo
   };
 }
 

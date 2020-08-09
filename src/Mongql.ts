@@ -2,7 +2,7 @@ import { resolvers, typeDefs } from 'graphql-scalars';
 import colors from 'colors';
 import { documentApi } from "graphql-extra";
 import mkdirp from 'mkdirp';
-import fs from 'fs-extra';
+import fs, { mkdirpSync } from 'fs-extra';
 import path from 'path';
 import S from 'voca';
 import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
@@ -13,18 +13,14 @@ import { DocumentNode } from "graphql";
 import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
 
-import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial } from "./types";
+import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TSchemaInfo, IOutputFull } from "./types";
 
+import { AsyncForEach } from "./utils/index";
 import { generateGlobalConfigs, generateBaseSchemaConfigs } from "./utils/generate/configs";
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
 import loadFiles from "./utils/loadFiles";
 import { convertToDocumentNodes } from "./utils/AST"
-
-async function AsyncForEach<T>(arr: readonly T[], cb: any) {
-  for (let index = 0; index < arr.length; index++)
-    await cb(arr[index] as T, index, arr);
-}
 
 const BaseTypeDefs = gql`
   type Query {
@@ -161,23 +157,18 @@ class Mongql {
     } = this.#globalConfigs;
     const InitTypedefs = Typedefs.init || {};
     const InitResolvers = Resolvers.init || {};
+    const SchemasInfo: Record<string, TSchemaInfo> = {};
     await AsyncForEach(Schemas, async (Schema: IMongqlMongooseSchemaFull) => {
       const {
         mongql
       } = Schema;
       const { resource, output } = mongql;
       let typedefsAST = mongql.TypeDefs || InitTypedefs[resource], resolver = mongql.Resolvers || InitResolvers[resource];
-      const generated = await generateTypedefs(
+      const generated = generateTypedefs(
         Schema,
         typedefsAST,
       );
       typedefsAST = generated.typedefsAST;
-      if (typeof output.SDL === 'string' && typedefsAST)
-        await Mongql.outputSDL(output.SDL, typedefsAST, resource);
-      if (typeof output.AST === 'string') {
-        await mkdirp(output.AST as string);
-        await fs.writeFile(path.join(output.AST as string, `${Schema.mongql.resource}.json`), JSON.stringify(typedefsAST), 'UTF-8');
-      }
       resolver = generateResolvers(
         Schema,
         resolver,
@@ -187,14 +178,59 @@ class Mongql {
       TransformedTypedefs.arr.push(typedefsAST);
       TransformedResolvers.obj[resource] = resolver;
       TransformedResolvers.arr.push(resolver);
-      // delete Schema.mongql;
-    });
+      SchemasInfo[resource] = generated.SchemaInfo;
+      // delete Schema.mongql
+      await this.#output(output, typedefsAST, resource);
+    })
+    this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
+    return {
+      TransformedTypedefs,
+      TransformedResolvers,
+      SchemasInfo
+    };
+  }
 
+  generateSync() {
+    const TransformedTypedefs: ITransformedPart = { obj: {}, arr: [] },
+      TransformedResolvers: ITransformedPart = { obj: {}, arr: [] };
+    const {
+      Typedefs,
+      Resolvers,
+      Schemas
+    } = this.#globalConfigs;
+    const InitTypedefs = Typedefs.init || {};
+    const InitResolvers = Resolvers.init || {};
+    const SchemasInfo: Record<string, TSchemaInfo> = {};
+    Schemas.forEach((Schema: IMongqlMongooseSchemaFull) => {
+      const {
+        mongql
+      } = Schema;
+      const { resource, output } = mongql;
+      let typedefsAST = mongql.TypeDefs || InitTypedefs[resource], resolver = mongql.Resolvers || InitResolvers[resource];
+      const generated = generateTypedefs(
+        Schema,
+        typedefsAST,
+      );
+      typedefsAST = generated.typedefsAST;
+      resolver = generateResolvers(
+        Schema,
+        resolver,
+        generated.SchemaInfo,
+      );
+      TransformedTypedefs.obj[resource] = typedefsAST;
+      TransformedTypedefs.arr.push(typedefsAST);
+      TransformedResolvers.obj[resource] = resolver;
+      TransformedResolvers.arr.push(resolver);
+      SchemasInfo[resource] = generated.SchemaInfo;
+      // delete Schema.mongql
+      this.#outputSync(output, typedefsAST, resource);
+    })
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
 
     return {
       TransformedTypedefs,
-      TransformedResolvers
+      TransformedResolvers,
+      SchemasInfo
     };
   }
 
@@ -207,17 +243,41 @@ class Mongql {
     });
   }
 
+  #output = async (output: IOutputFull, typedefsAST: DocumentNode, resource: string) => {
+    if (typeof output.SDL === 'string' && typedefsAST)
+      await this.#cleanAndOutput(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
+    if (typeof output.AST === 'string')
+      await this.#cleanAndOutput(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
+  }
+
+  #outputSync = (output: IOutputFull, typedefsAST: DocumentNode, resource: string) => {
+    if (typeof output.SDL === 'string' && typedefsAST)
+      this.#cleanAndOutputSync(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
+    if (typeof output.AST === 'string')
+      this.#cleanAndOutputSync(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
+  }
   /**
-   * Outputs the SDL by converting the TypedefsAST
+   * Clean the directory and creates output file
    * @param path Output path
    * @param TypedefsAST The AST to convert to SDL
    * @param resource Name of the resource
    */
-  static async outputSDL(path: string, TypedefsAST: DocumentNode, resource: string) {
+  #cleanAndOutput = async (path: string, content: string, resource: string) => {
     if (path) {
       try {
         await mkdirp(path);
-        await fs.writeFile(`${path}\\${resource}.graphql`, documentApi().addSDL(TypedefsAST).toSDLString(), 'UTF-8');
+        await fs.writeFile(`${path}\\${resource}`, content, 'UTF-8');
+      } catch (err) {
+        console.log(err.message)
+      }
+    }
+  }
+
+  #cleanAndOutputSync = (path: string, content: string, resource: string) => {
+    if (path) {
+      try {
+        mkdirpSync(path);
+        fs.writeFileSync(`${path}\\${resource}`, content, 'UTF-8');
       } catch (err) {
         console.log(err.message)
       }

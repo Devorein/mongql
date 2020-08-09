@@ -15,53 +15,54 @@ function CheckTypeFields (Inputs, TypeApiCb) {
 	});
 }
 
+const NestedSchema12 = new mongoose.Schema({
+	field321: {
+		type: [ Number ]
+	}
+});
+
+const NestedSchema1 = new mongoose.Schema({
+	field31: {
+		type: Number
+	},
+	field32: [ NestedSchema12 ],
+	field33: {
+		type: String,
+		enum: [ 'enum21', 'enum22', 'enum23' ]
+	}
+});
+
+const BaseSchema = new mongoose.Schema({
+	field1: [ String ],
+	field2: {
+		type: String,
+		enum: [ 'enum1', 'enum2', 'enum3' ]
+	},
+	field3: NestedSchema1,
+	field4: {
+		type: Number,
+		mongql: {
+			scalar: 'PositiveInt'
+		}
+	}
+});
+
+BaseSchema.mongql = {
+	resource: 'User'
+};
+const mongql = new Mongql({
+	Schemas: [ BaseSchema ]
+});
+
+const { TransformedTypedefs, SchemasInfo } = mongql.generateSync();
+const DocumentApi = documentApi().addSDL(TransformedTypedefs.obj.User);
+
 describe('Proper typedef types generation', () => {
-	let mongql = null,
-		DocumentApi = null;
-
-	beforeEach(async () => {
-		const NestedSchema12 = new mongoose.Schema({
-			field321: {
-				type: [ Number ]
-			}
+	/* 	SchemasInfo.User.Fields.forEach((Fields) => {
+		Object.entries(Fields).forEach(([ FieldKey, FieldValue ]) => {
+			console.log(FieldValue.path[FieldValue.path.length - 1].object_type);
 		});
-
-		const NestedSchema1 = new mongoose.Schema({
-			field31: {
-				type: Number
-			},
-			field32: [ NestedSchema12 ],
-			field33: {
-				type: String,
-				enum: [ 'enum21', 'enum22', 'enum23' ]
-			}
-		});
-
-		const BaseSchema = new mongoose.Schema({
-			field1: [ String ],
-			field2: {
-				type: String,
-				enum: [ 'enum1', 'enum2', 'enum3' ]
-			},
-			field3: NestedSchema1,
-			field4: {
-				type: Number,
-				mongql: {
-					scalar: 'PositiveInt'
-				}
-			}
-		});
-
-		BaseSchema.mongql = {
-			resource: 'User'
-		};
-		mongql = new Mongql({
-			Schemas: [ BaseSchema ]
-		});
-		const { TransformedTypedefs } = await mongql.generate();
-		DocumentApi = documentApi().addSDL(TransformedTypedefs.obj.User);
-	});
-
+	}); */
 	it('Interface type Validation', async () => {
 		CheckTypeFields(
 			[

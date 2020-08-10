@@ -1,4 +1,4 @@
-import { IMongqlMongooseSchemaFull } from "../types";
+import { IMongqlMongooseSchemaFull, MutableDocumentNode } from "../types";
 
 import generateQueryTypedefs from './query';
 import generateMutationTypedefs from './mutation';
@@ -14,10 +14,14 @@ import generateFragments from "../utils/AST/generateFragments";
 
 export default function (schema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined) {
   const { SchemaInfo, DocumentAST } = parseMongooseSchema(schema, InitTypedefsAST);
-  const GeneratedFragments = generateFragments(SchemaInfo);
-  generateQueryTypedefs(schema, DocumentAST);
-  generateMutationTypedefs(schema, DocumentAST);
-  return { typedefsAST: DocumentAST, SchemaInfo };
+  const GeneratedFragmentDefinitions = generateFragments(SchemaInfo);
+  const OperationNodes: MutableDocumentNode = {
+    kind: "Document",
+    definitions: [...GeneratedFragmentDefinitions]
+  }
+  generateQueryTypedefs(schema, DocumentAST, OperationNodes);
+  generateMutationTypedefs(schema, DocumentAST, OperationNodes);
+  return { typedefsAST: DocumentAST, SchemaInfo, OperationNodes };
 }
 
 export {

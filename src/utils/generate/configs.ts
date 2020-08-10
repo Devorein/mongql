@@ -15,7 +15,8 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPa
   return populateObjDefaultValue(InitialMongqlGlobalConfig, {
     output: {
       AST: undefined,
-      SDL: undefined
+      SDL: undefined,
+      Operation: undefined
     },
     generate: {
       mutation: nestedObjPopulation((InitialMongqlGlobalConfig?.generate as IGeneratePartial)?.mutation, mutation.options),

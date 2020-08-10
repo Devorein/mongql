@@ -3,6 +3,8 @@ import { MutableDocumentNode, IMongqlMongooseSchemaFull, ActionEnumString, Targe
 import pluralize from 'pluralize';
 import S from 'voca';
 import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
+import { FragmentDefinitionNode } from "graphql";
+import { createOperation, createFragmentSpread, createSelectionSet } from "../utils/AST/operation";
 
 interface ArgumentMapFnParam {
   r: string,
@@ -70,7 +72,7 @@ const ArgumentMap = {
  * @param Schema Schema to generate mutation typedefs from
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
-export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableDocumentNode) {
+export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableDocumentNode, OperationNodes: MutableDocumentNode) {
   const { mongql: { resource: r, generate: { mutation } } } = Schema;
   const ast = documentApi().addSDL(TypedefAST);
   const doesMutationExtExists = ast.hasExt('Mutation');
@@ -103,6 +105,14 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
           description: `${S.capitalize(action)} multiple ${r}`,
           arguments: ArgumentMap[action as ActionEnumString][target as TargetEnumString]({ r, pr, cr, cpr })
         });
+
+      OperationNodes.definitions.push(createOperation(
+        S.capitalize(`${action}${cr}`), 'mutation', [createSelectionSet(`${action}${cr}`, [createFragmentSpread(`Self${cr}Fragment`)])],
+      ));
+
+      OperationNodes.definitions.push(createOperation(
+        S.capitalize(`${action}${cpr}`), 'mutation', [createSelectionSet(`${action}${cpr}`, [createFragmentSpread(`Self${cr}Fragment`)])],
+      ));
     });
   });
   if (MutationExt.getFields().length && !doesMutationExtExists) TypedefAST.definitions.push(MutationExt.node);

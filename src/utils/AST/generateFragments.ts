@@ -1,5 +1,5 @@
 import { TSchemaInfo } from '../../types';
-import { FragmentDefinitionNode, SelectionNode, print } from 'graphql';
+import { FragmentDefinitionNode, SelectionNode } from 'graphql';
 import { createSelections, createFragmentSpread, createSelectionSet } from './operation';
 import S from "voca";
 

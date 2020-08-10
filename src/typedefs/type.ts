@@ -253,7 +253,6 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
         const decorated_object_type = decorateTypes(auth_object_type, nullable_object[auth]);
         const object_key = `${S.capitalize(auth)}${Type}Object`;
         if (!Objects[object_key].hasField(key)) {
-          console.log(auth);
           Objects[object_key].fields[key] = { ...generatedFieldFullInfo, auth };
           Objects[object_key].createField({
             name: key, description, type: decorated_object_type

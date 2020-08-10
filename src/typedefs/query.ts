@@ -1,10 +1,9 @@
 import pluralize from 'pluralize';
 import S from 'voca';
-import { print, OperationDefinitionNode } from "graphql";
 import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
 
 import { IMongqlMongooseSchemaFull, RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode } from "../types";
-import { createOperation, createSelections, createSelectionSet } from "../utils/AST/operation";
+import { createOperation, createSelectionSet, createFragmentSpread } from "../utils/AST/operation";
 
 const ArgumentMap = {
   paginated: [
@@ -40,7 +39,7 @@ const ArgumentMap = {
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
 
-export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableDocumentNode) {
+export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableDocumentNode, OperationNodes: MutableDocumentNode) {
   const ast = documentApi().addSDL(TypedefAST);
   const doesQueryExtExists = ast.hasExt('Query');
   const { mongql: { resource: r, generate: { query } } } = Schema;
@@ -54,8 +53,6 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
       directives: []
     })
   );
-
-  const OperationDefinitionNodes: OperationDefinitionNode[] = [];
 
   const ranges = Object.keys(query);
   ranges.forEach((range) => {
@@ -77,15 +74,15 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
           description: `Get ${range} ${auth} ${r} ${part}`,
           arguments: ArgumentMap[range as RangeEnumString]
         });
-        OperationDefinitionNodes.push(createOperation(
-          S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createSelections("name")])],
-        ))
+        if (part !== "count") {
+          const fragmentSpreadName = part === "whole" ? `${S.capitalize(auth)}${cr}Fragment` : 'NameAndId';
+          OperationNodes.definitions.push(createOperation(
+            S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createFragmentSpread(fragmentSpreadName)])],
+          ));
+        }
       });
     });
   });
-
-  console.log(print(OperationDefinitionNodes[0]))
-
   if (QueryExt.getFields().length > 0 && !doesQueryExtExists) TypedefAST.definitions.push(QueryExt.node);
 
 }

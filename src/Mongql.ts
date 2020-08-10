@@ -8,12 +8,12 @@ import S from 'voca';
 import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
 import gql from "graphql-tag"
 import { Model, model } from "mongoose"
-import { DocumentNode } from "graphql";
+import { DocumentNode, print } from "graphql";
 
 import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
 
-import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TSchemaInfo, IOutputFull } from "./types";
+import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TSchemaInfo, IOutputFull, MutableDocumentNode } from "./types";
 
 import { AsyncForEach } from "./utils/index";
 import { generateGlobalConfigs, generateBaseSchemaConfigs } from "./utils/generate/configs";
@@ -47,6 +47,11 @@ const BaseTypeDefs = gql`
 		sort: String
 		filter: JSON
 	}
+
+  fragment NameAndId on NameAndId{
+    name,
+    id
+  }
 `;
 
 class Mongql {
@@ -180,7 +185,7 @@ class Mongql {
       TransformedResolvers.arr.push(resolver);
       SchemasInfo[resource] = generated.SchemaInfo;
       // delete Schema.mongql
-      await this.#output(output, typedefsAST, resource);
+      await this.#output(output, typedefsAST, generated.OperationNodes, resource);
     })
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
     return {
@@ -223,7 +228,7 @@ class Mongql {
       TransformedResolvers.arr.push(resolver);
       SchemasInfo[resource] = generated.SchemaInfo;
       // delete Schema.mongql
-      this.#outputSync(output, typedefsAST, resource);
+      this.#outputSync(output, typedefsAST, generated.OperationNodes, resource);
     })
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
 
@@ -243,18 +248,22 @@ class Mongql {
     });
   }
 
-  #output = async (output: IOutputFull, typedefsAST: DocumentNode, resource: string) => {
+  #output = async (output: IOutputFull, typedefsAST: DocumentNode, OperationNodes: MutableDocumentNode, resource: string) => {
     if (typeof output.SDL === 'string' && typedefsAST)
       await this.#cleanAndOutput(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
     if (typeof output.AST === 'string')
       await this.#cleanAndOutput(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
+    if (typeof output.Operation === 'string')
+      await this.#cleanAndOutput(output.Operation, print(OperationNodes), `${resource}.graphql`)
   }
 
-  #outputSync = (output: IOutputFull, typedefsAST: DocumentNode, resource: string) => {
+  #outputSync = (output: IOutputFull, typedefsAST: DocumentNode, OperationNodes: MutableDocumentNode, resource: string) => {
     if (typeof output.SDL === 'string' && typedefsAST)
       this.#cleanAndOutputSync(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
     if (typeof output.AST === 'string')
       this.#cleanAndOutputSync(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
+    if (typeof output.Operation === 'string')
+      this.#cleanAndOutputSync(output.Operation, print(OperationNodes), `${resource}.graphql`)
   }
   /**
    * Clean the directory and creates output file

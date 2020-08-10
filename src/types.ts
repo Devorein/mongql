@@ -193,7 +193,8 @@ export interface IGenerateFull {
  */
 export type IOutputPartial = {
   SDL?: string,
-  AST?: string
+  AST?: string,
+  Operation?: string
 }
 
 /**
@@ -201,7 +202,8 @@ export type IOutputPartial = {
  */
 export type IOutputFull = {
   SDL: string | undefined,
-  AST: string | undefined
+  AST: string | undefined,
+  Operation: string | undefined
 }
 
 /**

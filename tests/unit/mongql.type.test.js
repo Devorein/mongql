@@ -54,15 +54,10 @@ const mongql = new Mongql({
 	Schemas: [ BaseSchema ]
 });
 
-const { TransformedTypedefs, SchemasInfo } = mongql.generateSync();
+const { TransformedTypedefs } = mongql.generateSync();
 const DocumentApi = documentApi().addSDL(TransformedTypedefs.obj.User);
 
 describe('Proper typedef types generation', () => {
-	/* 	SchemasInfo.User.Fields.forEach((Fields) => {
-		Object.entries(Fields).forEach(([ FieldKey, FieldValue ]) => {
-			console.log(FieldValue.path[FieldValue.path.length - 1].object_type);
-		});
-	}); */
 	it('Interface type Validation', async () => {
 		CheckTypeFields(
 			[

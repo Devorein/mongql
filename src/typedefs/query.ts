@@ -1,8 +1,10 @@
 import pluralize from 'pluralize';
 import S from 'voca';
+import { print, OperationDefinitionNode } from "graphql";
 import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
 
 import { IMongqlMongooseSchemaFull, RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode } from "../types";
+import { createOperation, createSelections, createSelectionSet } from "../utils/AST/operation";
 
 const ArgumentMap = {
   paginated: [
@@ -51,7 +53,9 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
       interfaces: [],
       directives: []
     })
-  )
+  );
+
+  const OperationDefinitionNodes: OperationDefinitionNode[] = [];
 
   const ranges = Object.keys(query);
   ranges.forEach((range) => {
@@ -66,15 +70,20 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
           else if (range === 'id') output = 'NameAndId!';
         }
         if (part === 'count') output = 'NonNegativeInt!';
+        const QueryName = `get${S.capitalize(range)}${S.capitalize(auth)}${cpr}${S.capitalize(part)}`
         QueryExt.createField({
-          name: `get${S.capitalize(range)}${S.capitalize(auth)}${cpr}${S.capitalize(part)}`,
+          name: QueryName,
           type: output,
           description: `Get ${range} ${auth} ${r} ${part}`,
           arguments: ArgumentMap[range as RangeEnumString]
         });
+        /*         OperationDefinitionNodes.push(createOperation(
+                  S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createSelections("name")])],
+                )) */
       });
     });
   });
+
   if (QueryExt.getFields().length > 0 && !doesQueryExtExists) TypedefAST.definitions.push(QueryExt.node);
 
 }

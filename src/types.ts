@@ -372,7 +372,8 @@ export interface FieldInfo extends ISpecificTypeInfo {
   generic_type: string,
   excludedAuthSegments: string[],
   fieldDepth: number,
-  path: MongqlFieldPath[]
+  path: MongqlFieldPath[],
+  auth?: AuthEnumString
 }
 
 export interface MongqlFieldPath {

@@ -77,12 +77,14 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
           description: `Get ${range} ${auth} ${r} ${part}`,
           arguments: ArgumentMap[range as RangeEnumString]
         });
-        /*         OperationDefinitionNodes.push(createOperation(
-                  S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createSelections("name")])],
-                )) */
+        OperationDefinitionNodes.push(createOperation(
+          S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createSelections("name")])],
+        ))
       });
     });
   });
+
+  console.log(print(OperationDefinitionNodes[0]))
 
   if (QueryExt.getFields().length > 0 && !doesQueryExtExists) TypedefAST.definitions.push(QueryExt.node);
 

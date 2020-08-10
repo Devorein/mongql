@@ -1,4 +1,4 @@
-import { SelectionNode, OperationDefinitionNode, OperationTypeNode, FieldNode } from "graphql";
+import { SelectionNode, OperationDefinitionNode, OperationTypeNode, FieldNode, FragmentSpreadNode } from "graphql";
 
 export function createSelections(name: string) {
   return {
@@ -10,6 +10,17 @@ export function createSelections(name: string) {
     "arguments": [],
     "directives": [],
   } as FieldNode
+}
+
+export function createFragmentSpread(value: string): FragmentSpreadNode {
+  return {
+    kind: "FragmentSpread",
+    name: {
+      kind: "Name",
+      value
+    },
+    directives: []
+  }
 }
 
 export function createSelectionSet(name: string, selections: SelectionNode[]) {

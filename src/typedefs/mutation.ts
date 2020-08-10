@@ -2,9 +2,8 @@ import { MutableDocumentNode, IMongqlMongooseSchemaFull, ActionEnumString, Targe
 
 import pluralize from 'pluralize';
 import S from 'voca';
-import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
-import { FragmentDefinitionNode } from "graphql";
-import { createOperation, createFragmentSpread, createSelectionSet } from "../utils/AST/operation";
+import { t, documentApi, objectExtApi, ObjectExtApi, variableDefinitionNode } from 'graphql-extra';
+import { createOperation, createFragmentSpread, createSelectionSet, createArgument } from "../utils/AST/operation";
 
 interface ArgumentMapFnParam {
   r: string,
@@ -91,27 +90,27 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
   actions.forEach((action) => {
     const targets = Object.keys(mutation[action as ActionEnumString]).filter((target) => mutation[action as ActionEnumString][target as TargetEnumString]);
     targets.forEach((target) => {
+      const Arguments: any[] = ArgumentMap[action as ActionEnumString][target as TargetEnumString]({ r, pr, cr, cpr });
+      const VariableDefinitions = Arguments.reduce((acc, { name, type }) => acc.concat(variableDefinitionNode({ variable: name, type })), []);
+      const ArgumentNodes = Arguments.reduce((acc, { name }) => acc.concat(createArgument(name)), [])
+
       if (target === 'single')
         MutationExt.createField({
           name: `${action}${cr}`,
           type: `Self${cr}Object!`,
           description: `${S.capitalize(action)} single ${r}`,
-          arguments: ArgumentMap[action as ActionEnumString][target as TargetEnumString]({ r, pr, cr, cpr })
+          arguments: Arguments
         });
       else if (target === 'multi')
         MutationExt.createField({
           name: `${action}${cpr}`,
           type: `[Self${cr}Object!]!`,
           description: `${S.capitalize(action)} multiple ${r}`,
-          arguments: ArgumentMap[action as ActionEnumString][target as TargetEnumString]({ r, pr, cr, cpr })
+          arguments: Arguments
         });
-
+      const OpTarget = target === 'multi' ? cpr : cr;
       OperationNodes.definitions.push(createOperation(
-        S.capitalize(`${action}${cr}`), 'mutation', [createSelectionSet(`${action}${cr}`, [createFragmentSpread(`Self${cr}Fragment`)])],
-      ));
-
-      OperationNodes.definitions.push(createOperation(
-        S.capitalize(`${action}${cpr}`), 'mutation', [createSelectionSet(`${action}${cpr}`, [createFragmentSpread(`Self${cr}Fragment`)])],
+        S.capitalize(`${action}${OpTarget}`), 'mutation', [createSelectionSet(`${action}${OpTarget}`, [createFragmentSpread(`Self${OpTarget}Fragment`)], ArgumentNodes)], VariableDefinitions,
       ));
     });
   });

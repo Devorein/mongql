@@ -1,11 +1,11 @@
 import pluralize from 'pluralize';
 import S from 'voca';
-import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
+import { t, documentApi, objectExtApi, ObjectExtApi, variableDefinitionNode } from 'graphql-extra';
 
 import { IMongqlMongooseSchemaFull, RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode } from "../types";
-import { createOperation, createSelectionSet, createFragmentSpread } from "../utils/AST/operation";
+import { createArgument, createOperation, createSelectionSet, createFragmentSpread, createSelections } from "../utils/AST/operation";
 
-const ArgumentMap = {
+const ArgumentMap: Record<string, any[]> = {
   paginated: [
     {
       name: 'pagination',
@@ -67,19 +67,25 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
           else if (range === 'id') output = 'NameAndId!';
         }
         if (part === 'count') output = 'NonNegativeInt!';
-        const QueryName = `get${S.capitalize(range)}${S.capitalize(auth)}${cpr}${S.capitalize(part)}`
+        const QueryName = `get${S.capitalize(range)}${S.capitalize(auth)}${cpr}${S.capitalize(part)}`;
+        const Arguments = ArgumentMap[range as RangeEnumString]
         QueryExt.createField({
           name: QueryName,
           type: output,
           description: `Get ${range} ${auth} ${r} ${part}`,
-          arguments: ArgumentMap[range as RangeEnumString]
+          arguments: Arguments
         });
+        const VariableDefinitions = Arguments.reduce((acc, { name, type }) => acc.concat(variableDefinitionNode({ variable: name, type })), []);
+        const ArgumentNodes = Arguments.reduce((acc, { name }) => acc.concat(createArgument(name)), [])
         if (part !== "count") {
           const fragmentSpreadName = part === "whole" ? `${S.capitalize(auth)}${cr}Fragment` : 'NameAndId';
           OperationNodes.definitions.push(createOperation(
-            S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createFragmentSpread(fragmentSpreadName)])],
+            S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createFragmentSpread(fragmentSpreadName)], ArgumentNodes)], VariableDefinitions
           ));
-        }
+        } else
+          OperationNodes.definitions.push(createOperation(
+            S.capitalize(QueryName), 'query', [createSelections(QueryName, ArgumentNodes)], VariableDefinitions
+          ));
       });
     });
   });

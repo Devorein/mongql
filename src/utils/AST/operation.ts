@@ -1,15 +1,15 @@
-import { SelectionNode, OperationDefinitionNode, OperationTypeNode, FieldNode, FragmentSpreadNode } from "graphql";
+import { SelectionNode, OperationDefinitionNode, OperationTypeNode, FieldNode, FragmentSpreadNode, ArgumentNode, VariableDefinitionNode } from "graphql";
 
-export function createSelections(name: string) {
+export function createSelections(name: string, selection_arguments?: ArgumentNode[]): FieldNode {
   return {
     kind: "Field",
     "name": {
       "kind": "Name",
       "value": name,
     },
-    "arguments": [],
+    "arguments": selection_arguments || [],
     "directives": [],
-  } as FieldNode
+  }
 }
 
 export function createFragmentSpread(value: string): FragmentSpreadNode {
@@ -23,23 +23,23 @@ export function createFragmentSpread(value: string): FragmentSpreadNode {
   }
 }
 
-export function createSelectionSet(name: string, selections: SelectionNode[]) {
+export function createSelectionSet(name: string, selections: SelectionNode[], selection_arguments?: ArgumentNode[]): FieldNode {
   return {
     kind: "Field",
     "name": {
       "kind": "Name",
       "value": name,
     },
-    "arguments": [],
+    "arguments": selection_arguments || [],
     "directives": [],
     selectionSet: {
       kind: "SelectionSet",
       selections
     }
-  } as FieldNode
+  }
 }
 
-export function createOperation(name: string, operation: OperationTypeNode, selections: SelectionNode[]): OperationDefinitionNode {
+export function createOperation(name: string, operation: OperationTypeNode, selections: SelectionNode[], variableDefinitions?: VariableDefinitionNode[]): OperationDefinitionNode {
   return {
     kind: 'OperationDefinition',
     operation,
@@ -47,11 +47,28 @@ export function createOperation(name: string, operation: OperationTypeNode, sele
       kind: 'Name',
       value: name
     },
-    variableDefinitions: [],
+    variableDefinitions: variableDefinitions || [],
     directives: [],
     selectionSet: {
       kind: "SelectionSet",
       selections
+    }
+  }
+}
+
+export function createArgument(value: string): ArgumentNode {
+  return {
+    kind: "Argument",
+    name: {
+      kind: "Name",
+      value
+    },
+    value: {
+      kind: "Variable",
+      name: {
+        kind: "Name",
+        value
+      }
     }
   }
 }

@@ -18,7 +18,7 @@ export default function (schema: IMongqlMongooseSchemaFull, InitTypedefsAST: Doc
     definitions: []
   };
   const { SchemaInfo, DocumentAST } = parseMongooseSchema(schema, InitTypedefsAST);
-  OperationNodes.definitions.push(...generateFragments(DocumentAST));
+  OperationNodes.definitions.push(...generateFragments(DocumentAST, SchemaInfo));
   generateQueryTypedefs(schema, DocumentAST, OperationNodes);
   generateMutationTypedefs(schema, DocumentAST, OperationNodes);
   return { typedefsAST: DocumentAST, SchemaInfo, OperationNodes };

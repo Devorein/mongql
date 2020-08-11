@@ -27,7 +27,7 @@ export function createVariableDefAndArguments(Arguments: readonly InputValueDefi
   }
 }
 
-export function isScalar(TypeName: string, DocumentNode: MutableDocumentNode) {
+export function detectScalarity(TypeName: string, DocumentNode: MutableDocumentNode) {
   return Scalars.includes(TypeName) || DocumentNode.definitions.find((Node) => Node.kind === "EnumTypeDefinition" && Node.name.value === TypeName);
 }
 

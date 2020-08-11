@@ -47,7 +47,7 @@ function generateBaseSchemaConfigs(MongqlSchemaConfig: IMongqlBaseSchemaConfigsP
     type: nestedObjPopulation(ModifiedMongqlSchemaConfig?.generate?.type, ModifiedMongqlGlobalConfig.generate.type),
     query: nestedObjPopulation(ModifiedMongqlSchemaConfig?.generate?.query, ModifiedMongqlGlobalConfig.generate.query)
   };
-  return populateObjDefaultValue(ModifiedMongqlSchemaConfig, Object.assign({}, ModifiedMongqlGlobalConfig, { skip: false, uniqueBy: undefined }));
+  return populateObjDefaultValue(ModifiedMongqlSchemaConfig, Object.assign({}, ModifiedMongqlGlobalConfig, { skip: false, uniqueBy: undefined, unAuthOpsList: [] }));
 }
 
 /**
@@ -69,17 +69,17 @@ function generateNestedSchemaConfigs(MongqlSchemaConfig: MongqlSchemaConfigsPart
   return populateObjDefaultValue(ModifiedMongqlNestedSchemaConfig, { type: undefined });
 }
 
+function populateLeafsFromStem(stemparent: any, stem: string, leafs: string[], value: any) {
+  stemparent[stem] = {};
+  leafs.forEach(leaf => stemparent[stem][leaf] = value)
+}
+
 /**
  * Generate full field config
  * @param MongooseField Field to parse
  * @param ParentSchema Schema to extend
  * @returns The extracted field options populated with default values
  */
-
-function populateLeafsFromStem(stemparent: any, stem: string, leafs: string[], value: any) {
-  stemparent[stem] = {};
-  leafs.forEach(leaf => stemparent[stem][leaf] = value)
-}
 
 function generateFieldConfigs(MongooseField: any, ParentSchema: MongqlSchemaConfigsFull): IMongqlFieldConfigsFull {
   const [fieldDepth, InnerMongooseField] = calculateFieldDepth(MongooseField);

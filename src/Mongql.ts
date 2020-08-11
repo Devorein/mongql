@@ -7,7 +7,8 @@ import path from 'path';
 import S from 'voca';
 import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
 import gql from "graphql-tag"
-import { Model, model } from "mongoose"
+import { Model, model, connect } from "mongoose";
+
 import { DocumentNode, print } from "graphql";
 
 import Password from "./utils/gql-types/password"
@@ -296,7 +297,14 @@ class Mongql {
   /**
    * Generates models from the Schemas passed to Global Configs
    */
-  generateModels() {
+  async generateModels() {
+    const conn = await connect(process.env.MONGO_URI as string, {
+      useNewUrlParser: true,
+      useCreateIndex: true,
+      useFindAndModify: false,
+      useUnifiedTopology: true
+    });
+    console.log(`MongoDB Connected: ${conn.connection.host}`.green.underline.bold);
     const res: { [key: string]: Model<any> } = {};
     this.#globalConfigs.Schemas.forEach((schema: IMongqlMongooseSchemaFull) => {
       const { mongql: { resource } } = schema;

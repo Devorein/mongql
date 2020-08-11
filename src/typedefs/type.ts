@@ -281,10 +281,10 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       if (generic_type.match(/(object)/))
         _inner(innerValue, object_type, path, CurrentSchemaConfigs);
       path.pop();
-      if (value.mongql) delete value.mongql;
+      // if (value.mongql) delete value.mongql;
     });
-    if (Schema.mongql && parentKey)
-      delete Schema.mongql
+    // if (Schema.mongql && parentKey)
+    //   delete Schema.mongql
   }
 
   _inner(BaseSchema, cr, [], BaseSchemaConfigs);

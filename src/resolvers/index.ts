@@ -9,7 +9,7 @@ export default function generateResolvers(Schema: IMongqlMongooseSchemaFull, Ini
   generateTypeResolvers(SchemaInfo, InitResolver);
   generateQueryResolvers(Schema, SchemaInfo, InitResolver);
   generateMutationResolvers(Schema, SchemaInfo, InitResolver);
-  return resolverCompose(InitResolver);
+  return resolverCompose(Schema, InitResolver);
 }
 
 export {

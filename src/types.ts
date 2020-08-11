@@ -246,7 +246,8 @@ export interface IMongqlBaseSchemaConfigsFull {
   output: IOutputFull,
   TypeDefs: DocumentNode | undefined,
   Resolvers: IResolverFull | undefined,
-  uniqueBy: undefined | string
+  uniqueBy: undefined | string,
+  unAuthOpsList: [] | string[]
 }
 
 /**
@@ -259,7 +260,8 @@ export interface IMongqlBaseSchemaConfigsPartial {
   output?: boolean | IOutputPartial,
   TypeDefs?: DocumentNode,
   Resolvers?: IResolverPartial,
-  uniqueBy?: string
+  uniqueBy?: string,
+  unAuthOpsList?: string[]
 }
 
 /**

@@ -3,7 +3,7 @@ import S from 'voca';
 import { t, documentApi, objectExtApi, ObjectExtApi, variableDefinitionNode } from 'graphql-extra';
 
 import { IMongqlMongooseSchemaFull, RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode } from "../types";
-import { createArgument, createOperation, createSelectionSet, createFragmentSpread, createSelections } from "../utils/AST/operation";
+import { populateOperationAST, createArgument, createOperation, createSelectionSet, createFragmentSpread, createSelections } from "../utils/AST";
 
 const ArgumentMap: Record<string, any[]> = {
   paginated: [
@@ -53,6 +53,8 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
       directives: []
     })
   );
+
+  populateOperationAST(QueryExt.node, 'query', OperationNodes);
 
   const ranges = Object.keys(query);
   ranges.forEach((range) => {

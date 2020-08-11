@@ -2,8 +2,8 @@ import { MutableDocumentNode, IMongqlMongooseSchemaFull, ActionEnumString, Targe
 
 import pluralize from 'pluralize';
 import S from 'voca';
-import { t, documentApi, objectExtApi, ObjectExtApi, variableDefinitionNode } from 'graphql-extra';
-import { createOperation, createFragmentSpread, createSelectionSet, createArgument } from "../utils/AST/operation";
+import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
+import { populateOperationAST, createOperation, createFragmentSpread, createSelectionSet, createVariableDefAndArguments } from "../utils/AST";
 
 interface ArgumentMapFnParam {
   r: string,
@@ -87,12 +87,13 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
       fields: []
     }));
 
+  populateOperationAST(MutationExt.node, 'mutation', OperationNodes)
+
   actions.forEach((action) => {
     const targets = Object.keys(mutation[action as ActionEnumString]).filter((target) => mutation[action as ActionEnumString][target as TargetEnumString]);
     targets.forEach((target) => {
       const Arguments: any[] = ArgumentMap[action as ActionEnumString][target as TargetEnumString]({ r, pr, cr, cpr });
-      const VariableDefinitions = Arguments.reduce((acc, { name, type }) => acc.concat(variableDefinitionNode({ variable: name, type })), []);
-      const ArgumentNodes = Arguments.reduce((acc, { name }) => acc.concat(createArgument(name)), [])
+      const { VariableDefinitions, ArgumentNodes } = createVariableDefAndArguments(Arguments);
 
       if (target === 'single')
         MutationExt.createField({

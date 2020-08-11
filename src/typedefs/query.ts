@@ -1,9 +1,9 @@
 import pluralize from 'pluralize';
 import S from 'voca';
-import { t, documentApi, objectExtApi, ObjectExtApi, variableDefinitionNode } from 'graphql-extra';
+import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
 
 import { IMongqlMongooseSchemaFull, RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode } from "../types";
-import { populateOperationAST, createArgument, createOperation, createSelectionSet, createFragmentSpread, createSelections } from "../utils/AST";
+import { populateOperationAST, createOperation, createSelectionSet, createFragmentSpread, createSelections, createVariableDefAndArguments } from "../utils/AST";
 
 const ArgumentMap: Record<string, any[]> = {
   paginated: [
@@ -77,13 +77,19 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
           description: `Get ${range} ${auth} ${r} ${part}`,
           arguments: Arguments
         });
-        const VariableDefinitions = Arguments.reduce((acc, { name, type }) => acc.concat(variableDefinitionNode({ variable: name, type })), []);
-        const ArgumentNodes = Arguments.reduce((acc, { name }) => acc.concat(createArgument(name)), [])
+        const { VariableDefinitions, ArgumentNodes } = createVariableDefAndArguments(Arguments);
+
         if (part !== "count") {
-          const fragmentSpreadName = part === "whole" ? `${S.capitalize(auth)}${cr}ObjectFragment` : 'NameAndId';
-          OperationNodes.definitions.push(createOperation(
-            S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createFragmentSpread(fragmentSpreadName)], ArgumentNodes)], VariableDefinitions
-          ));
+          if (part === "whole")
+            ['RefsWhole', 'RefsNone', 'RefsNameAndId'].forEach(part => {
+              OperationNodes.definitions.push(createOperation(
+                S.capitalize(QueryName + part), 'query', [createSelectionSet(QueryName, [createFragmentSpread(`${S.capitalize(auth)}${cr}Object${part}Fragment`)], ArgumentNodes)], VariableDefinitions
+              ));
+            })
+          else
+            OperationNodes.definitions.push(createOperation(
+              S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createFragmentSpread(`NameAndId`)], ArgumentNodes)], VariableDefinitions
+            ));
         } else
           OperationNodes.definitions.push(createOperation(
             S.capitalize(QueryName), 'query', [createSelections(QueryName, ArgumentNodes)], VariableDefinitions

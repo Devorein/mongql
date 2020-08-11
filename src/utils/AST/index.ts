@@ -20,10 +20,10 @@ export function getNestedType(Type: TypeNode) {
   return (currentNode as NamedTypeNode).name.value;
 }
 
-export function createVariableDefAndArguments(Arguments: readonly InputValueDefinitionNode[]) {
+export function createVariableDefAndArguments(Arguments: readonly any[]) {
   return {
-    VariableDefinitions: Arguments.reduce((acc, { name, type }) => acc.concat(variableDefinitionNode({ variable: name.value, type })), [] as any[]),
-    ArgumentNodes: Arguments.reduce((acc, { name }) => acc.concat(createArgument(name.value)), [] as any[])
+    VariableDefinitions: Arguments.reduce((acc, { name, type }) => acc.concat(variableDefinitionNode({ variable: name, type })), [] as any[]),
+    ArgumentNodes: Arguments.reduce((acc, { name }) => acc.concat(createArgument(name)), [] as any[])
   }
 }
 

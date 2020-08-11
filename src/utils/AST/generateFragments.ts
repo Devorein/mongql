@@ -1,4 +1,4 @@
-import { FragmentDefinitionNode, SelectionNode, DocumentNode, ObjectTypeDefinitionNode, DefinitionNode, FieldDefinitionNode, isCompositeType } from 'graphql';
+import { FragmentDefinitionNode, SelectionNode, DocumentNode, ObjectTypeDefinitionNode, DefinitionNode, FieldDefinitionNode } from 'graphql';
 
 import { createSelections, createFragmentSpread, createSelectionSet } from './operation';
 import { detectScalarity, getNestedType } from '.';
@@ -30,13 +30,13 @@ export function createFragment(name: string, part: string, selections: Selection
   };
 }
 
-function generateExistingObjectFragments(ObjTypeDef: ObjectTypeDefinitionNode, InitTypedefsAST: DocumentNode, part: string) {
+function generateObjectFragments(ObjTypeDef: ObjectTypeDefinitionNode, InitTypedefsAST: DocumentNode, part: string) {
   const selections = (ObjTypeDef.fields as FieldDefinitionNode[]).reduce(
     (acc, FieldDefinition) => {
       const FieldType = getNestedType(FieldDefinition.type);
       const isScalar = detectScalarity(FieldType, InitTypedefsAST as MutableDocumentNode);
       let Selection = null;
-      if (!isScalar && part !== "WithoutRef") Selection = createSelectionSet(FieldDefinition.name.value, [createFragmentSpread(part === "RefNameAndId" ? "NameAndId" : FieldType + part + 'Fragment')]);
+      if (!isScalar && part !== "RefsNone") Selection = createSelectionSet(FieldDefinition.name.value, [createFragmentSpread(part === "RefsNameAndId" ? "NameAndId" : FieldType + part + 'Fragment')]);
       else if (isScalar) Selection = createSelections(FieldDefinition.name.value)
       return Selection !== null ? acc.concat(
         Selection
@@ -48,10 +48,6 @@ function generateExistingObjectFragments(ObjTypeDef: ObjectTypeDefinitionNode, I
   return createFragment(ObjTypeDef.name.value, part, selections);
 }
 
-function generateGeneratedObjectFragments(ObjTypeDef: ObjectTypeDefinitionNode, InitTypedefsAST: DocumentNode) {
-  return ['Whole', 'WithoutRef', 'RefNameAndId'].reduce((acc, part) =>
-    acc.concat(generateExistingObjectFragments(ObjTypeDef, InitTypedefsAST, part)), [] as any[])
-}
 
 export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaInfo: ISchemaInfo): FragmentDefinitionNode[] {
   const FragmentDefinitionNodes: FragmentDefinitionNode[] = [];
@@ -69,7 +65,8 @@ export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaI
   (InitTypedefsAST.definitions.filter(Node => Node.kind === "ObjectTypeDefinition") as ObjectTypeDefinitionNode[]).forEach((ObjTypeDef) => {
     const isGenerated = Boolean(TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value]);
     if (ObjTypeDef.fields)
-      isGenerated ? FragmentDefinitionNodes.push(...generateGeneratedObjectFragments(ObjTypeDef, InitTypedefsAST)) : FragmentDefinitionNodes.push(generateExistingObjectFragments(ObjTypeDef, InitTypedefsAST, ''));
+      isGenerated ? FragmentDefinitionNodes.push(...['RefsWhole', 'RefsNone', 'RefsNameAndId'].reduce((acc, part) =>
+        acc.concat(generateObjectFragments(ObjTypeDef, InitTypedefsAST, part)), [] as any[])) : FragmentDefinitionNodes.push(generateObjectFragments(ObjTypeDef, InitTypedefsAST, ''));
   })
   return FragmentDefinitionNodes;
 }

@@ -75,19 +75,23 @@ function generateNestedSchemaConfigs(MongqlSchemaConfig: MongqlSchemaConfigsPart
  * @param ParentSchema Schema to extend
  * @returns The extracted field options populated with default values
  */
+
+function populateLeafsFromStem(stemparent: any, stem: string, leafs: string[], value: any) {
+  stemparent[stem] = {};
+  leafs.forEach(leaf => stemparent[stem][leaf] = value)
+}
+
 function generateFieldConfigs(MongooseField: any, ParentSchema: MongqlSchemaConfigsFull): IMongqlFieldConfigsFull {
   const [fieldDepth, InnerMongooseField] = calculateFieldDepth(MongooseField);
 
-  if (Array.isArray(InnerMongooseField?.mongql?.nullable?.object)) {
-    const arr = [...InnerMongooseField.mongql.nullable.object];
-    InnerMongooseField.mongql.nullable.object = {};
-    ['mixed', 'self', 'others'].forEach(auth => InnerMongooseField.mongql.nullable.object[auth] = arr)
-  }
-  if (Array.isArray(InnerMongooseField?.mongql?.nullable?.input)) {
-    const arr = [...InnerMongooseField.mongql.nullable.input];
-    InnerMongooseField.mongql.nullable.input = {};
-    ['create', 'update'].forEach(action => InnerMongooseField.mongql.nullable.input[action] = arr)
-  }
+  if (Array.isArray(InnerMongooseField?.mongql?.nullable?.object))
+    populateLeafsFromStem(InnerMongooseField.mongql.nullable, 'object', ['mixed', 'self', 'others'], [...InnerMongooseField.mongql.nullable.object]);
+  if (Array.isArray(InnerMongooseField?.mongql?.nullable?.input))
+    populateLeafsFromStem(InnerMongooseField.mongql.nullable, 'object', ['create', 'update'], [...InnerMongooseField.mongql.nullable.input]);
+  if (InnerMongooseField?.mongql?.attach?.input === false)
+    populateLeafsFromStem(InnerMongooseField.mongql.attach, 'input', ['create', 'update'], false);
+  if (InnerMongooseField?.mongql?.attach?.object === false)
+    populateLeafsFromStem(InnerMongooseField.mongql.attach, 'object', ['mixed', 'self', 'others'], false);
 
   const GeneratedMongooseFieldConfig = populateObjDefaultValue(InnerMongooseField.mongql || {}, {
     nullable: {

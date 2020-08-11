@@ -87,7 +87,7 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
       fields: []
     }));
 
-  populateOperationAST(MutationExt.node, 'mutation', OperationNodes)
+  populateOperationAST(MutationExt.node, 'mutation', OperationNodes, TypedefAST)
 
   actions.forEach((action) => {
     const targets = Object.keys(mutation[action as ActionEnumString]).filter((target) => mutation[action as ActionEnumString][target as TargetEnumString]);
@@ -111,7 +111,7 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
         });
       const OpTarget = target === 'multi' ? cpr : cr;
       OperationNodes.definitions.push(createOperation(
-        S.capitalize(`${action}${OpTarget}`), 'mutation', [createSelectionSet(`${action}${OpTarget}`, [createFragmentSpread(`Self${OpTarget}Fragment`)], ArgumentNodes)], VariableDefinitions,
+        S.capitalize(`${action}${OpTarget}`), 'mutation', [createSelectionSet(`${action}${OpTarget}`, [createFragmentSpread(`Self${OpTarget}ObjectFragment`)], ArgumentNodes)], VariableDefinitions,
       ));
     });
   });

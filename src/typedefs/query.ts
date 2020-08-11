@@ -54,7 +54,7 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
     })
   );
 
-  populateOperationAST(QueryExt.node, 'query', OperationNodes);
+  populateOperationAST(QueryExt.node, 'query', OperationNodes, TypedefAST);
 
   const ranges = Object.keys(query);
   ranges.forEach((range) => {
@@ -80,7 +80,7 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
         const VariableDefinitions = Arguments.reduce((acc, { name, type }) => acc.concat(variableDefinitionNode({ variable: name, type })), []);
         const ArgumentNodes = Arguments.reduce((acc, { name }) => acc.concat(createArgument(name)), [])
         if (part !== "count") {
-          const fragmentSpreadName = part === "whole" ? `${S.capitalize(auth)}${cr}Fragment` : 'NameAndId';
+          const fragmentSpreadName = part === "whole" ? `${S.capitalize(auth)}${cr}ObjectFragment` : 'NameAndId';
           OperationNodes.definitions.push(createOperation(
             S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createFragmentSpread(fragmentSpreadName)], ArgumentNodes)], VariableDefinitions
           ));

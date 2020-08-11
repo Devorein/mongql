@@ -1,7 +1,8 @@
-import { TSchemaInfo } from '../../types';
-import { FragmentDefinitionNode, SelectionNode } from 'graphql';
+import { FragmentDefinitionNode, SelectionNode, DocumentNode, ObjectTypeDefinitionNode } from 'graphql';
+
 import { createSelections, createFragmentSpread, createSelectionSet } from './operation';
-import S from "voca";
+import { isScalar, getNestedType } from '.';
+import { MutableDocumentNode } from '../../types';
 
 export function createFragment(name: string, selections: SelectionNode[]): FragmentDefinitionNode {
   return {
@@ -9,7 +10,7 @@ export function createFragment(name: string, selections: SelectionNode[]): Fragm
     name:
     {
       kind: 'Name',
-      value: name.replace('Object', 'Fragment')
+      value: name + 'Fragment'
     },
     typeCondition:
     {
@@ -29,21 +30,24 @@ export function createFragment(name: string, selections: SelectionNode[]): Fragm
   };
 }
 
-export default function generateFragments(SchemaInfo: TSchemaInfo): FragmentDefinitionNode[] {
+export default function generateFragments(InitTypedefsAST: DocumentNode): FragmentDefinitionNode[] {
   const FragmentDefinitionNodes: FragmentDefinitionNode[] = [];
-  SchemaInfo.Types.objects.reverse().forEach((Objects) => {
-    Object.entries(Objects).forEach(([ObjectKey, ObjectValue]) => {
-      const selections: SelectionNode[] = Object.entries(ObjectValue.fields).reduce(
-        (acc, [field, value]) =>
-          acc.concat(
-            value.generic_type.match(/(ref|object)/)
-              ? createSelectionSet(field, [createFragmentSpread(S.capitalize(value.auth) + value.object_type + 'Fragment')])
-              : createSelections(field)
-          ),
+  (InitTypedefsAST.definitions.filter(Node => Node.kind === "ObjectTypeDefinition") as ObjectTypeDefinitionNode[]).forEach((ObjTypeDef) => {
+    let selections: SelectionNode[] = [];
+    if (ObjTypeDef.fields)
+
+      selections = ObjTypeDef.fields.reduce(
+        (acc, FieldDefinition) => {
+          const FieldType = getNestedType(FieldDefinition.type);
+          return acc.concat(
+            !isScalar(FieldType, InitTypedefsAST as MutableDocumentNode)
+              ? createSelectionSet(FieldDefinition.name.value, [createFragmentSpread(FieldType + 'Fragment')])
+              : createSelections(FieldDefinition.name.value)
+          )
+        },
         [] as any[]
       );
-      FragmentDefinitionNodes.push(createFragment(ObjectKey, selections));
-    });
-  });
+    FragmentDefinitionNodes.push(createFragment(ObjTypeDef.name.value, selections));
+  })
   return FragmentDefinitionNodes;
 }

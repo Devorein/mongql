@@ -1,10 +1,14 @@
 import { TypeNode, NamedTypeNode, InputValueDefinitionNode } from "graphql/language/ast";
 import { variableDefinitionNode } from 'graphql-extra';
+import { typeDefs } from 'graphql-scalars';
+
+const Scalars = typeDefs.map(scalar => scalar.split(" ")[1]).concat(["Password", "Username", "String", "Int", "Float", "Boolean", "ID"]);
 
 import convertToDocumentNodes from "./convertToDocumentNodes";
 import { createArgument } from "./operation";
 
 import populateOperationAST from "./populateOperationAST";
+import { MutableDocumentNode } from "../../types";
 
 export * from "./transformASTToString";
 export * from "./operation";
@@ -23,8 +27,8 @@ export function createVariableDefAndArguments(Arguments: readonly InputValueDefi
   }
 }
 
-export function isScalar(TypeName: string) {
-  return TypeName.match(/(String|Int|Float|Boolean|ID)/) !== null;
+export function isScalar(TypeName: string, DocumentNode: MutableDocumentNode) {
+  return Scalars.includes(TypeName) || DocumentNode.definitions.find((Node) => Node.kind === "EnumTypeDefinition" && Node.name.value === TypeName);
 }
 
 export {

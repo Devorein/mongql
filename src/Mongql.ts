@@ -156,11 +156,13 @@ class Mongql {
     const {
       Typedefs,
       Resolvers,
-      Schemas
+      Schemas,
+      output
     } = this.#globalConfigs;
     const InitTypedefs = Typedefs.init || {};
     const InitResolvers = Resolvers.init || {};
     const SchemasInfo: Record<string, TSchemaInfo> = {};
+    let OperationOutput = ''
     await AsyncForEach(Schemas, async (Schema: IMongqlMongooseSchemaFull) => {
       const {
         mongql
@@ -183,8 +185,10 @@ class Mongql {
       TransformedResolvers.arr.push(resolver);
       SchemasInfo[resource] = generated.SchemaInfo;
       // delete Schema.mongql
-      await this.#output(output, typedefsAST, generated.OperationNodes, resource);
-    })
+      OperationOutput += await this.#output(output, typedefsAST, generated.OperationNodes, resource);
+    });
+    if (output.Operation)
+      this.#cleanAndOutput(output.Operation, OperationOutput, 'Operations.js');
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
     return {
       TransformedTypedefs,
@@ -199,11 +203,13 @@ class Mongql {
     const {
       Typedefs,
       Resolvers,
-      Schemas
+      Schemas,
+      output
     } = this.#globalConfigs;
     const InitTypedefs = Typedefs.init || {};
     const InitResolvers = Resolvers.init || {};
     const SchemasInfo: Record<string, TSchemaInfo> = {};
+    let OperationOutput = '';
     Schemas.forEach((Schema: IMongqlMongooseSchemaFull) => {
       const {
         mongql
@@ -226,8 +232,11 @@ class Mongql {
       TransformedResolvers.arr.push(resolver);
       SchemasInfo[resource] = generated.SchemaInfo;
       // delete Schema.mongql
-      this.#outputSync(output, typedefsAST, generated.OperationNodes, resource);
-    })
+      OperationOutput += this.#outputSync(output, typedefsAST, generated.OperationNodes, resource);
+    });
+    if (output.Operation)
+      this.#cleanAndOutputSync(output.Operation, OperationOutput, 'Operations.js');
+
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
 
     return {
@@ -250,9 +259,9 @@ class Mongql {
     if (typeof output.SDL === 'string' && typedefsAST)
       await this.#cleanAndOutput(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
     if (typeof output.AST === 'string')
-      await this.#cleanAndOutput(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
-    if (typeof output.Operation === 'string')
-      await this.#cleanAndOutput(output.Operation, operationAstToJS(OperationNodes), `${resource}.js`)
+      await this.#cleanAndOutput(output.AST, JSON.stringify(typedefsAST), `${resource}.json`);
+    if (typeof output.Operation === 'string') return operationAstToJS(OperationNodes);
+    else return ''
   }
 
   #outputSync = (output: IOutputFull, typedefsAST: DocumentNode, OperationNodes: MutableDocumentNode, resource: string) => {
@@ -260,8 +269,8 @@ class Mongql {
       this.#cleanAndOutputSync(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
     if (typeof output.AST === 'string')
       this.#cleanAndOutputSync(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
-    if (typeof output.Operation === 'string')
-      this.#cleanAndOutputSync(output.Operation, operationAstToJS(OperationNodes), `${resource}.js`)
+    if (typeof output.Operation === 'string') return operationAstToJS(OperationNodes);
+    else return ''
   }
   /**
    * Clean the directory and creates output file

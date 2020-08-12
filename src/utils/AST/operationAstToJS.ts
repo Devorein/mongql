@@ -11,6 +11,6 @@ export default function operationAstToJS(OperationNodes: DocumentNode): string {
     const FragmentsUsed: string[] = extractFragments(Node.selectionSet);
     res += `\nexport const ${(Node.name as NameNode).value} = gql\`\n\t${print(Node).split("\n").join("\n\t")}\n${FragmentsUsed.reduce((acc, cur) => acc + "\t${" + cur + "}\n", '')}\`;\n`;
     Operations.push((Node.name as NameNode).value);
-  })
+  });
   return res;
 }

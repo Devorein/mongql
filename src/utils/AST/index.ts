@@ -9,6 +9,7 @@ import { createArgument } from "./operation";
 
 import populateOperationAST from "./populateOperationAST";
 import { MutableDocumentNode } from "../../types";
+import operationAstToJS from "./operationAstToJS";
 
 export * from "./transformASTToString";
 export * from "./operation";
@@ -33,5 +34,6 @@ export function detectScalarity(TypeName: string, DocumentNode: MutableDocumentN
 
 export {
   convertToDocumentNodes,
-  populateOperationAST
+  populateOperationAST,
+  operationAstToJS
 }

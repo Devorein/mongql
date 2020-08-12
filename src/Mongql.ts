@@ -9,19 +9,16 @@ import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tool
 import gql from "graphql-tag"
 import { Model, model, connect } from "mongoose";
 
-import { DocumentNode, print } from "graphql";
+import { DocumentNode } from "graphql";
 
 import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
 
 import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TSchemaInfo, IOutputFull, MutableDocumentNode } from "./types";
 
-import { AsyncForEach } from "./utils/index";
-import { generateGlobalConfigs, generateBaseSchemaConfigs } from "./utils/generate/configs";
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
-import loadFiles from "./utils/loadFiles";
-import { convertToDocumentNodes } from "./utils/AST"
+import { operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes } from "./utils";
 
 const BaseTypeDefs = gql`
   type Query {
@@ -255,7 +252,7 @@ class Mongql {
     if (typeof output.AST === 'string')
       await this.#cleanAndOutput(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
     if (typeof output.Operation === 'string')
-      await this.#cleanAndOutput(output.Operation, print(OperationNodes), `${resource}.graphql`)
+      await this.#cleanAndOutput(output.Operation, operationAstToJS(OperationNodes), `${resource}.js`)
   }
 
   #outputSync = (output: IOutputFull, typedefsAST: DocumentNode, OperationNodes: MutableDocumentNode, resource: string) => {
@@ -264,7 +261,7 @@ class Mongql {
     if (typeof output.AST === 'string')
       this.#cleanAndOutputSync(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
     if (typeof output.Operation === 'string')
-      this.#cleanAndOutputSync(output.Operation, print(OperationNodes), `${resource}.graphql`)
+      this.#cleanAndOutputSync(output.Operation, operationAstToJS(OperationNodes), `${resource}.js`)
   }
   /**
    * Clean the directory and creates output file

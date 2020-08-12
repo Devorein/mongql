@@ -6,7 +6,7 @@ import deleteResource from "./resource/deleteResource";
 import generateOptions from "./generate/options";
 
 export * from "./generate/configs";
-export * from "./AST/transformASTToString";
+export * from "./AST";
 export * from "./mongoose";
 export * from "./objManip";
 
@@ -21,5 +21,5 @@ export {
   createResource,
   updateResource,
   deleteResource,
-  generateOptions
+  generateOptions,
 }

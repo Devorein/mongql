@@ -112,7 +112,7 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
       const OpTarget = target === 'multi' ? cpr : cr;
       ['RefsWhole', 'RefsNone', 'RefsNameAndId'].forEach(part => {
         OperationNodes.definitions.push(createOperation(
-          S.capitalize(`${action}${OpTarget}${part}`), 'mutation', [createSelectionSet(`${action}${OpTarget}`, [createFragmentSpread(`Self${OpTarget}${part}ObjectFragment`)], ArgumentNodes)], VariableDefinitions,
+          S.capitalize(`${action}${OpTarget}${part}`), 'mutation', [createSelectionSet(`${action}${OpTarget}`, [createFragmentSpread(`Self${cr}Object${part}Fragment`)], ArgumentNodes)], VariableDefinitions,
         ));
       })
       OperationNodes.definitions.push(createOperation(

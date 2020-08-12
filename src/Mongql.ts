@@ -19,6 +19,7 @@ import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
 import { operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes } from "./utils";
+import { sortDefinitions } from './utils/AST/sortAST';
 
 const BaseTypeDefs = gql`
   type Query {
@@ -27,11 +28,6 @@ const BaseTypeDefs = gql`
 
 	type Mutation {
 		_empty: Boolean
-	}
-
-	type UsernameAndId {
-		username: String!
-		id: ID!
 	}
 
 	type NameAndId {
@@ -45,11 +41,6 @@ const BaseTypeDefs = gql`
 		sort: String
 		filter: JSON
 	}
-
-  fragment NameAndId on NameAndId{
-    name,
-    id
-  }
 `;
 
 class Mongql {
@@ -168,12 +159,13 @@ class Mongql {
         mongql
       } = Schema;
       const { resource, output } = mongql;
-      let typedefsAST = mongql.TypeDefs || InitTypedefs[resource], resolver = mongql.Resolvers || InitResolvers[resource];
+      let typedefsAST = (mongql.TypeDefs || InitTypedefs[resource]) as MutableDocumentNode, resolver = mongql.Resolvers || InitResolvers[resource];
       const generated = generateTypedefs(
         Schema,
         typedefsAST,
       );
       typedefsAST = generated.typedefsAST;
+      typedefsAST.definitions = sortDefinitions(typedefsAST.definitions);
       resolver = generateResolvers(
         Schema,
         resolver,
@@ -188,7 +180,8 @@ class Mongql {
       OperationOutput += await this.#output(output, typedefsAST, generated.OperationNodes, resource);
     });
     if (output.Operation)
-      this.#cleanAndOutput(output.Operation, OperationOutput, 'Operations.js');
+      this.#cleanAndOutput(output.Operation, 'import gql from "graphql-tag";\n\nexport const NameAndId = gql\`\n\tfragment NameAndIdFragment on NameAndId{\n\t\tname,\n\t\tid\n}\n\`' + OperationOutput, 'Operations.js');
+
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
     return {
       TransformedTypedefs,
@@ -215,12 +208,13 @@ class Mongql {
         mongql
       } = Schema;
       const { resource, output } = mongql;
-      let typedefsAST = mongql.TypeDefs || InitTypedefs[resource], resolver = mongql.Resolvers || InitResolvers[resource];
+      let typedefsAST = (mongql.TypeDefs || InitTypedefs[resource]) as MutableDocumentNode, resolver = mongql.Resolvers || InitResolvers[resource];
       const generated = generateTypedefs(
         Schema,
         typedefsAST,
       );
       typedefsAST = generated.typedefsAST;
+      typedefsAST.definitions = sortDefinitions(typedefsAST.definitions);
       resolver = generateResolvers(
         Schema,
         resolver,
@@ -235,7 +229,7 @@ class Mongql {
       OperationOutput += this.#outputSync(output, typedefsAST, generated.OperationNodes, resource);
     });
     if (output.Operation)
-      this.#cleanAndOutputSync(output.Operation, OperationOutput, 'Operations.js');
+      this.#cleanAndOutputSync(output.Operation, 'import gql from "graphql-tag";\n\nexport const NameAndId = gql\`\n\tfragment NameAndIdFragment on NameAndId{\n\t\tname,\n\t\tid\n}\n\`' + OperationOutput, 'Operations.js');
 
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
 

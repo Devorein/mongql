@@ -5,7 +5,7 @@ type SelectionSetDefinitionNode = FragmentDefinitionNode | OperationDefinitionNo
 type SelectionSetDefinitionNodes = SelectionSetDefinitionNode[];
 
 export default function operationAstToJS(OperationNodes: DocumentNode): string {
-  let res = 'import gql from "graphql-tag";\n';
+  let res = '';
   const Operations: string[] = [];
   (OperationNodes.definitions as SelectionSetDefinitionNodes).forEach((Node: SelectionSetDefinitionNode) => {
     const FragmentsUsed: string[] = extractFragments(Node.selectionSet);

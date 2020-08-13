@@ -216,7 +216,8 @@ export interface IMongqlGlobalConfigsPartial {
     init?: string | Record<string, IResolverPartial>,
   },
   generate?: boolean | IGeneratePartial,
-  output?: boolean | IOutputPartial
+  output?: boolean | IOutputPartial,
+  Operations?: Record<string, string[]>
 }
 
 /**
@@ -231,7 +232,8 @@ export interface IMongqlGlobalConfigsFull {
     init: undefined | Record<string, IResolverFull>,
   },
   generate: IGenerateFull,
-  output: IOutputFull
+  output: IOutputFull,
+  Operations: Record<string, string[]>
 }
 
 /**
@@ -245,7 +247,8 @@ export interface IMongqlBaseSchemaConfigsFull {
   TypeDefs: DocumentNode | undefined,
   Resolvers: IResolverFull | undefined,
   uniqueBy: undefined | string,
-  unAuthOpsList: [] | string[]
+  unAuthOpsList: [] | string[],
+  Operations: Record<string, string[]>
 }
 
 /**
@@ -259,7 +262,8 @@ export interface IMongqlBaseSchemaConfigsPartial {
   TypeDefs?: DocumentNode,
   Resolvers?: IResolverPartial,
   uniqueBy?: string,
-  unAuthOpsList?: string[]
+  unAuthOpsList?: string[],
+  Operations?: Record<string, string[]>
 }
 
 /**

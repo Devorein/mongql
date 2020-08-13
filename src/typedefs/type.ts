@@ -1,10 +1,10 @@
 import S from 'voca';
 import { Schema } from 'mongoose';
-import { t, objectTypeApi, enumTypeApi, interfaceTypeApi, inputTypeApi, unionTypeApi, TypeDefinitonApi } from 'graphql-extra';
+import { t, objectTypeApi, enumTypeApi, interfaceTypeApi, inputTypeApi, unionTypeApi, TypeDefinitonApi, ObjectExtApi, ObjectTypeApi } from 'graphql-extra';
 import { resolvers } from 'graphql-scalars';
 import { GraphQLScalarType, NamedTypeNode, DocumentNode } from "graphql";
 
-import { ISpecificTypeInfo, IMongqlMongooseSchemaFull, IMongqlGeneratedTypes, AuthEnumString, InputActionEnumString, MutableDocumentNode, FieldsFullInfos, FieldFullInfo, MongqlSchemaConfigsFull, MongqlFieldAttachObjectConfigsFull, MongqlFieldPath, TSchemaInfo } from "../types";
+import { ISpecificTypeInfo, IMongqlMongooseSchemaFull, IMongqlGeneratedTypes, AuthEnumString, InputActionEnumString, MutableDocumentNode, FieldsFullInfos, FieldFullInfo, MongqlSchemaConfigsFull, MongqlFieldAttachObjectConfigsFull, MongqlFieldPath, TSchemaInfo, FieldsFullInfo } from "../types";
 import Password from "../utils/gql-types/password";
 import Username from "../utils/gql-types/username";
 
@@ -136,7 +136,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
     kind: 'Document',
     definitions: InitTypedefsAST ? [...InitTypedefsAST.definitions] : []
   };
-
+  const FlattenedFields: FieldsFullInfo = {};
   const Fields: FieldsFullInfos = [];
   const Types: IMongqlGeneratedTypes = {
     enums: [],
@@ -235,17 +235,20 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
         ref_type,
         object_type,
         excludedAuthSegments: field_excluded_auth_segments,
+        includedAuthSegments: field_included_auth_segments,
         fieldDepth,
         enum_type,
         path: [...path]
       })
 
+      FlattenedFields[(parentKey ? parentKey.key + "." : "") + key] = generatedFieldFullInfo;
       Fields[path.length - 1][key] = generatedFieldFullInfo;
+
       if (generic_type.match(/(scalar)/))
         BaseSchema.path(path.map(({ key }) => key).join('.')).validate((v: any) => {
           const value = Validators[object_type](v);
           return value !== null && value !== undefined;
-        }/*, (props: any) => props.reason.message */);
+        }, ((props: any) => props.reason.message) as any);
 
       field_included_auth_segments.forEach((auth) => {
         path[path.length - 1] = { object_type, key, enum_type };
@@ -282,9 +285,31 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
 
       if (generic_type.match(/(object)/))
         _inner(innerValue, object_type, path, CurrentSchemaConfigs);
+
       path.pop();
       // if (value.mongql) delete value.mongql;
     });
+
+    if (Schema?.mongql?.Operations) {
+      Object.entries(Schema.mongql.Operations).forEach(([OperationName, OperationFields]) => {
+        const AuthObjectTypes: Record<string, ObjectTypeApi> = {};
+        OperationFields.forEach(OperationField => {
+          const FlattenedField = FlattenedFields[(parentKey ? parentKey.key + "." : "") + OperationField];
+          (OperationField === "id" ? ["self", "others", "mixed"] : FlattenedField.includedAuthSegments).forEach(includedAuthSegment => {
+            if (!AuthObjectTypes[includedAuthSegment]) AuthObjectTypes[includedAuthSegment] = objectTypeApi(t.objectType({
+              name: `${S.capitalize(includedAuthSegment)}${Type}${OperationName}`,
+              description: ``,
+              fields: [],
+              interfaces: []
+            }));
+            AuthObjectTypes[includedAuthSegment].createField({ name: OperationField, type: OperationField === "id" ? "ID!" : decorateTypes(FlattenedField.object_type, FlattenedField.nullable.object[includedAuthSegment as AuthEnumString]) });
+          })
+        });
+        Object.values(AuthObjectTypes).forEach(AuthObjectType => {
+          ResultDocumentNode.definitions.push(AuthObjectType.node)
+        })
+      });
+    }
     // if (Schema.mongql && parentKey)
     //   delete Schema.mongql
   }

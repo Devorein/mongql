@@ -284,6 +284,7 @@ export interface IMongqlBaseSchemaConfigsFull extends IMongqlGlobalAndBaseSchema
  */
 export interface IMongqlNestedSchemaConfigsFull extends IMongqlFieldConfigsFull {
   generate: IGenerateFull,
+  Operations: Record<string, string[]>,
   type: undefined | string
 }
 
@@ -292,6 +293,7 @@ export interface IMongqlNestedSchemaConfigsFull extends IMongqlFieldConfigsFull 
  */
 export interface IMongqlNestedSchemaConfigsPartial extends IMongqlFieldConfigsPartial {
   generate?: IGeneratePartial,
+  Operations?: Record<string, string[]>,
   type?: string
 }
 
@@ -390,6 +392,7 @@ export interface IMongqlFieldConfigsPartial {
 export interface FieldInfo extends ISpecificTypeInfo {
   generic_type: string,
   excludedAuthSegments: string[],
+  includedAuthSegments: string[],
   fieldDepth: number,
   path: MongqlFieldPath[],
   auth?: AuthEnumString

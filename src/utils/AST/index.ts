@@ -14,6 +14,7 @@ import operationAstToJS from "./operationAstToJS";
 export * from "./transformASTToString";
 export * from "./operation";
 export * from "./generateFragments";
+export * from "./sortAST";
 
 export function getNestedType(Type: TypeNode) {
   let currentNode = Type;

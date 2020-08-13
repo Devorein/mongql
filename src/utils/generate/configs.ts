@@ -29,7 +29,8 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPa
     Resolvers: {
       init: undefined
     },
-    Operations: {}
+    Operations: {},
+    sort: { fields: true, nodes: true }
   });
 }
 

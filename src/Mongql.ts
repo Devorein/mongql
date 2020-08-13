@@ -18,8 +18,7 @@ import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull
 
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
-import { operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes } from "./utils";
-import { sortDefinitions } from './utils/AST/sortAST';
+import { sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes } from "./utils";
 
 const BaseTypeDefs = gql`
   type Query {
@@ -160,7 +159,10 @@ class Mongql {
         typedefsAST,
       );
       typedefsAST = generated.typedefsAST;
-      typedefsAST.definitions = sortDefinitions(typedefsAST.definitions);
+      if (mongql.sort.fields)
+        typedefsAST.definitions = sortFields(typedefsAST.definitions);
+      if (mongql.sort.nodes)
+        typedefsAST.definitions = sortNodes(typedefsAST.definitions);
       resolver = generateResolvers(
         Schema,
         resolver,
@@ -209,7 +211,10 @@ class Mongql {
         typedefsAST,
       );
       typedefsAST = generated.typedefsAST;
-      typedefsAST.definitions = sortDefinitions(typedefsAST.definitions);
+      if (mongql.sort.fields)
+        typedefsAST.definitions = sortFields(typedefsAST.definitions);
+      if (mongql.sort.nodes)
+        typedefsAST.definitions = sortNodes(typedefsAST.definitions);
       resolver = generateResolvers(
         Schema,
         resolver,

@@ -204,10 +204,34 @@ export type IOutputFull = {
   Operation: string | undefined
 }
 
+export type ISortFull = {
+  fields: boolean,
+  nodes: boolean
+}
+
+export type ISortPartial = {
+  fields?: undefined | boolean,
+  nodes?: undefined | boolean
+}
+
+export interface IMongqlGlobalAndBaseSchemaCommonPartial {
+  generate?: boolean | IGeneratePartial,
+  output?: boolean | IOutputPartial,
+  Operations?: Record<string, string[]>,
+  sort?: ISortPartial
+}
+
+export interface IMongqlGlobalAndBaseSchemaCommonFull {
+  generate: IGenerateFull,
+  output: IOutputFull,
+  Operations: Record<string, string[]>,
+  sort: ISortFull
+}
+
 /**
  * Partial interface for Mongql Global configs
  */
-export interface IMongqlGlobalConfigsPartial {
+export interface IMongqlGlobalConfigsPartial extends IMongqlGlobalAndBaseSchemaCommonPartial {
   Schemas: IMongqlMongooseSchemaPartial[],
   Typedefs?: {
     init?: string | Record<string, string | DocumentNode>,
@@ -215,15 +239,12 @@ export interface IMongqlGlobalConfigsPartial {
   Resolvers?: {
     init?: string | Record<string, IResolverPartial>,
   },
-  generate?: boolean | IGeneratePartial,
-  output?: boolean | IOutputPartial,
-  Operations?: Record<string, string[]>
 }
 
 /**
  * Full interface for Mongql Global configs
  */
-export interface IMongqlGlobalConfigsFull {
+export interface IMongqlGlobalConfigsFull extends IMongqlGlobalAndBaseSchemaCommonFull {
   Schemas: IMongqlMongooseSchemaFull[],
   Typedefs: {
     init: undefined | Record<string, DocumentNode>,
@@ -231,39 +252,31 @@ export interface IMongqlGlobalConfigsFull {
   Resolvers: {
     init: undefined | Record<string, IResolverFull>,
   },
-  generate: IGenerateFull,
-  output: IOutputFull,
-  Operations: Record<string, string[]>
+}
+
+
+/**
+ * Partial interface for Mongql BaseSchema Configs
+ */
+export interface IMongqlBaseSchemaConfigsPartial extends IMongqlGlobalAndBaseSchemaCommonPartial {
+  resource: string,
+  skip?: boolean,
+  TypeDefs?: DocumentNode,
+  Resolvers?: IResolverPartial,
+  uniqueBy?: string,
+  unAuthOpsList?: string[],
 }
 
 /**
  * Full interface for Mongql BaseSchema Configs
  */
-export interface IMongqlBaseSchemaConfigsFull {
+export interface IMongqlBaseSchemaConfigsFull extends IMongqlGlobalAndBaseSchemaCommonFull {
   resource: string,
-  generate: IGenerateFull,
   skip: boolean,
-  output: IOutputFull,
   TypeDefs: DocumentNode | undefined,
   Resolvers: IResolverFull | undefined,
   uniqueBy: undefined | string,
   unAuthOpsList: [] | string[],
-  Operations: Record<string, string[]>
-}
-
-/**
- * Partial interface for Mongql BaseSchema Configs
- */
-export interface IMongqlBaseSchemaConfigsPartial {
-  resource: string,
-  generate?: IGeneratePartial,
-  skip?: boolean,
-  output?: boolean | IOutputPartial,
-  TypeDefs?: DocumentNode,
-  Resolvers?: IResolverPartial,
-  uniqueBy?: string,
-  unAuthOpsList?: string[],
-  Operations?: Record<string, string[]>
 }
 
 /**

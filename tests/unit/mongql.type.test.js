@@ -51,7 +51,10 @@ BaseSchema.mongql = {
 	resource: 'User'
 };
 const mongql = new Mongql({
-	Schemas: [ BaseSchema ]
+	Schemas: [ BaseSchema ],
+	sort: {
+		fields: false
+	}
 });
 
 const { TransformedTypedefs } = mongql.generateSync();

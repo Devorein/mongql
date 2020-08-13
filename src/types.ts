@@ -31,7 +31,6 @@ export interface IMongqlMongooseSchemaFull extends Schema {
  */
 export interface IGenerateQueryPartPartial {
   whole?: boolean,
-  nameandid?: boolean,
   count?: boolean
 }
 
@@ -40,7 +39,6 @@ export interface IGenerateQueryPartPartial {
  */
 export interface IGenerateQueryPartFull {
   whole: boolean,
-  nameandid: boolean,
   count: boolean
 }
 
@@ -454,7 +452,6 @@ export type RangeEnumString = keyof typeof RangeEnum;
 export enum PartEnum {
   whole,
   count,
-  nameandid
 }
 
 export type PartEnumString = keyof typeof PartEnum;

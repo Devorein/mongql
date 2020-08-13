@@ -115,9 +115,6 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
           S.capitalize(`${action}${OpTarget}${part}`), 'mutation', [createSelectionSet(`${action}${OpTarget}`, [createFragmentSpread(`Self${cr}Object${part}Fragment`)], ArgumentNodes)], VariableDefinitions,
         ));
       })
-      OperationNodes.definitions.push(createOperation(
-        S.capitalize(`${action}${OpTarget}NameAndId`), 'mutation', [createSelectionSet(`${action}${OpTarget}`, [createFragmentSpread(`NameAndId`)], ArgumentNodes)], VariableDefinitions,
-      ));
     });
   });
   if (MutationExt.getFields().length && !doesMutationExtExists) TypedefAST.definitions.push(MutationExt.node);

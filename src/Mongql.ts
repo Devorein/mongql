@@ -30,11 +30,6 @@ const BaseTypeDefs = gql`
 		_empty: Boolean
 	}
 
-	type NameAndId {
-		name: String!
-		id: ID!
-	}
-
   input PaginationInput {
 		page: Int!
 		limit: Int!
@@ -180,7 +175,7 @@ class Mongql {
       OperationOutput += await this.#output(output, typedefsAST, generated.OperationNodes, resource);
     });
     if (output.Operation)
-      this.#cleanAndOutput(output.Operation, 'import gql from "graphql-tag";\n\nexport const NameAndId = gql\`\n\tfragment NameAndIdFragment on NameAndId{\n\t\tname,\n\t\tid\n}\n\`' + OperationOutput, 'Operations.js');
+      this.#cleanAndOutput(output.Operation, 'import gql from "graphql-tag";\n\n' + OperationOutput, 'Operations.js');
 
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
     return {
@@ -229,7 +224,7 @@ class Mongql {
       OperationOutput += this.#outputSync(output, typedefsAST, generated.OperationNodes, resource);
     });
     if (output.Operation)
-      this.#cleanAndOutputSync(output.Operation, 'import gql from "graphql-tag";\n\nexport const NameAndId = gql\`\n\tfragment NameAndIdFragment on NameAndId{\n\t\tname,\n\t\tid\n}\n\`' + OperationOutput, 'Operations.js');
+      this.#cleanAndOutputSync(output.Operation, 'import gql from "graphql-tag";\n\n' + OperationOutput, 'Operations.js');
 
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
 

@@ -9,7 +9,7 @@ export default function () {
     Query.options[range] = {};
     ['self', 'others', 'mixed'].forEach((auth) => {
       Query.options[range][auth] = {};
-      const parts = range.match(/(id|paginated)/) ? ['whole', 'nameandid'] : ['whole', 'nameandid', 'count'];
+      const parts = range.match(/(id|paginated)/) ? ['whole'] : ['whole', 'count'];
       parts.forEach((part) => {
         Query.options[range][auth][part] = true;
         Query.fields.push(`${range}.${auth}.${part}`);

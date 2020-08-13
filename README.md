@@ -407,10 +407,9 @@ During the generation of schema, a few concepts are followed
    4. Part(Output):
 
        1. Whole: Get the whole data along with sub/extra types
-       2. NameAndId: get the name and id of the resource
-       3. Count: get the count of resource
+       2. Count: get the count of resource
 
-Generated Query Examples: `getSelfSettingsWhole, getOthersSettingsNameAndId` ; 
+Generated Query Examples: `getSelfSettingsWhole, getOthersSettingsCount` ; 
 
 **NOTE**: Count part is not generate in paginated and id range as for paginated query the user already knows the count and id returns just one
 

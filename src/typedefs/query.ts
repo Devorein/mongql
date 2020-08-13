@@ -64,10 +64,6 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
       parts.forEach((part) => {
         let output = `${S.capitalize(auth)}${cr}Object!`;
         output = range !== 'id' ? `[${output}]!` : output;
-        if (part === 'nameandid') {
-          if (range.match(/(paginated|filtered|all)/)) output = '[NameAndId!]!';
-          else if (range === 'id') output = 'NameAndId!';
-        }
         if (part === 'count') output = 'NonNegativeInt!';
         const QueryName = `get${S.capitalize(range)}${S.capitalize(auth)}${cpr}${S.capitalize(part)}`;
         const Arguments = ArgumentMap[range as RangeEnumString]
@@ -86,10 +82,6 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
                 S.capitalize(QueryName + part), 'query', [createSelectionSet(QueryName, [createFragmentSpread(`${S.capitalize(auth)}${cr}Object${part}Fragment`)], ArgumentNodes)], VariableDefinitions
               ));
             })
-          else
-            OperationNodes.definitions.push(createOperation(
-              S.capitalize(QueryName), 'query', [createSelectionSet(QueryName, [createFragmentSpread(`NameAndId`)], ArgumentNodes)], VariableDefinitions
-            ));
         } else
           OperationNodes.definitions.push(createOperation(
             S.capitalize(QueryName), 'query', [createSelections(QueryName, ArgumentNodes)], VariableDefinitions

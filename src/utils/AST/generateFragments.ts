@@ -35,7 +35,7 @@ function generateObjectFragments(ObjTypeDef: ObjectTypeDefinitionNode, InitTyped
     (acc, FieldDefinition) => {
       const FieldType = getNestedType(FieldDefinition.type);
       const isScalar = detectScalarity(FieldType, InitTypedefsAST as MutableDocumentNode);
-      const FragmentSpread = part === "RefsNameAndId" ? "NameAndId" : FieldType + part + 'Fragment';
+      const FragmentSpread = FieldType + part + 'Fragment';
       let Selection = null;
       if (!isScalar && part !== "RefsNone") Selection = createSelectionSet(FieldDefinition.name.value, [createFragmentSpread(FragmentSpread)]);
       else if (!isScalar && part === 'RefsOnly') Selection = createSelectionSet(FieldDefinition.name.value, [createFragmentSpread(FragmentSpread)]);

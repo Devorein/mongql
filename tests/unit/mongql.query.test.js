@@ -18,35 +18,23 @@ const queryOpts = [];
 
 const QueryMap = {
 	getAllSelfUsersWhole: [ '', '[SelfUserObject!]!' ],
-	getAllSelfUsersNameandid: [ '', '[NameAndId!]!' ],
 	getAllSelfUsersCount: [ '', 'NonNegativeInt!' ],
 	getAllOthersUsersWhole: [ '', '[OthersUserObject!]!' ],
-	getAllOthersUsersNameandid: [ '', '[NameAndId!]!' ],
 	getAllOthersUsersCount: [ '', 'NonNegativeInt!' ],
 	getAllMixedUsersWhole: [ '', '[MixedUserObject!]!' ],
-	getAllMixedUsersNameandid: [ '', '[NameAndId!]!' ],
 	getAllMixedUsersCount: [ '', 'NonNegativeInt!' ],
 	getPaginatedSelfUsersWhole: [ 'pagination:PaginationInput!', '[SelfUserObject!]!' ],
-	getPaginatedSelfUsersNameandid: [ 'pagination:PaginationInput!', '[NameAndId!]!' ],
 	getPaginatedOthersUsersWhole: [ 'pagination:PaginationInput!', '[OthersUserObject!]!' ],
-	getPaginatedOthersUsersNameandid: [ 'pagination:PaginationInput!', '[NameAndId!]!' ],
 	getPaginatedMixedUsersWhole: [ 'pagination:PaginationInput!', '[MixedUserObject!]!' ],
-	getPaginatedMixedUsersNameandid: [ 'pagination:PaginationInput!', '[NameAndId!]!' ],
 	getFilteredSelfUsersWhole: [ 'filter:JSON', '[SelfUserObject!]!' ],
-	getFilteredSelfUsersNameandid: [ 'filter:JSON', '[NameAndId!]!' ],
 	getFilteredSelfUsersCount: [ 'filter:JSON', 'NonNegativeInt!' ],
 	getFilteredOthersUsersWhole: [ 'filter:JSON', '[OthersUserObject!]!' ],
-	getFilteredOthersUsersNameandid: [ 'filter:JSON', '[NameAndId!]!' ],
 	getFilteredOthersUsersCount: [ 'filter:JSON', 'NonNegativeInt!' ],
 	getFilteredMixedUsersWhole: [ 'filter:JSON', '[MixedUserObject!]!' ],
-	getFilteredMixedUsersNameandid: [ 'filter:JSON', '[NameAndId!]!' ],
 	getFilteredMixedUsersCount: [ 'filter:JSON', 'NonNegativeInt!' ],
 	getIdSelfUsersWhole: [ 'id:ID!', 'SelfUserObject!' ],
-	getIdSelfUsersNameandid: [ 'id:ID!', 'NameAndId!' ],
 	getIdOthersUsersWhole: [ 'id:ID!', 'OthersUserObject!' ],
-	getIdOthersUsersNameandid: [ 'id:ID!', 'NameAndId!' ],
-	getIdMixedUsersWhole: [ 'id:ID!', 'MixedUserObject!' ],
-	getIdMixedUsersNameandid: [ 'id:ID!', 'NameAndId!' ]
+	getIdMixedUsersWhole: [ 'id:ID!', 'MixedUserObject!' ]
 };
 
 const QueryMapLength = Object.keys(QueryMap).length;

@@ -94,21 +94,23 @@ function parseScalarType(mongooseField: any): string {
 function generateSpecificType(generic_type: string, value: any, key: string, parentKey: MongqlFieldPath, resource: string): ISpecificTypeInfo {
   let object_type = '',
     input_type = null,
-    ref_type = null;
-  const enum_type = (parentKey ? parentKey.enum_type + "_" : resource + '_').toUpperCase() + key.toUpperCase();
-  if (generic_type.match(/(object)/)) {
+    ref_type = null,
+    enum_type = null;
+  if (generic_type.match(/(object|enum)/)) {
     object_type = (parentKey ? parentKey.object_type : S.capitalize(resource)) + S.capitalize(value.mongql?.type || key);
     input_type = object_type + 'Input'
   }
-  else if (generic_type === 'enum')
-    object_type = enum_type
+  if (generic_type === 'enum') {
+    object_type = (parentKey ? parentKey.object_type : S.capitalize(resource)) + S.capitalize(value.mongql?.type || key) + "Enum";
+    enum_type = object_type;
+    input_type = object_type;
+  }
   else if (generic_type.match('ref')) {
     object_type = value.ref;
     input_type = `ID`;
     ref_type = value.ref;
   } else if (generic_type.match(/(scalar|mongoose)/))
     object_type = parseScalarType(value);
-
   input_type = input_type ? input_type : object_type;
   return { object_type, input_type, ref_type, enum_type };
 }

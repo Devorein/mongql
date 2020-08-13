@@ -61,8 +61,8 @@ describe('Proper typedef types generation', () => {
 	it('Interface type Validation', async () => {
 		CheckTypeFields(
 			[
-				[ ``, [ 'ID!', '[String!]!', 'USER_FIELD2!', 'UserField3Union!', 'PositiveInt!' ] ],
-				[ `Field3`, [ 'Int!', '[UserField3Field32Union!]!', 'USER_FIELD3_FIELD33!' ] ],
+				[ ``, [ 'ID!', '[String!]!', 'UserField2Enum!', 'UserField3Union!', 'PositiveInt!' ] ],
+				[ `Field3`, [ 'Int!', '[UserField3Field32Union!]!', 'UserField3Field33Enum!' ] ],
 				[ `Field3Field32`, [ '[Int!]!' ] ]
 			],
 			(Type) => DocumentApi.getInterfaceType(`User${Type}Interface`)
@@ -71,8 +71,8 @@ describe('Proper typedef types generation', () => {
 
 	it('Enum type validation', async () => {
 		[
-			[ `USER_FIELD2`, 'enum1,enum2,enum3' ],
-			[ `USER_FIELD3_FIELD33`, 'enum21,enum22,enum23' ]
+			[ `UserField2Enum`, 'enum1,enum2,enum3' ],
+			[ `UserField3Field33Enum`, 'enum21,enum22,enum23' ]
 		].forEach(([ EnumStr, EnumValues ]) => {
 			const EnumApi = DocumentApi.getEnumType(EnumStr);
 			expect(EnumApi).toBeTruthy();
@@ -84,8 +84,8 @@ describe('Proper typedef types generation', () => {
 		[ 'Mixed', 'Others', 'Self' ].forEach((auth) => {
 			CheckTypeFields(
 				[
-					[ `User`, [ 'ID!', '[String!]!', 'USER_FIELD2!', `${auth}UserField3Object!`, 'PositiveInt!' ] ],
-					[ `UserField3`, [ 'Int!', `[${auth}UserField3Field32Object!]!`, 'USER_FIELD3_FIELD33!' ] ],
+					[ `User`, [ 'ID!', '[String!]!', 'UserField2Enum!', `${auth}UserField3Object!`, 'PositiveInt!' ] ],
+					[ `UserField3`, [ 'Int!', `[${auth}UserField3Field32Object!]!`, 'UserField3Field33Enum!' ] ],
 					[ `UserField3Field32`, [ '[Int!]!' ] ]
 				],
 				(Type) => DocumentApi.getObjectType(`${auth}${Type}Object`)
@@ -96,16 +96,16 @@ describe('Proper typedef types generation', () => {
 	it('Input type validation', async () => {
 		CheckTypeFields(
 			[
-				[ 'User', [ '[String!]!', 'USER_FIELD2!', 'CreateUserField3Input!', 'PositiveInt!' ] ],
-				[ 'UserField3', [ 'Int!', '[CreateUserField3Field32Input!]!', 'USER_FIELD3_FIELD33!' ] ],
+				[ 'User', [ '[String!]!', 'UserField2Enum!', 'CreateUserField3Input!', 'PositiveInt!' ] ],
+				[ 'UserField3', [ 'Int!', '[CreateUserField3Field32Input!]!', 'UserField3Field33Enum!' ] ],
 				[ 'UserField3Field32', [ '[Int!]!' ] ]
 			],
 			(Type) => DocumentApi.getInputType(`Create${Type}Input`)
 		);
 		CheckTypeFields(
 			[
-				[ 'User', [ 'ID!', '[String]!', 'USER_FIELD2', 'UpdateUserField3Input', 'PositiveInt' ] ],
-				[ 'UserField3', [ 'Int', '[UpdateUserField3Field32Input]!', 'USER_FIELD3_FIELD33' ] ],
+				[ 'User', [ 'ID!', '[String]!', 'UserField2Enum', 'UpdateUserField3Input', 'PositiveInt' ] ],
+				[ 'UserField3', [ 'Int', '[UpdateUserField3Field32Input]!', 'UserField3Field33Enum' ] ],
 				[ 'UserField3Field32', [ '[Int]!' ] ]
 			],
 			(Type) => DocumentApi.getInputType(`Update${Type}Input`)

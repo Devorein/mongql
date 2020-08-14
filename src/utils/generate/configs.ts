@@ -25,6 +25,7 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPa
     },
     Typedefs: {
       init: undefined,
+      base: undefined
     },
     Resolvers: {
       init: undefined

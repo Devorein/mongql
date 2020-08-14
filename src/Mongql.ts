@@ -184,7 +184,9 @@ class Mongql {
       const OperationCode = this.#globalConfigs.Operations.module === "esm" ? "import gql from 'graphql-tag'\n" + OperationOutput : 'const gql = require("graphql-tag");\n\nconst Operations = {};\n' + OperationOutput + "\nmodule.exports = Operations"
       this.#cleanAndOutput(output.Operation, OperationCode, 'Operations.js');
     }
-
+    const BaseTypeDefs = typeof Typedefs.base === 'string' ? gql(await fs.readFile(Typedefs.base, 'UTF-8')) : Typedefs.base;
+    if (BaseTypeDefs)
+      TransformedTypedefs.arr.push(BaseTypeDefs);
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
     return {
       TransformedTypedefs,
@@ -215,7 +217,9 @@ class Mongql {
       const OperationCode = this.#globalConfigs.Operations.module === "esm" ? "import gql from 'graphql-tag'\n" + OperationOutput : 'const gql = require("graphql-tag");\n\nconst Operations = {};\n' + OperationOutput + "module.exports = Operations"
       this.#cleanAndOutputSync(output.Operation, OperationCode, 'Operations.js');
     }
-
+    const BaseTypeDefs = typeof Typedefs.base === 'string' ? gql(fs.readFileSync(Typedefs.base, 'utf-8')) : Typedefs.base;
+    if (BaseTypeDefs)
+      TransformedTypedefs.arr.push(BaseTypeDefs);
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
 
     return {

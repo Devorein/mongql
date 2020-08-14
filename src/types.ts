@@ -237,6 +237,7 @@ export interface IMongqlGlobalConfigsPartial extends IMongqlGlobalAndBaseSchemaC
   Schemas: IMongqlMongooseSchemaPartial[],
   Typedefs?: {
     init?: string | Record<string, string | DocumentNode>,
+    base?: string | DocumentNode
   },
   Resolvers?: {
     init?: string | Record<string, IResolverPartial>,
@@ -253,6 +254,7 @@ export interface IMongqlGlobalConfigsFull extends IMongqlGlobalAndBaseSchemaComm
   Schemas: IMongqlMongooseSchemaFull[],
   Typedefs: {
     init: undefined | Record<string, DocumentNode>,
+    base: undefined | string | DocumentNode
   },
   Resolvers: {
     init: undefined | Record<string, IResolverFull>,

@@ -30,7 +30,10 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPa
       init: undefined
     },
     Fragments: {},
-    sort: { fields: true, nodes: true }
+    sort: { fields: true, nodes: true },
+    Operations: {
+      module: "esm"
+    }
   });
 }
 

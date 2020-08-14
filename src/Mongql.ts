@@ -176,8 +176,10 @@ class Mongql {
       // delete Schema.mongql
       OperationOutput += await this.#output(output, typedefsAST, generated.OperationNodes, resource);
     });
-    if (output.Operation)
-      this.#cleanAndOutput(output.Operation, 'import gql from "graphql-tag";\n\n' + OperationOutput, 'Operations.js');
+    if (output.Operation) {
+      const OperationCode = this.#globalConfigs.Operations.module === "esm" ? "import gql from 'graphql-tag'\n" + OperationOutput : 'const gql = require("graphql-tag");\n\nconst Operations = {};\n' + OperationOutput + "\nmodule.exports = Operations"
+      this.#cleanAndOutput(output.Operation, OperationCode, 'Operations.js');
+    }
 
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
     return {
@@ -228,8 +230,10 @@ class Mongql {
       // delete Schema.mongql
       OperationOutput += this.#outputSync(output, typedefsAST, generated.OperationNodes, resource);
     });
-    if (output.Operation)
-      this.#cleanAndOutputSync(output.Operation, 'import gql from "graphql-tag";\n\n' + OperationOutput, 'Operations.js');
+    if (output.Operation) {
+      const OperationCode = this.#globalConfigs.Operations.module === "esm" ? "import gql from 'graphql-tag'\n" + OperationOutput : 'const gql = require("graphql-tag");\n\nconst Operations = {};\n' + OperationOutput + "module.exports = Operations"
+      this.#cleanAndOutputSync(output.Operation, OperationCode, 'Operations.js');
+    }
 
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
 
@@ -254,7 +258,7 @@ class Mongql {
       await this.#cleanAndOutput(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
     if (typeof output.AST === 'string')
       await this.#cleanAndOutput(output.AST, JSON.stringify(typedefsAST), `${resource}.json`);
-    if (typeof output.Operation === 'string') return operationAstToJS(OperationNodes);
+    if (typeof output.Operation === 'string') return operationAstToJS(OperationNodes, this.#globalConfigs.Operations.module);
     else return ''
   }
 
@@ -263,7 +267,7 @@ class Mongql {
       this.#cleanAndOutputSync(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
     if (typeof output.AST === 'string')
       this.#cleanAndOutputSync(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
-    if (typeof output.Operation === 'string') return operationAstToJS(OperationNodes);
+    if (typeof output.Operation === 'string') return operationAstToJS(OperationNodes, this.#globalConfigs.Operations.module);
     else return ''
   }
   /**

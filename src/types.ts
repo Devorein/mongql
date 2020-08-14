@@ -228,6 +228,8 @@ export interface IMongqlGlobalAndBaseSchemaCommonFull {
   sort: ISortFull
 }
 
+export type ModuleEnumType = "esm" | "cjs";
+
 /**
  * Partial interface for Mongql Global configs
  */
@@ -239,6 +241,9 @@ export interface IMongqlGlobalConfigsPartial extends IMongqlGlobalAndBaseSchemaC
   Resolvers?: {
     init?: string | Record<string, IResolverPartial>,
   },
+  Operations?: {
+    module?: ModuleEnumType
+  }
 }
 
 /**
@@ -252,6 +257,9 @@ export interface IMongqlGlobalConfigsFull extends IMongqlGlobalAndBaseSchemaComm
   Resolvers: {
     init: undefined | Record<string, IResolverFull>,
   },
+  Operations: {
+    module: ModuleEnumType
+  }
 }
 
 

@@ -6,6 +6,7 @@ import { MutableDocumentNode, TParsedSchemaInfo, FieldFullInfo } from '../../typ
 import { objectTypeApi, ObjectTypeApi } from 'graphql-extra';
 import { t } from 'graphql-extra';
 import S from "voca";
+import { decorateTypes } from '../../typedefs/index';
 
 export function createFragment(fragmentname: string, objectname: undefined | string, part: string, selections: SelectionNode[]): FragmentDefinitionNode {
   return {
@@ -81,12 +82,13 @@ export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaI
                 interfaces: []
               }));
             }
-            AuthObjectTypes[includedAuthSegment].createField({ name: FragmentSelection, type: FieldInfo.decorated_types.object[includedAuthSegment] as string });
+            const FragmentSpread = FieldInfo.generic_type.match(/(object|ref)/) ? decorateTypes(S.capitalize(includedAuthSegment) + FieldInfo.object_type + "Object" + FragmentName, FieldInfo.nullable.object[includedAuthSegment]) : FieldInfo.decorated_types.object[includedAuthSegment]
+            AuthObjectTypes[includedAuthSegment].createField({ name: FragmentSelection, type: FragmentSpread as string });
           })
         });
 
         Object.entries(AuthObjectTypes).forEach(([AuthObjectType, AuthObjectValue]) => {
-          FragmentDefinitionNodes.push(generateObjectFragments(S.capitalize(AuthObjectType) + SchemaName + FragmentName, AuthObjectValue.node, InitTypedefsAST, ''))
+          FragmentDefinitionNodes.push(generateObjectFragments(S.capitalize(AuthObjectType) + SchemaName + "Object" + FragmentName, AuthObjectValue.node, InitTypedefsAST, ''))
         })
       });
     })
@@ -96,7 +98,7 @@ export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaI
     const GeneratedNode = TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value];
     const hasRefs = GeneratedNode && Object.values(TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value].fields).find((field) => (field as FieldFullInfo).ref_type)
     if (ObjTypeDef.fields)
-      GeneratedNode ? FragmentDefinitionNodes.push(...(hasRefs ? ['RefsWhole', 'RefsNone', 'RefsNameAndId', 'RefsOnly'] : []).reduce((acc, part) =>
+      GeneratedNode ? FragmentDefinitionNodes.push(...(hasRefs ? ['RefsWhole', 'RefsNone', 'RefsOnly'] : []).reduce((acc, part) =>
         acc.concat(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, part)), [] as any[])) : FragmentDefinitionNodes.push(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, ''));
   })
   return FragmentDefinitionNodes;

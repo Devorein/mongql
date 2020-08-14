@@ -10,13 +10,13 @@ export default function populateOperationAST(TypeExt: ObjectTypeExtensionNode, o
       const { name, arguments: FieldDefinitonArgs, type } = FieldDefinition;
       const FieldDefinitonType = getNestedType(type);
       if (FieldDefinitonArgs && FieldDefinitonArgs.length !== 0) {
-        const { VariableDefinitions, ArgumentNodes } = createVariableDefAndArguments(FieldDefinitonArgs);
+        const { VariableDefinitions, ArgumentNodes } = createVariableDefAndArguments(FieldDefinitonArgs.map(FieldDefinitonArg => ({ name: FieldDefinitonArg.name.value, type: FieldDefinitonArg.type })));
         OperationNodes.definitions.push(createOperation(
-          S.capitalize(`${name.value}`), operation, detectScalarity(FieldDefinitonType, DocumentNode) ? [createSelections(`${name.value}`, ArgumentNodes)] : [createSelectionSet(`${name.value}`, [createFragmentSpread(FieldDefinitonType)], ArgumentNodes)], VariableDefinitions,
+          S.capitalize(`${name.value}`), operation, detectScalarity(FieldDefinitonType, DocumentNode) ? [createSelections(`${name.value}`, ArgumentNodes)] : [createSelectionSet(`${name.value}`, [createFragmentSpread(FieldDefinitonType + "Fragment")], ArgumentNodes)], VariableDefinitions,
         ));
       } else
         OperationNodes.definitions.push(createOperation(
-          S.capitalize(`${name.value}`), operation, detectScalarity(FieldDefinitonType, DocumentNode) ? [createSelections(`${name.value}`)] : [createSelectionSet(`${name.value}`, [createFragmentSpread(FieldDefinitonType)])],
+          S.capitalize(`${name.value}`), operation, detectScalarity(FieldDefinitonType, DocumentNode) ? [createSelections(`${name.value}`)] : [createSelectionSet(`${name.value}`, [createFragmentSpread(FieldDefinitonType + "Fragment")])],
         ));
     });
 }

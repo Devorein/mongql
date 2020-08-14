@@ -2,7 +2,7 @@ import pluralize from 'pluralize';
 import S from 'voca';
 import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
 
-import { IMongqlMongooseSchemaFull, RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode } from "../types";
+import { RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode, IMongqlBaseSchemaConfigsFull, TParsedSchemaInfo } from "../types";
 import { populateOperationAST, createOperation, createSelectionSet, createFragmentSpread, createSelections, createVariableDefAndArguments } from "../utils/AST";
 
 const ArgumentMap: Record<string, any[]> = {
@@ -39,10 +39,10 @@ const ArgumentMap: Record<string, any[]> = {
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
 
-export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableDocumentNode, OperationNodes: MutableDocumentNode) {
+export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocumentNode, OperationNodes: MutableDocumentNode) {
   const ast = documentApi().addSDL(TypedefAST);
   const doesQueryExtExists = ast.hasExt('Query');
-  const { mongql: { resource: r, generate: { query } } } = Schema;
+  const { resource: r, generate: { query }, Fragments } = Object.values(Schemas.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
   const cr = S.capitalize(r);
   const cpr = pluralize(cr, 2);
   const QueryExt = doesQueryExtExists ? ast.getExt('Query') as ObjectExtApi : objectExtApi(
@@ -55,7 +55,7 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
   );
 
   populateOperationAST(QueryExt.node, 'query', OperationNodes, TypedefAST);
-
+  const BaseSchemaFragments = Object.keys(Fragments);
   const ranges = Object.keys(query);
   ranges.forEach((range) => {
     const auths = Object.keys(query[range as RangeEnumString]);
@@ -77,7 +77,7 @@ export default function (Schema: IMongqlMongooseSchemaFull, TypedefAST: MutableD
 
         if (part !== "count") {
           if (part === "whole")
-            ['RefsWhole', 'RefsNone', 'RefsNameAndId'].forEach(part => {
+            ['RefsWhole', 'RefsNone', ...BaseSchemaFragments].forEach(part => {
               OperationNodes.definitions.push(createOperation(
                 S.capitalize(QueryName + part), 'query', [createSelectionSet(QueryName, [createFragmentSpread(`${S.capitalize(auth)}${cr}Object${part}Fragment`)], ArgumentNodes)], VariableDefinitions
               ));

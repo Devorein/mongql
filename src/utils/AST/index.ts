@@ -1,4 +1,4 @@
-import { TypeNode, NamedTypeNode, InputValueDefinitionNode } from "graphql/language/ast";
+import { TypeNode, NamedTypeNode } from "graphql/language/ast";
 import { variableDefinitionNode } from 'graphql-extra';
 import { typeDefs } from 'graphql-scalars';
 

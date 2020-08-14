@@ -39,15 +39,15 @@ export function createSelectionSet(name: string, selections: SelectionNode[], se
   }
 }
 
-export function createOperation(name: string, operation: OperationTypeNode, selections: SelectionNode[], variableDefinitions?: VariableDefinitionNode[]): OperationDefinitionNode {
+export function createOperation(value: string, operation: OperationTypeNode, selections: SelectionNode[], variableDefinitions?: VariableDefinitionNode[]): OperationDefinitionNode {
   return {
     kind: 'OperationDefinition',
     operation,
     name: {
       kind: 'Name',
-      value: name
+      value
     },
-    variableDefinitions: variableDefinitions || [],
+    variableDefinitions,
     directives: [],
     selectionSet: {
       kind: "SelectionSet",

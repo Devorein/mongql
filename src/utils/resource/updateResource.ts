@@ -1,8 +1,8 @@
-import { ISchemaInfo } from "../../types";
+import { TParsedSchemaInfo } from "../../types";
 
 import { Model } from "mongoose";
 
-async function updateResource(model: Model<any>, data: any, userId: string, SchemaInfo: ISchemaInfo) {
+async function updateResource(model: Model<any>, data: any, userId: string, SchemaInfo: TParsedSchemaInfo) {
   if (typeof model.schema.statics.preupdate === 'function') await model.schema.statics.preupdate(data, SchemaInfo);
   const updated_resource = await model.findOneAndUpdate({ _id: data.id, user: userId }, Object.assign({}, { updated_at: Date.now() }, data), { new: true });
   if (typeof model.schema.statics.postupdate === 'function') await model.schema.statics.postupdate(data, SchemaInfo);
@@ -17,7 +17,7 @@ async function updateResource(model: Model<any>, data: any, userId: string, Sche
  * @param SchemaInfo Information related to the MongooseSchema
  * @returns updated resource(s)
  */
-export default async function (model: Model<any>, datas: any | any[], userId: string, SchemaInfo: ISchemaInfo) {
+export default async function (model: Model<any>, datas: any | any[], userId: string, SchemaInfo: TParsedSchemaInfo) {
   if (Array.isArray(datas)) {
     const updated_resources = [];
     for (let i = 0; i < datas.length; i++)

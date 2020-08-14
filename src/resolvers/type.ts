@@ -1,4 +1,4 @@
-import { ISchemaInfo, FieldFullInfo } from "../types";
+import { FieldFullInfo, TParsedSchemaInfo } from "../types";
 
 /**
  * Generates type (except query and mutation) resolvers from the Schemainfo
@@ -6,7 +6,7 @@ import { ISchemaInfo, FieldFullInfo } from "../types";
  * 2. For types that are not related, it just gets the same type from its parent 
  * @param SchemaInfo Schema related info
  */
-export default function (SchemaInfo: ISchemaInfo, InitResolver: Record<string, any>) {
+export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<string, any>) {
   const { Types: { objects } } = SchemaInfo;
   const result: { [key: string]: any } = InitResolver;
 

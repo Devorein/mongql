@@ -1,4 +1,4 @@
-import { ISchemaInfo, IMongqlMongooseSchemaFull, AuthEnumString, RangeEnumString, PartEnumString } from "../types";
+import { TParsedSchemaInfo, AuthEnumString, RangeEnumString, PartEnumString, IMongqlBaseSchemaConfigsFull } from "../types";
 
 import pluralize from 'pluralize';
 import S from 'voca';
@@ -21,12 +21,11 @@ type TExcludedFields = {
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
 
-export default function (Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaInfo, InitResolver: Record<string, any>) {
+export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<string, any>) {
   if (!InitResolver.Query) InitResolver.Query = {};
 
-  const cr = S.capitalize(Schema.mongql.resource);
-
-  const { mongql: { generate: { query } } } = Schema;
+  const { generate: { query }, resource } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
+  const cr = S.capitalize(resource);
 
   const ExcludedFields: TExcludedFields = {
     self: '',

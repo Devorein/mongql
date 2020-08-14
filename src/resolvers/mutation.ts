@@ -1,4 +1,4 @@
-import { IMongqlMongooseSchemaFull, ISchemaInfo, ActionEnumString, TargetEnumString } from "../types";
+import { IMongqlMongooseSchemaFull, TParsedSchemaInfo, ActionEnumString, TargetEnumString, IMongqlBaseSchemaConfigsFull } from "../types";
 
 import pluralize from 'pluralize';
 
@@ -14,9 +14,10 @@ import deleteResource from '../utils/resource/deleteResource';
  * @param Schema Schema to generate mutation resolvers from
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
-export default function generateMutationResolvers(Schema: IMongqlMongooseSchemaFull, SchemaInfo: ISchemaInfo, InitResolver: Record<string, any>) {
+export default function generateMutationResolvers(SchemaInfo: TParsedSchemaInfo, InitResolver: Record<string, any>) {
   if (!InitResolver.Mutation) InitResolver.Mutation = {};
-  const { mongql: { resource, generate: { mutation } } } = Schema;
+  const BaseSchemaConfigs = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
+  const { generate: { mutation }, resource } = BaseSchemaConfigs;
 
   const capitalizedResource = resource.charAt(0).toUpperCase() + resource.substr(1);
   const pluralizedcapitalizedResource = pluralize(capitalizedResource, 2);
@@ -25,10 +26,10 @@ export default function generateMutationResolvers(Schema: IMongqlMongooseSchemaF
   const MutationResolversMapper = {
     create: {
       single: async function (parent: any, args: any, ctx: any) {
-        return await createResource(ctx[capitalizedResource], args.data, ctx.user.id, SchemaInfo, Schema.mongql);
+        return await createResource(ctx[capitalizedResource], args.data, ctx.user.id, SchemaInfo, BaseSchemaConfigs);
       },
       multi: async function (parent: any, args: any, ctx: any) {
-        return await createResource(ctx[capitalizedResource], args.datas, ctx.user.id, SchemaInfo, Schema.mongql);
+        return await createResource(ctx[capitalizedResource], args.datas, ctx.user.id, SchemaInfo, BaseSchemaConfigs);
       }
     },
     update: {

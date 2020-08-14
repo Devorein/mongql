@@ -536,15 +536,6 @@ export type FieldsFullInfo = {
 
 export type FieldsFullInfos = FieldsFullInfo[]
 
-/**
- * Generated Schema Info containing Fields and Types info
- */
-export interface ISchemaInfo {
-  Fields: FieldsFullInfos,
-  Types: IMongqlGeneratedTypes,
-  Schemas: Record<string, MongqlSchemaConfigsFull>[]
-}
-
 export interface IMongqlTypeNode {
   type: TypeNode,
   kind: "NamedType" | "NonNullType" | "ListType",
@@ -578,6 +569,10 @@ export type MongqlSchemaConfigsFull = IMongqlBaseSchemaConfigsFull | IMongqlNest
 
 export type TSchemaInfo = Record<string, MongqlSchemaConfigsFull & { fields: FieldsFullInfo }>
 export type TSchemaInfos = TSchemaInfo[];
+
+/**
+ * Generated Schema Info containing Fields and Types info
+ */
 
 export type TParsedSchemaInfo = {
   Types: IMongqlGeneratedTypes,

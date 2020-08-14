@@ -1,8 +1,8 @@
-import { ISchemaInfo } from "../../types";
+import { TParsedSchemaInfo } from "../../types";
 
 import { Model } from "mongoose";
 
-async function deleteResource(model: Model<any>, id: string, userId: string, SchemaInfo: ISchemaInfo) {
+async function deleteResource(model: Model<any>, id: string, userId: string, SchemaInfo: TParsedSchemaInfo) {
   const resource = await model.findById(id);
   if (!resource) return new Error(`ResourceModel not found with id of ${id}`);
   if (resource.user.toString() !== userId.toString())
@@ -21,7 +21,7 @@ async function deleteResource(model: Model<any>, id: string, userId: string, Sch
  * @param SchemaInfo Information related to the MongooseSchema
  * @returns deleted resource(s)
  */
-export default async function (model: Model<any>, ids: string | string[], userId: string, SchemaInfo: ISchemaInfo) {
+export default async function (model: Model<any>, ids: string | string[], userId: string, SchemaInfo: TParsedSchemaInfo) {
   if (Array.isArray(ids)) {
     const deleted_resources = [];
     for (let i = 0; i < ids.length; i++)

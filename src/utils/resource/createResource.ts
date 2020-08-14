@@ -1,8 +1,8 @@
 import { Model } from "mongoose";
 
-import { ISchemaInfo, IMongqlBaseSchemaConfigsFull } from "../../types";
+import { TParsedSchemaInfo, IMongqlBaseSchemaConfigsFull } from "../../types";
 
-async function createResource(model: Model<any>, data: any, userId: string, SchemaInfo: ISchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull) {
+async function createResource(model: Model<any>, data: any, userId: string, SchemaInfo: TParsedSchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull) {
   const { uniqueBy } = SchemaConfig;
   // Check if previous resource with same uniqueBy key exists
   if (uniqueBy) {
@@ -31,7 +31,7 @@ async function createResource(model: Model<any>, data: any, userId: string, Sche
  * @param SchemaConfig Configuration of the BaseMongqlMongooseSchema
  * @returns created resource(s)
  */
-export default async function (model: Model<any>, datas: any | any[], userId: string, SchemaInfo: ISchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull) {
+export default async function (model: Model<any>, datas: any | any[], userId: string, SchemaInfo: TParsedSchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull) {
   if (Array.isArray(datas)) {
     const created_resources = [];
     for (let i = 0; i < datas.length; i++)

@@ -1,10 +1,10 @@
 import S from 'voca';
 import { Schema } from 'mongoose';
-import { t, objectTypeApi, enumTypeApi, interfaceTypeApi, inputTypeApi, unionTypeApi, TypeDefinitonApi, ObjectExtApi, ObjectTypeApi } from 'graphql-extra';
+import { t, objectTypeApi, enumTypeApi, interfaceTypeApi, inputTypeApi, unionTypeApi, TypeDefinitonApi } from 'graphql-extra';
 import { resolvers } from 'graphql-scalars';
 import { GraphQLScalarType, NamedTypeNode, DocumentNode } from "graphql";
 
-import { ISpecificTypeInfo, IMongqlMongooseSchemaFull, IMongqlGeneratedTypes, AuthEnumString, InputActionEnumString, MutableDocumentNode, FieldsFullInfos, FieldFullInfo, MongqlSchemaConfigsFull, MongqlFieldAttachObjectConfigsFull, MongqlFieldPath, TSchemaInfo, FieldsFullInfo } from "../types";
+import { ISpecificTypeInfo, IMongqlMongooseSchemaFull, IMongqlGeneratedTypes, AuthEnumString, InputActionEnumString, MutableDocumentNode, FieldsFullInfos, FieldFullInfo, MongqlSchemaConfigsFull, MongqlFieldAttachObjectConfigsFull, MongqlFieldPath, TParsedSchemaInfo, TSchemaInfos } from "../types";
 import Password from "../utils/gql-types/password";
 import Username from "../utils/gql-types/username";
 
@@ -136,7 +136,6 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
     kind: 'Document',
     definitions: InitTypedefsAST ? [...InitTypedefsAST.definitions] : []
   };
-  const FlattenedFields: FieldsFullInfo = {};
   const Fields: FieldsFullInfos = [];
   const Types: IMongqlGeneratedTypes = {
     enums: [],
@@ -145,6 +144,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
     objects: [],
     inputs: [],
   };
+  const Schemas: TSchemaInfos = []
 
   function hasFields(AST: any): boolean {
     return (AST.fields || AST.values || AST.types).length > 0;
@@ -159,12 +159,15 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       type.push({})
     });
 
+
     const Interfaces = Types.interfaces[path.length];
     const Enums = Types.enums[path.length];
     const Objects = Types.objects[path.length];
     const Inputs = Types.inputs[path.length];
     const Unions = Types.unions[path.length];
-
+    if (!Schemas[path.length]) Schemas.push({});
+    const CurrentSchema = Schemas[path.length];
+    CurrentSchema[Type] = { ...CurrentSchemaConfigs, fields: {} };
     const UnionsObjTypes: NamedTypeNode[] = [];
 
     currentSchema_included_auth_segments.forEach((auth) => {
@@ -224,9 +227,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       const generatedFieldConfigs = generateFieldConfigs(value, CurrentSchemaConfigs);
       const { description, authMapper, nullable: { input: nullable_input, object: nullable_object }, attach: { input: attach_to_input, interface: attach_to_interface, enum: attach_to_enum } } = generatedFieldConfigs;
       const { object_type, input_type, ref_type, enum_type } = generateSpecificType(generic_type, innerValue, key, parentKey, cr);
-      const generatedIncludedAuthSegments = generateIncludedAuthSegments(generatedFieldConfigs.attach.object, currentSchema_included_auth_segments);
-      const field_excluded_auth_segments = generatedIncludedAuthSegments[0];
-      const field_included_auth_segments: AuthEnumString[] = generatedIncludedAuthSegments[1];
+      const [field_excluded_auth_segments, field_included_auth_segments] = generateIncludedAuthSegments(generatedFieldConfigs.attach.object, currentSchema_included_auth_segments);
 
       path = parentKey ? [...path, { object_type, key, enum_type }] : [{ object_type, key, enum_type }];
       const generatedFieldFullInfo: FieldFullInfo = Object.assign({}, generatedFieldConfigs, {
@@ -238,11 +239,15 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
         includedAuthSegments: field_included_auth_segments,
         fieldDepth,
         enum_type,
-        path: [...path]
+        path: [...path],
+        decorated_types: {
+          object: {},
+          input: {}
+        }
       })
 
-      FlattenedFields[(parentKey ? parentKey.key + "." : "") + key] = generatedFieldFullInfo;
       Fields[path.length - 1][key] = generatedFieldFullInfo;
+      CurrentSchema[Type].fields[key] = generatedFieldFullInfo;
 
       if (generic_type.match(/(scalar)/))
         BaseSchema.path(path.map(({ key }) => key).join('.')).validate((v: any) => {
@@ -256,6 +261,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
           ? authMapper[S.capitalize(auth) as AuthEnumString] + object_type + "Object"
           : object_type;
         const decorated_object_type = decorateTypes(auth_object_type, nullable_object[auth]);
+        generatedFieldFullInfo.decorated_types.object[auth] = decorated_object_type;
         const object_key = `${S.capitalize(auth)}${Type}Object`;
         if (!Objects[object_key].hasField(key)) {
           Objects[object_key].fields[key] = { ...generatedFieldFullInfo, auth };
@@ -266,9 +272,12 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       });
 
       ['create', 'update'].forEach((action) => {
-        const _action = S.capitalize(action)
-        if (CurrentSchemaConfigs.generate.type.input[action as InputActionEnumString] && attach_to_input[action as InputActionEnumString] && !Inputs[`${_action}${Type}Input`].hasField(key))
-          Inputs[`${_action}${Type}Input`].createField({ name: key, type: decorateTypes((generic_type.match(/(object)/) ? _action : "") + input_type, nullable_input[action as InputActionEnumString]) });
+        const _action = S.capitalize(action);
+        if (CurrentSchemaConfigs.generate.type.input[action as InputActionEnumString] && attach_to_input[action as InputActionEnumString] && !Inputs[`${_action}${Type}Input`].hasField(key)) {
+          const decorated_input_type = decorateTypes((generic_type.match(/(object)/) ? _action : "") + input_type, nullable_input[action as InputActionEnumString])
+          generatedFieldFullInfo.decorated_types.input[action as InputActionEnumString] = decorated_input_type;
+          Inputs[`${_action}${Type}Input`].createField({ name: key, type: decorated_input_type });
+        }
       })
 
       if (CurrentSchemaConfigs.generate.type.enum && attach_to_enum && generic_type.match(/(enum)/))
@@ -290,26 +299,6 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       // if (value.mongql) delete value.mongql;
     });
 
-    if (Schema?.mongql?.Operations) {
-      Object.entries(Schema.mongql.Operations).forEach(([OperationName, OperationFields]) => {
-        const AuthObjectTypes: Record<string, ObjectTypeApi> = {};
-        OperationFields.forEach(OperationField => {
-          const FlattenedField = FlattenedFields[(parentKey ? parentKey.key + "." : "") + OperationField];
-          (OperationField === "id" ? ["self", "others", "mixed"] : FlattenedField.includedAuthSegments).forEach(includedAuthSegment => {
-            if (!AuthObjectTypes[includedAuthSegment]) AuthObjectTypes[includedAuthSegment] = objectTypeApi(t.objectType({
-              name: `${S.capitalize(includedAuthSegment)}${Type}${OperationName}`,
-              description: ``,
-              fields: [],
-              interfaces: []
-            }));
-            AuthObjectTypes[includedAuthSegment].createField({ name: OperationField, type: OperationField === "id" ? "ID!" : decorateTypes(FlattenedField.object_type, FlattenedField.nullable.object[includedAuthSegment as AuthEnumString]) });
-          })
-        });
-        Object.values(AuthObjectTypes).forEach(AuthObjectType => {
-          ResultDocumentNode.definitions.push(AuthObjectType.node)
-        })
-      });
-    }
     // if (Schema.mongql && parentKey)
     //   delete Schema.mongql
   }
@@ -323,9 +312,10 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       });
     })
   });
-  const SchemaInfo: TSchemaInfo = {
+  const SchemaInfo: TParsedSchemaInfo = {
     Types,
     Fields,
+    Schemas
   };
   return {
     DocumentAST: ResultDocumentNode as MutableDocumentNode,

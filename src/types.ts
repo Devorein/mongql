@@ -217,14 +217,14 @@ export type ISortPartial = {
 export interface IMongqlGlobalAndBaseSchemaCommonPartial {
   generate?: boolean | IGeneratePartial,
   output?: boolean | IOutputPartial,
-  Operations?: Record<string, string[]>,
+  Fragments?: Record<string, string[]>,
   sort?: ISortPartial
 }
 
 export interface IMongqlGlobalAndBaseSchemaCommonFull {
   generate: IGenerateFull,
   output: IOutputFull,
-  Operations: Record<string, string[]>,
+  Fragments: Record<string, string[]>,
   sort: ISortFull
 }
 
@@ -284,7 +284,7 @@ export interface IMongqlBaseSchemaConfigsFull extends IMongqlGlobalAndBaseSchema
  */
 export interface IMongqlNestedSchemaConfigsFull extends IMongqlFieldConfigsFull {
   generate: IGenerateFull,
-  Operations: Record<string, string[]>,
+  Fragments: Record<string, string[]>,
   type: undefined | string
 }
 
@@ -293,7 +293,7 @@ export interface IMongqlNestedSchemaConfigsFull extends IMongqlFieldConfigsFull 
  */
 export interface IMongqlNestedSchemaConfigsPartial extends IMongqlFieldConfigsPartial {
   generate?: IGeneratePartial,
-  Operations?: Record<string, string[]>,
+  Fragments?: Record<string, string[]>,
   type?: string
 }
 
@@ -391,8 +391,8 @@ export interface IMongqlFieldConfigsPartial {
  */
 export interface FieldInfo extends ISpecificTypeInfo {
   generic_type: string,
-  excludedAuthSegments: string[],
-  includedAuthSegments: string[],
+  excludedAuthSegments: AuthEnumString[],
+  includedAuthSegments: AuthEnumString[],
   fieldDepth: number,
   path: MongqlFieldPath[],
   auth?: AuthEnumString
@@ -407,7 +407,19 @@ export interface MongqlFieldPath {
 /**
  * Mongoose field generated config and info
  */
-export interface FieldFullInfo extends IMongqlFieldConfigsFull, FieldInfo { }
+export interface FieldFullInfo extends IMongqlFieldConfigsFull, FieldInfo {
+  decorated_types: {
+    object: {
+      self?: string,
+      others?: string,
+      mixed?: string,
+    },
+    input: {
+      create?: string,
+      update?: string
+    }
+  }
+}
 
 /**
  * Mongoose field generated specific type info
@@ -512,14 +524,15 @@ export type FieldsFullInfo = {
   [key: string]: FieldFullInfo
 }
 
-export type FieldsFullInfos = FieldsFullInfo[];
+export type FieldsFullInfos = FieldsFullInfo[]
 
 /**
  * Generated Schema Info containing Fields and Types info
  */
 export interface ISchemaInfo {
   Fields: FieldsFullInfos,
-  Types: IMongqlGeneratedTypes
+  Types: IMongqlGeneratedTypes,
+  Schemas: Record<string, MongqlSchemaConfigsFull>[]
 }
 
 export interface IMongqlTypeNode {
@@ -553,7 +566,11 @@ export type MongqlSchemaConfigsPartial = IMongqlBaseSchemaConfigsPartial | IMong
  */
 export type MongqlSchemaConfigsFull = IMongqlBaseSchemaConfigsFull | IMongqlNestedSchemaConfigsFull;
 
-export type TSchemaInfo = {
+export type TSchemaInfo = Record<string, MongqlSchemaConfigsFull & { fields: FieldsFullInfo }>
+export type TSchemaInfos = TSchemaInfo[];
+
+export type TParsedSchemaInfo = {
   Types: IMongqlGeneratedTypes,
   Fields: FieldsFullInfos,
+  Schemas: TSchemaInfos
 }

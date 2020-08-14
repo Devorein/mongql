@@ -14,7 +14,7 @@ import { DocumentNode } from "graphql";
 import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
 
-import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TSchemaInfo, IOutputFull, MutableDocumentNode } from "./types";
+import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TParsedSchemaInfo, IOutputFull, MutableDocumentNode } from "./types";
 
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
@@ -146,7 +146,7 @@ class Mongql {
     } = this.#globalConfigs;
     const InitTypedefs = Typedefs.init || {};
     const InitResolvers = Resolvers.init || {};
-    const SchemasInfo: Record<string, TSchemaInfo> = {};
+    const SchemasInfo: Record<string, TParsedSchemaInfo> = {};
     let OperationOutput = ''
     await AsyncForEach(Schemas, async (Schema: IMongqlMongooseSchemaFull) => {
       const {
@@ -198,7 +198,7 @@ class Mongql {
     } = this.#globalConfigs;
     const InitTypedefs = Typedefs.init || {};
     const InitResolvers = Resolvers.init || {};
-    const SchemasInfo: Record<string, TSchemaInfo> = {};
+    const SchemasInfo: Record<string, TParsedSchemaInfo> = {};
     let OperationOutput = '';
     Schemas.forEach((Schema: IMongqlMongooseSchemaFull) => {
       const {

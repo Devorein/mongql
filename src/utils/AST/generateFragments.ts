@@ -1,16 +1,19 @@
-import { FragmentDefinitionNode, SelectionNode, DocumentNode, ObjectTypeDefinitionNode, DefinitionNode, FieldDefinitionNode } from 'graphql';
+import { FragmentDefinitionNode, SelectionNode, DocumentNode, ObjectTypeDefinitionNode, FieldDefinitionNode } from 'graphql';
 
 import { createSelections, createFragmentSpread, createSelectionSet } from './operation';
 import { detectScalarity, getNestedType } from '.';
-import { MutableDocumentNode, ISchemaInfo, FieldFullInfo } from '../../types';
+import { MutableDocumentNode, TParsedSchemaInfo, FieldFullInfo } from '../../types';
+import { objectTypeApi, ObjectTypeApi } from 'graphql-extra';
+import { t } from 'graphql-extra';
+import S from "voca";
 
-export function createFragment(name: string, part: string, selections: SelectionNode[]): FragmentDefinitionNode {
+export function createFragment(fragmentname: string, objectname: undefined | string, part: string, selections: SelectionNode[]): FragmentDefinitionNode {
   return {
     kind: 'FragmentDefinition',
     name:
     {
       kind: 'Name',
-      value: name + part + 'Fragment'
+      value: fragmentname + part + 'Fragment'
     },
     typeCondition:
     {
@@ -18,7 +21,7 @@ export function createFragment(name: string, part: string, selections: Selection
       name:
       {
         kind: 'Name',
-        value: name
+        value: objectname ? objectname : fragmentname
       }
     },
     directives: [],
@@ -30,7 +33,7 @@ export function createFragment(name: string, part: string, selections: Selection
   };
 }
 
-function generateObjectFragments(ObjTypeDef: ObjectTypeDefinitionNode, InitTypedefsAST: DocumentNode, part: string) {
+function generateObjectFragments(FragmentName: string, ObjTypeDef: ObjectTypeDefinitionNode, InitTypedefsAST: DocumentNode, part: string) {
   const selections = (ObjTypeDef.fields as FieldDefinitionNode[]).reduce(
     (acc, FieldDefinition) => {
       const FieldType = getNestedType(FieldDefinition.type);
@@ -47,20 +50,45 @@ function generateObjectFragments(ObjTypeDef: ObjectTypeDefinitionNode, InitTyped
     [] as any[]
   );
 
-  return createFragment(ObjTypeDef.name.value, part, selections);
+  return createFragment(FragmentName, ObjTypeDef.name.value, part, selections);
 }
 
-
-export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaInfo: ISchemaInfo): FragmentDefinitionNode[] {
+export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaInfo: TParsedSchemaInfo): FragmentDefinitionNode[] {
   const FragmentDefinitionNodes: FragmentDefinitionNode[] = [];
   const TransformedSchemaInfoTypes: Record<string, any> = {};
 
-  Object.entries(SchemaInfo.Types).forEach(([key, value]) => {
-    TransformedSchemaInfoTypes[key] = {};
-    value.forEach((val: any) => {
-      Object.entries(val).forEach(([_key, _val]: [string, any]) => {
-        TransformedSchemaInfoTypes[key][_key] = { node: _val.node, fields: _val.fields }
+  Object.entries(SchemaInfo.Types).forEach(([TypeKey, TypeVal]) => {
+    TransformedSchemaInfoTypes[TypeKey] = {};
+    TypeVal.forEach((val: any) => {
+      Object.entries(val).forEach(([fieldkey, fieldval]: [string, any]) => {
+        TransformedSchemaInfoTypes[TypeKey][fieldkey] = { node: fieldval.node, fields: fieldval.fields }
       })
+    })
+  });
+
+  SchemaInfo.Schemas.forEach(Schemas => {
+    Object.entries(Schemas).forEach(([SchemaName, SchemaInfo]) => {
+      Object.entries(SchemaInfo.Fragments).forEach(([FragmentName, FragmentSelections]) => {
+        const AuthObjectTypes: Record<string, ObjectTypeApi> = {};
+        FragmentSelections.forEach(FragmentSelection => {
+          const FieldInfo = SchemaInfo.fields[FragmentSelection];
+          FieldInfo.includedAuthSegments.forEach(includedAuthSegment => {
+            if (!AuthObjectTypes[includedAuthSegment]) {
+              AuthObjectTypes[includedAuthSegment] = objectTypeApi(t.objectType({
+                name: S.capitalize(includedAuthSegment) + SchemaName + "Object",
+                description: ``,
+                fields: [],
+                interfaces: []
+              }));
+            }
+            AuthObjectTypes[includedAuthSegment].createField({ name: FragmentSelection, type: FieldInfo.decorated_types.object[includedAuthSegment] as string });
+          })
+        });
+
+        Object.entries(AuthObjectTypes).forEach(([AuthObjectType, AuthObjectValue]) => {
+          FragmentDefinitionNodes.push(generateObjectFragments(S.capitalize(AuthObjectType) + SchemaName + FragmentName, AuthObjectValue.node, InitTypedefsAST, ''))
+        })
+      });
     })
   });
 
@@ -69,7 +97,7 @@ export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaI
     const hasRefs = GeneratedNode && Object.values(TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value].fields).find((field) => (field as FieldFullInfo).ref_type)
     if (ObjTypeDef.fields)
       GeneratedNode ? FragmentDefinitionNodes.push(...(hasRefs ? ['RefsWhole', 'RefsNone', 'RefsNameAndId', 'RefsOnly'] : []).reduce((acc, part) =>
-        acc.concat(generateObjectFragments(ObjTypeDef, InitTypedefsAST, part)), [] as any[])) : FragmentDefinitionNodes.push(generateObjectFragments(ObjTypeDef, InitTypedefsAST, ''));
+        acc.concat(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, part)), [] as any[])) : FragmentDefinitionNodes.push(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, ''));
   })
   return FragmentDefinitionNodes;
 }

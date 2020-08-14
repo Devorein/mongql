@@ -29,7 +29,7 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPa
     Resolvers: {
       init: undefined
     },
-    Operations: {},
+    Fragments: {},
     sort: { fields: true, nodes: true }
   });
 }
@@ -68,7 +68,7 @@ function generateNestedSchemaConfigs(MongqlSchemaConfig: MongqlSchemaConfigsPart
   };
   delete ModifiedMongqlNestedSchemaConfig.attach;
 
-  return populateObjDefaultValue(ModifiedMongqlNestedSchemaConfig, { type: undefined });
+  return populateObjDefaultValue(ModifiedMongqlNestedSchemaConfig, { type: undefined, Fragments: {} });
 }
 
 function populateLeafsFromStem(stemparent: any, stem: string, leafs: string[], value: any) {

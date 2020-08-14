@@ -5,6 +5,11 @@ import { ModuleEnumType } from "../../types";
 type SelectionSetDefinitionNode = FragmentDefinitionNode | OperationDefinitionNode;
 type SelectionSetDefinitionNodes = SelectionSetDefinitionNode[];
 
+/**
+ * Converts A documentnode full of Operations to javascript string
+ * @param OperationNodes DocumentNode containing Operation and Fragments
+ * @param module Module System to convert to
+ */
 export default function operationAstToJS(OperationNodes: DocumentNode, module: ModuleEnumType): string {
   let res = '';
   const Operations: string[] = [];

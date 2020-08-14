@@ -79,7 +79,7 @@ describe('Proper typedef types generation', () => {
 		].forEach(([ EnumStr, EnumValues ]) => {
 			const EnumApi = DocumentApi.getEnumType(EnumStr);
 			expect(EnumApi).toBeTruthy();
-			expect(enumToString(EnumApi.node.values)).toBe(EnumValues);
+			expect(enumToString(EnumApi.node)).toBe(EnumValues);
 		});
 	});
 
@@ -122,7 +122,7 @@ describe('Proper typedef types generation', () => {
 			const UnionValue = [ 'Mixed', 'Others', 'Self' ]
 				.reduce((prev, next) => prev.concat(`${next}${UnionStr}Object`), [])
 				.join('|');
-			expect(unionToString(UnionApi.node.types)).toBe(UnionValue);
+			expect(unionToString(UnionApi.node)).toBe(UnionValue);
 		});
 	});
 });

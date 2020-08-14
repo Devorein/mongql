@@ -4,6 +4,13 @@ import { ObjectTypeExtensionNode, OperationTypeNode } from "graphql";
 import { createSelections, detectScalarity, getNestedType, createOperation, createVariableDefAndArguments, createSelectionSet, createFragmentSpread } from "./index";
 import { MutableDocumentNode } from "../../types";
 
+/**
+ * Creates OperationDefinitions from a given ObjectTypeExtension node fields
+ * @param TypeExt Object Type to extract fields from
+ * @param operation The name of the Operation
+ * @param OperationNodes OperationNode to add OperationDefinition to
+ * @param DocumentNode DocumentNode used to detect scalarity
+ */
 export default function populateOperationAST(TypeExt: ObjectTypeExtensionNode, operation: OperationTypeNode, OperationNodes: MutableDocumentNode, DocumentNode: MutableDocumentNode) {
   if (TypeExt.fields)
     TypeExt.fields.forEach(FieldDefinition => {

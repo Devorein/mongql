@@ -1,4 +1,4 @@
-import { TypeNode, InputValueDefinitionNode, NonNullTypeNode, ListTypeNode, NamedTypeNode, EnumValueDefinitionNode } from 'graphql/language/ast';
+import { TypeNode, InputValueDefinitionNode, NonNullTypeNode, ListTypeNode, NamedTypeNode, EnumTypeDefinitionNode, UnionTypeDefinitionNode } from 'graphql/language/ast';
 import { IMongqlTypeNode } from "../../types";
 
 /**
@@ -62,10 +62,10 @@ export function outputToString(outputAst: TypeNode) {
  * @param enumValues Enum value nodes array
  * @return String representation of enum value
  */
-export function enumToString(enumValues: EnumValueDefinitionNode[]) {
-  return enumValues.reduce((acc: string[], node) => acc.concat(node.name.value), []).join(",");
+export function enumToString(EnumTypeDef: EnumTypeDefinitionNode) {
+  return EnumTypeDef.values ? EnumTypeDef.values.reduce((acc: string[], node) => acc.concat(node.name.value), []).join(",") : '';
 }
 
-export function unionToString(unionTypes: NamedTypeNode[]) {
-  return unionTypes.reduce((acc: string[], node) => acc.concat(node.name.value), []).join("|");
+export function unionToString(UnionTypeDef: UnionTypeDefinitionNode) {
+  return UnionTypeDef.types ? UnionTypeDef.types.reduce((acc: string[], node) => acc.concat(node.name.value), []).join("|") : '';
 }

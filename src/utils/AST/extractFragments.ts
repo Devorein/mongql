@@ -1,5 +1,9 @@
 import { SelectionSetNode } from "graphql";
 
+/**
+ * Captures all the fragments included in a selection set
+ * @param SelectionSet SelectionSet to look for 
+ */
 export default function extractFragments(SelectionSet: SelectionSetNode): string[] {
   const FragmentsUsed: Record<string, number> = {};
   function extract(SelectionSet: SelectionSetNode) {

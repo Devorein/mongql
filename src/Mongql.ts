@@ -145,7 +145,6 @@ class Mongql {
     if (mongql.sort.nodes)
       typedefsAST.definitions = sortNodes(typedefsAST.definitions);
     resolver = generateResolvers(
-      Schema,
       resolver,
       generated.SchemaInfo,
     );

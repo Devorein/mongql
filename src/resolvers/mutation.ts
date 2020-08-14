@@ -1,4 +1,4 @@
-import { IMongqlMongooseSchemaFull, TParsedSchemaInfo, ActionEnumString, TargetEnumString, IMongqlBaseSchemaConfigsFull } from "../types";
+import { TParsedSchemaInfo, ActionEnumString, TargetEnumString, IMongqlBaseSchemaConfigsFull } from "../types";
 
 import pluralize from 'pluralize';
 

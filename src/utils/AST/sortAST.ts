@@ -1,5 +1,9 @@
 import { DefinitionNode, TypeDefinitionNode, TypeExtensionNode, InterfaceTypeDefinitionNode, InterfaceTypeExtensionNode, ObjectTypeExtensionNode, ObjectTypeDefinitionNode, FieldDefinitionNode, EnumTypeDefinitionNode, EnumValueDefinitionNode, UnionTypeDefinitionNode, NamedTypeNode } from "graphql";
 
+/**
+ * Sorts an array of definitionNodes through itss name value 
+ * @param DefinitionNodes DefinitionNode array to sort
+ */
 export function sortNodes(DefinitionNodes: DefinitionNode[]) {
   return DefinitionNodes.sort((DefinitionNodeA, DefinitionNodeB) => {
     if (DefinitionNodeA.kind !== DefinitionNodeB.kind)
@@ -14,6 +18,10 @@ export function sortNodes(DefinitionNodes: DefinitionNode[]) {
 
 type FieldTypes = InterfaceTypeDefinitionNode | ObjectTypeDefinitionNode | InterfaceTypeExtensionNode | ObjectTypeExtensionNode;
 
+/**
+ * Sorts the fields of all the nodes of array of definitionnodes
+ * @param DefinitionNodes DefinitionNode array to sort
+ */
 export function sortFields(DefinitionNodes: DefinitionNode[]) {
   return DefinitionNodes.map(DefinitionNode => {
     if (DefinitionNode.kind.match(/(Object|Interface)/) && (DefinitionNode as FieldTypes).fields) ((DefinitionNode as FieldTypes).fields as FieldDefinitionNode[]) = ((DefinitionNode as FieldTypes).fields as FieldDefinitionNode[]).sort((fieldA, fieldB) => fieldA.name.value.charCodeAt(0) - fieldB.name.value.charCodeAt(0))

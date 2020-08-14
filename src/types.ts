@@ -579,3 +579,5 @@ export type TParsedSchemaInfo = {
   Fields: FieldsFullInfos,
   Schemas: TSchemaInfos
 }
+
+export type FragmentPartEnum = 'RefsWhole' | 'RefsNone' | 'RefsOnly' | 'ScalarsOnly' | 'ObjectsOnly' | 'ObjectNone'

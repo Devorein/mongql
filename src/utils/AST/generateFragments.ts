@@ -2,19 +2,25 @@ import { FragmentDefinitionNode, SelectionNode, DocumentNode, ObjectTypeDefiniti
 
 import { createSelections, createFragmentSpread, createSelectionSet } from './operation';
 import { detectScalarity, getNestedType } from '.';
-import { MutableDocumentNode, TParsedSchemaInfo, FieldFullInfo } from '../../types';
+import { MutableDocumentNode, TParsedSchemaInfo, FieldFullInfo, FragmentPartEnum } from '../../types';
 import { objectTypeApi, ObjectTypeApi } from 'graphql-extra';
 import { t } from 'graphql-extra';
 import S from "voca";
 import { decorateTypes } from '../../typedefs/index';
 
-export function createFragment(fragmentname: string, objectname: undefined | string, part: string, selections: SelectionNode[]): FragmentDefinitionNode {
+/**
+ * Creates a fragment node
+ * @param fragmentname Fragment Name
+ * @param objectname Name of the object that this fragment in on
+ * @param selections Selection node of the fragment
+ */
+export function createFragment(fragmentname: string, objectname: undefined | string, selections: SelectionNode[]): FragmentDefinitionNode {
   return {
     kind: 'FragmentDefinition',
     name:
     {
       kind: 'Name',
-      value: fragmentname + part + 'Fragment'
+      value: fragmentname
     },
     typeCondition:
     {
@@ -34,7 +40,14 @@ export function createFragment(fragmentname: string, objectname: undefined | str
   };
 }
 
-function generateObjectFragments(FragmentName: string, ObjTypeDef: ObjectTypeDefinitionNode, InitTypedefsAST: DocumentNode, part: string) {
+/**
+ * 
+ * @param FragmentName Name of the fragment
+ * @param ObjTypeDef Object to extract field from
+ * @param InitTypedefsAST Initial DocumentNode for scalar detection
+ * @param part Part of fragment to produce
+ */
+function generateObjectFragments(FragmentName: string, ObjTypeDef: ObjectTypeDefinitionNode, InitTypedefsAST: DocumentNode, part: '' | FragmentPartEnum) {
   const selections = (ObjTypeDef.fields as FieldDefinitionNode[]).reduce(
     (acc, FieldDefinition) => {
       const FieldType = getNestedType(FieldDefinition.type);
@@ -51,9 +64,14 @@ function generateObjectFragments(FragmentName: string, ObjTypeDef: ObjectTypeDef
     [] as any[]
   );
 
-  return createFragment(FragmentName, ObjTypeDef.name.value, part, selections);
+  return createFragment(FragmentName + part + "Fragment", ObjTypeDef.name.value, selections);
 }
 
+/**
+ * Generate auto and custom Fragments from DocumentNode 
+ * @param InitTypedefsAST DocumentNode to generate fragments from
+ * @param SchemaInfo Parsed Schemainfo for generating custom fragments
+ */
 export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaInfo: TParsedSchemaInfo): FragmentDefinitionNode[] {
   const FragmentDefinitionNodes: FragmentDefinitionNode[] = [];
   const TransformedSchemaInfoTypes: Record<string, any> = {};
@@ -99,7 +117,7 @@ export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaI
     const hasRefs = GeneratedNode && Object.values(TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value].fields).find((field) => (field as FieldFullInfo).ref_type)
     if (ObjTypeDef.fields)
       GeneratedNode ? FragmentDefinitionNodes.push(...(hasRefs ? ['RefsWhole', 'RefsNone', 'RefsOnly'] : []).reduce((acc, part) =>
-        acc.concat(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, part)), [] as any[])) : FragmentDefinitionNodes.push(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, ''));
+        acc.concat(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, part as FragmentPartEnum)), [] as any[])) : FragmentDefinitionNodes.push(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, ''));
   })
   return FragmentDefinitionNodes;
 }

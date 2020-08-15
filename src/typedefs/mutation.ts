@@ -3,7 +3,6 @@ import { MutableDocumentNode, ActionEnumString, TargetEnumString, TParsedSchemaI
 import pluralize from 'pluralize';
 import S from 'voca';
 import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
-import { populateOperationAST, createOperation, createFragmentSpread, createSelectionSet, createVariableDefAndArguments } from "../utils/AST";
 
 interface ArgumentMapFnParam {
   r: string,
@@ -71,8 +70,8 @@ const ArgumentMap = {
  * @param Schema Schema to generate mutation typedefs from
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
-export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocumentNode, OperationNodes: MutableDocumentNode) {
-  const { resource: r, generate: { mutation }, Fragments } = Object.values(Schemas.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
+export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocumentNode) {
+  const { resource: r, generate: { mutation } } = Object.values(Schemas.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
   const ast = documentApi().addSDL(TypedefAST);
   const doesMutationExtExists = ast.hasExt('Mutation');
   const cr = S.capitalize(r);
@@ -87,14 +86,11 @@ export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocument
       fields: []
     }));
 
-  populateOperationAST(MutationExt.node, 'mutation', OperationNodes, TypedefAST);
-  const BaseSchemaFragments = Object.keys(Fragments);
 
   actions.forEach((action) => {
     const targets = Object.keys(mutation[action as ActionEnumString]).filter((target) => mutation[action as ActionEnumString][target as TargetEnumString]);
     targets.forEach((target) => {
       const Arguments: any[] = ArgumentMap[action as ActionEnumString][target as TargetEnumString]({ r, pr, cr, cpr });
-      const { VariableDefinitions, ArgumentNodes } = createVariableDefAndArguments(Arguments);
 
       if (target === 'single')
         MutationExt.createField({
@@ -110,12 +106,6 @@ export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocument
           description: `${S.capitalize(action)} multiple ${r}`,
           arguments: Arguments
         });
-      const OpTarget = target === 'multi' ? cpr : cr;
-      ['RefsWhole', 'RefsNone', ...BaseSchemaFragments].forEach(part => {
-        OperationNodes.definitions.push(createOperation(
-          S.capitalize(`${action}${OpTarget}${part}`), 'mutation', [createSelectionSet(`${action}${OpTarget}`, [createFragmentSpread(`Self${cr}Object${part}Fragment`)], ArgumentNodes)], VariableDefinitions,
-        ));
-      })
     });
   });
   if (MutationExt.getFields().length && !doesMutationExtExists) TypedefAST.definitions.push(MutationExt.node);

@@ -3,7 +3,6 @@ import S from 'voca';
 import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
 
 import { RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode, IMongqlBaseSchemaConfigsFull, TParsedSchemaInfo } from "../types";
-import { populateOperationAST, createOperation, createSelectionSet, createFragmentSpread, createSelections, createVariableDefAndArguments } from "../utils/AST";
 
 const ArgumentMap: Record<string, any[]> = {
   paginated: [
@@ -39,10 +38,10 @@ const ArgumentMap: Record<string, any[]> = {
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
 
-export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocumentNode, OperationNodes: MutableDocumentNode) {
+export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocumentNode) {
   const ast = documentApi().addSDL(TypedefAST);
   const doesQueryExtExists = ast.hasExt('Query');
-  const { resource: r, generate: { query }, Fragments } = Object.values(Schemas.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
+  const { resource: r, generate: { query } } = Object.values(Schemas.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
   const cr = S.capitalize(r);
   const cpr = pluralize(cr, 2);
   const QueryExt = doesQueryExtExists ? ast.getExt('Query') as ObjectExtApi : objectExtApi(
@@ -54,8 +53,6 @@ export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocument
     })
   );
 
-  populateOperationAST(QueryExt.node, 'query', OperationNodes, TypedefAST);
-  const BaseSchemaFragments = Object.keys(Fragments);
   const ranges = Object.keys(query);
   ranges.forEach((range) => {
     const auths = Object.keys(query[range as RangeEnumString]);
@@ -73,22 +70,9 @@ export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocument
           description: `Get ${range} ${auth} ${r} ${part}`,
           arguments: Arguments
         });
-        const { VariableDefinitions, ArgumentNodes } = createVariableDefAndArguments(Arguments);
-
-        if (part !== "count") {
-          if (part === "whole")
-            ['RefsWhole', 'RefsNone', ...BaseSchemaFragments].forEach(part => {
-              OperationNodes.definitions.push(createOperation(
-                S.capitalize(QueryName + part), 'query', [createSelectionSet(QueryName, [createFragmentSpread(`${S.capitalize(auth)}${cr}Object${part}Fragment`)], ArgumentNodes)], VariableDefinitions
-              ));
-            })
-        } else
-          OperationNodes.definitions.push(createOperation(
-            S.capitalize(QueryName), 'query', [createSelections(QueryName, ArgumentNodes)], VariableDefinitions
-          ));
       });
     });
   });
-  if (QueryExt.getFields().length > 0 && !doesQueryExtExists) TypedefAST.definitions.push(QueryExt.node);
 
+  if (QueryExt.getFields().length > 0 && !doesQueryExtExists) TypedefAST.definitions.push(QueryExt.node);
 }

@@ -15,11 +15,9 @@ import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
 
 import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TParsedSchemaInfo, IOutputFull, MutableDocumentNode } from "./types";
-
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
-import { sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes } from "./utils";
-import generateFragments from './utils/AST/generateFragments';
+import { generateFragments, sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes } from "./utils";
 
 const BaseTypeDefs = gql`
   type Query {

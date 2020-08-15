@@ -78,6 +78,7 @@ export function generateSchemaFragments(InitTypedefsAST: DocumentNode, SchemaInf
     })
   });
 
+  // Generating Custom Fragments from schema
   SchemaInfo.Schemas.forEach(Schemas => {
     Object.entries(Schemas).forEach(([SchemaName, SchemaInfo]) => {
       Object.entries(SchemaInfo.Fragments).forEach(([FragmentName, FragmentSelections]) => {
@@ -112,15 +113,16 @@ export function generateSchemaFragments(InitTypedefsAST: DocumentNode, SchemaInf
  * @param InitTypedefsAST DocumentNode to generate fragments from
  * @param SchemaInfo Parsed Schemainfo for generating custom fragments
  */
-export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaInfo?: TParsedSchemaInfo): FragmentDefinitionNode[] {
+export function generateFragments(InitTypedefsAST: DocumentNode, SchemaInfo?: TParsedSchemaInfo): FragmentDefinitionNode[] {
   const FragmentDefinitionNodes: FragmentDefinitionNode[] = [];
   const TransformedSchemaInfoTypes = SchemaInfo ? generateSchemaFragments(InitTypedefsAST, SchemaInfo, FragmentDefinitionNodes) : { objects: {} };
   (InitTypedefsAST.definitions.filter(Node => Node.kind === "ObjectTypeDefinition") as ObjectTypeDefinitionNode[]).forEach((ObjTypeDef) => {
     const GeneratedNode = TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value];
+
     const hasRefs = GeneratedNode && Object.values(TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value].fields).find((field) => (field as FieldFullInfo).ref_type)
     if (ObjTypeDef.fields)
-      GeneratedNode ? FragmentDefinitionNodes.push(...(hasRefs ? ['RefsWhole', 'RefsNone', 'RefsOnly'] : []).reduce((acc, part) =>
-        acc.concat(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, part as FragmentPartEnum)), [] as any[])) : FragmentDefinitionNodes.push(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, ''));
+      /* GeneratedNode ? */ FragmentDefinitionNodes.push(...(/* hasRefs ?  */['RefsWhole'/* , 'RefsNone', 'RefsOnly' */]/*  : [] */).reduce((acc, part) =>
+      acc.concat(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, part as FragmentPartEnum)), [] as any[]))/*  : FragmentDefinitionNodes.push(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, '')); */
   })
   return FragmentDefinitionNodes;
 }

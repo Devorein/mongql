@@ -7,7 +7,7 @@ const Scalars = typeDefs.map(scalar => scalar.split(" ")[1]).concat(["Password",
 import convertToDocumentNodes from "./convertToDocumentNodes";
 import { createArgument } from "./operation";
 
-import populateOperationAST from "./populateOperationAST";
+import generateOperations from "./generateOperations";
 import { MutableDocumentNode } from "../../types";
 import operationAstToJS from "./operationAstToJS";
 
@@ -30,11 +30,11 @@ export function createVariableDefAndArguments(Arguments: readonly any[]) {
 }
 
 export function detectScalarity(TypeName: string, DocumentNode: MutableDocumentNode) {
-  return Scalars.includes(TypeName) || DocumentNode.definitions.find((Node) => Node.kind === "EnumTypeDefinition" && Node.name.value === TypeName);
+  return Scalars.includes(TypeName) || TypeName.includes("Enum") || DocumentNode.definitions.find((Node) => Node.kind === "EnumTypeDefinition" && Node.name.value === TypeName);
 }
 
 export {
   convertToDocumentNodes,
-  populateOperationAST,
+  generateOperations,
   operationAstToJS
 }

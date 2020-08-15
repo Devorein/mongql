@@ -1,7 +1,7 @@
 import { IMongqlMongooseSchemaFull, MutableDocumentNode } from "../types";
 
-import generateQueryTypedefs from './query';
-import generateMutationTypedefs from './mutation';
+import generateQueryFields from './query';
+import generateMutationFields from './mutation';
 import {
   parseMongooseSchema,
   decorateTypes,
@@ -10,19 +10,21 @@ import {
   generateSpecificType
 } from './type';
 import { DocumentNode } from "graphql";
-import generateFragments from "../utils/AST/generateFragments";
+import { generateFragments, generateOperations } from "../utils/AST";
 
 export default function (Schema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined, OperationNodes: MutableDocumentNode) {
   const { SchemaInfo, DocumentAST } = parseMongooseSchema(Schema, InitTypedefsAST);
   OperationNodes.definitions.push(...generateFragments(DocumentAST, SchemaInfo));
-  generateQueryTypedefs(SchemaInfo, DocumentAST, OperationNodes);
-  generateMutationTypedefs(SchemaInfo, DocumentAST, OperationNodes);
+  generateQueryFields(SchemaInfo, DocumentAST);
+  generateMutationFields(SchemaInfo, DocumentAST);
+  generateOperations(OperationNodes, DocumentAST, SchemaInfo);
+
   return { typedefsAST: DocumentAST as MutableDocumentNode, SchemaInfo, OperationNodes };
 }
 
 export {
-  generateQueryTypedefs,
-  generateMutationTypedefs,
+  generateQueryFields,
+  generateMutationFields,
   decorateTypes,
   generateGenericType,
   parseScalarType,

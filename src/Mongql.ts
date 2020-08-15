@@ -19,6 +19,7 @@ import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
 import { sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes } from "./utils";
+import generateFragments from './utils/AST/generateFragments';
 
 const BaseTypeDefs = gql`
   type Query {
@@ -129,7 +130,7 @@ class Mongql {
     TransformedResolvers.arr.push(BaseResolver);
   }
 
-  #schemaLooper = (Schema: IMongqlMongooseSchemaFull, { InitTypedefs, InitResolvers, TransformedResolvers, TransformedTypedefs, SchemasInfo }: any) => {
+  #schemaLooper = (Schema: IMongqlMongooseSchemaFull, { OperationNodes, InitTypedefs, InitResolvers, TransformedResolvers, TransformedTypedefs, SchemasInfo }: any) => {
     const {
       mongql
     } = Schema;
@@ -138,6 +139,7 @@ class Mongql {
     const generated = generateTypedefs(
       Schema,
       typedefsAST,
+      OperationNodes
     );
     typedefsAST = generated.typedefsAST;
     if (mongql.sort.fields)
@@ -170,22 +172,27 @@ class Mongql {
       Schemas,
       output
     } = this.#globalConfigs;
+    const OperationNodes: MutableDocumentNode = {
+      kind: "Document",
+      definitions: []
+    };
     const InitTypedefs = Typedefs.init || {};
     const InitResolvers = Resolvers.init || {};
     const SchemasInfo: Record<string, TParsedSchemaInfo> = {};
-    let OperationOutput = ''
     await AsyncForEach(Schemas, async (Schema: IMongqlMongooseSchemaFull) => {
-      const generated = this.#schemaLooper(Schema, { InitTypedefs, InitResolvers, TransformedResolvers, TransformedTypedefs, SchemasInfo });
+      const generated = this.#schemaLooper(Schema, { InitTypedefs, InitResolvers, TransformedResolvers, OperationNodes, TransformedTypedefs, SchemasInfo });
       // delete Schema.mongql
-      OperationOutput += await this.#output(Schema.mongql.output, generated.typedefsAST, generated.OperationNodes, Schema.mongql.resource);
+      await this.#output(Schema.mongql.output, generated.typedefsAST, Schema.mongql.resource);
     });
-    if (output.Operation) {
-      const OperationCode = this.#globalConfigs.Operations.module === "esm" ? "import gql from 'graphql-tag'\n" + OperationOutput : 'const gql = require("graphql-tag");\n\nconst Operations = {};\n' + OperationOutput + "\nmodule.exports = Operations"
-      this.#cleanAndOutput(output.Operation, OperationCode, 'Operations.js');
-    }
     const BaseTypeDefs = typeof Typedefs.base === 'string' ? gql(await fs.readFile(Typedefs.base, 'UTF-8')) : Typedefs.base;
-    if (BaseTypeDefs)
+    if (BaseTypeDefs) {
       TransformedTypedefs.arr.push(BaseTypeDefs);
+      OperationNodes.definitions.push(...generateFragments(BaseTypeDefs));
+    }
+
+    if (output.Operation)
+      await this.#cleanAndOutput(output.Operation, operationAstToJS(OperationNodes, this.#globalConfigs.Operations.module), 'Operations.js');
+
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
     return {
       TransformedTypedefs,
@@ -203,14 +210,18 @@ class Mongql {
       Schemas,
       output
     } = this.#globalConfigs;
+    const OperationNodes: MutableDocumentNode = {
+      kind: "Document",
+      definitions: []
+    };
     const InitTypedefs = Typedefs.init || {};
     const InitResolvers = Resolvers.init || {};
     const SchemasInfo: Record<string, TParsedSchemaInfo> = {};
     let OperationOutput = '';
     Schemas.forEach((Schema: IMongqlMongooseSchemaFull) => {
-      const generated = this.#schemaLooper(Schema, { InitTypedefs, InitResolvers, TransformedResolvers, TransformedTypedefs, SchemasInfo });
+      const generated = this.#schemaLooper(Schema, { InitTypedefs, InitResolvers, TransformedResolvers, OperationNodes, TransformedTypedefs, SchemasInfo });
       // delete Schema.mongql
-      OperationOutput += this.#outputSync(Schema.mongql.output, generated.typedefsAST, generated.OperationNodes, Schema.mongql.resource);
+      OperationOutput += this.#outputSync(Schema.mongql.output, generated.typedefsAST, Schema.mongql.resource);
     });
     if (output.Operation) {
       const OperationCode = this.#globalConfigs.Operations.module === "esm" ? "import gql from 'graphql-tag'\n" + OperationOutput : 'const gql = require("graphql-tag");\n\nconst Operations = {};\n' + OperationOutput + "module.exports = Operations"
@@ -237,22 +248,18 @@ class Mongql {
     });
   }
 
-  #output = async (output: IOutputFull, typedefsAST: DocumentNode, OperationNodes: MutableDocumentNode, resource: string) => {
+  #output = async (output: IOutputFull, typedefsAST: DocumentNode, resource: string) => {
     if (typeof output.SDL === 'string' && typedefsAST)
       await this.#cleanAndOutput(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
     if (typeof output.AST === 'string')
       await this.#cleanAndOutput(output.AST, JSON.stringify(typedefsAST), `${resource}.json`);
-    if (typeof output.Operation === 'string') return operationAstToJS(OperationNodes, this.#globalConfigs.Operations.module);
-    else return ''
   }
 
-  #outputSync = (output: IOutputFull, typedefsAST: DocumentNode, OperationNodes: MutableDocumentNode, resource: string) => {
+  #outputSync = (output: IOutputFull, typedefsAST: DocumentNode, resource: string) => {
     if (typeof output.SDL === 'string' && typedefsAST)
       this.#cleanAndOutputSync(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
     if (typeof output.AST === 'string')
       this.#cleanAndOutputSync(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
-    if (typeof output.Operation === 'string') return operationAstToJS(OperationNodes, this.#globalConfigs.Operations.module);
-    else return ''
   }
   /**
    * Clean the directory and creates output file

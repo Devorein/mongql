@@ -12,11 +12,7 @@ import {
 import { DocumentNode } from "graphql";
 import generateFragments from "../utils/AST/generateFragments";
 
-export default function (Schema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined) {
-  const OperationNodes: MutableDocumentNode = {
-    kind: "Document",
-    definitions: []
-  };
+export default function (Schema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined, OperationNodes: MutableDocumentNode) {
   const { SchemaInfo, DocumentAST } = parseMongooseSchema(Schema, InitTypedefsAST);
   OperationNodes.definitions.push(...generateFragments(DocumentAST, SchemaInfo));
   generateQueryTypedefs(SchemaInfo, DocumentAST, OperationNodes);

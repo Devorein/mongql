@@ -67,15 +67,8 @@ function generateObjectFragments(FragmentName: string, ObjTypeDef: ObjectTypeDef
   return createFragment(FragmentName + part + "Fragment", ObjTypeDef.name.value, selections);
 }
 
-/**
- * Generate auto and custom Fragments from DocumentNode 
- * @param InitTypedefsAST DocumentNode to generate fragments from
- * @param SchemaInfo Parsed Schemainfo for generating custom fragments
- */
-export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaInfo: TParsedSchemaInfo): FragmentDefinitionNode[] {
-  const FragmentDefinitionNodes: FragmentDefinitionNode[] = [];
+export function generateSchemaFragments(InitTypedefsAST: DocumentNode, SchemaInfo: TParsedSchemaInfo, FragmentDefinitionNodes: FragmentDefinitionNode[]) {
   const TransformedSchemaInfoTypes: Record<string, any> = {};
-
   Object.entries(SchemaInfo.Types).forEach(([TypeKey, TypeVal]) => {
     TransformedSchemaInfoTypes[TypeKey] = {};
     TypeVal.forEach((val: any) => {
@@ -111,7 +104,17 @@ export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaI
       });
     })
   });
+  return TransformedSchemaInfoTypes;
+}
 
+/**
+ * Generate auto and custom Fragments from DocumentNode 
+ * @param InitTypedefsAST DocumentNode to generate fragments from
+ * @param SchemaInfo Parsed Schemainfo for generating custom fragments
+ */
+export default function generateFragments(InitTypedefsAST: DocumentNode, SchemaInfo?: TParsedSchemaInfo): FragmentDefinitionNode[] {
+  const FragmentDefinitionNodes: FragmentDefinitionNode[] = [];
+  const TransformedSchemaInfoTypes = SchemaInfo ? generateSchemaFragments(InitTypedefsAST, SchemaInfo, FragmentDefinitionNodes) : { objects: {} };
   (InitTypedefsAST.definitions.filter(Node => Node.kind === "ObjectTypeDefinition") as ObjectTypeDefinitionNode[]).forEach((ObjTypeDef) => {
     const GeneratedNode = TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value];
     const hasRefs = GeneratedNode && Object.values(TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value].fields).find((field) => (field as FieldFullInfo).ref_type)

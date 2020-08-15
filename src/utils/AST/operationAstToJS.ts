@@ -11,13 +11,33 @@ type SelectionSetDefinitionNodes = SelectionSetDefinitionNode[];
  * @param module Module System to convert to
  */
 export default function operationAstToJS(OperationNodes: DocumentNode, module: ModuleEnumType): string {
-  let res = '';
-  const Operations: string[] = [];
+  let OperationOutput = 'const Operations = {};\n';
+  const ExportedDefinitions: Record<string, { source: string, fragments: string[] }>[] = [{}, {}];
   (OperationNodes.definitions as SelectionSetDefinitionNodes).forEach((Node: SelectionSetDefinitionNode) => {
     const FragmentsUsed: string[] = extractFragments(Node.selectionSet);
-    const startcode = module === "esm" ? 'export const ' : 'Operations.'
-    res += `\n${startcode}${(Node.name as NameNode).value} = gql\`\n\t${print(Node).split("\n").join("\n\t")}\n${FragmentsUsed.reduce((acc, cur) => acc + "\t${" + (module === "cjs" ? "Operations." : "") + cur + "}\n", '')}\`;\n`;
-    Operations.push((Node.name as NameNode).value);
+    const DefinitionString = print(Node).split("\n").join("\n\t");
+    const NodeName = (Node.name as NameNode).value;
+    if (Node.kind === "FragmentDefinition") {
+      if (FragmentsUsed.length > 0)
+        ExportedDefinitions[0][NodeName] = {
+          source: DefinitionString,
+          fragments: FragmentsUsed
+        }
+      OperationOutput += `const ${NodeName} = \`\n\t${DefinitionString}\`;\n\n${FragmentsUsed.length > 0 ? "" : `Operations.${NodeName} = ${NodeName};\n\n`}`;
+    }
+    else if (Node.kind === "OperationDefinition") {
+      ExportedDefinitions[1][NodeName] = {
+        source: DefinitionString,
+        fragments: FragmentsUsed
+      }
+    }
   });
-  return res;
+
+  ExportedDefinitions.forEach(Definitions => {
+    Object.entries(Definitions).forEach(([DefinitionName, DefinitionInfo]) => {
+      OperationOutput += `\nOperations.${DefinitionName} = \`\n\t${DefinitionInfo.source}\n${DefinitionInfo.fragments.reduce((acc, cur) => acc + `\t\${${cur}}`, '')}\n\`\n`
+    });
+  })
+
+  return OperationOutput += module === "esm" ? "\nexport default Operations;" : "\nmodule.exports = Operations;";
 }

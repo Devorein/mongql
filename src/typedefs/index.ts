@@ -18,7 +18,6 @@ export default function (Schema: IMongqlMongooseSchemaFull, InitTypedefsAST: Doc
   generateQueryFields(SchemaInfo, DocumentAST);
   generateMutationFields(SchemaInfo, DocumentAST);
   generateOperations(OperationNodes, DocumentAST, SchemaInfo);
-
   return { typedefsAST: DocumentAST as MutableDocumentNode, SchemaInfo, OperationNodes };
 }
 

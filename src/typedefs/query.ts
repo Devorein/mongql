@@ -38,10 +38,10 @@ const ArgumentMap: Record<string, any[]> = {
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
 
-export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocumentNode) {
+export default function (SchemaInfo: TParsedSchemaInfo, TypedefAST: MutableDocumentNode) {
   const ast = documentApi().addSDL(TypedefAST);
   const doesQueryExtExists = ast.hasExt('Query');
-  const { resource: r, generate: { query } } = Object.values(Schemas.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
+  const { resource: r, generate: { query } } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
   const cr = S.capitalize(r);
   const cpr = pluralize(cr, 2);
   const QueryExt = doesQueryExtExists ? ast.getExt('Query') as ObjectExtApi : objectExtApi(
@@ -70,6 +70,7 @@ export default function (Schemas: TParsedSchemaInfo, TypedefAST: MutableDocument
           description: `Get ${range} ${auth} ${r} ${part}`,
           arguments: Arguments
         });
+        SchemaInfo.Operations.push(QueryName);
       });
     });
   });

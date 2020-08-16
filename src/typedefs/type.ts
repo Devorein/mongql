@@ -315,7 +315,8 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
   const SchemaInfo: TParsedSchemaInfo = {
     Types,
     Fields,
-    Schemas
+    Schemas,
+    Operations: []
   };
   return {
     DocumentAST: ResultDocumentNode as MutableDocumentNode,

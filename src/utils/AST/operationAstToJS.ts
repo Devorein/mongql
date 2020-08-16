@@ -35,7 +35,7 @@ export default function operationAstToJS(OperationNodes: DocumentNode, module: M
 
   ExportedDefinitions.forEach(Definitions => {
     Object.entries(Definitions).forEach(([DefinitionName, DefinitionInfo]) => {
-      OperationOutput += `\nOperations.${DefinitionName} = \`\n\t${DefinitionInfo.source}\n${DefinitionInfo.fragments.reduce((acc, cur) => acc + `\t\${${cur}}\n`, '')}\n\`\n`
+      OperationOutput += `\nOperations.${DefinitionName} = \`\n\t${DefinitionInfo.source}\n${DefinitionInfo.fragments.reduce((acc, cur) => acc + `\t\${${"Operations." + cur}}\n`, '')}\n\`\n`
     });
   })
 

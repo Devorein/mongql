@@ -577,7 +577,8 @@ export type TSchemaInfos = TSchemaInfo[];
 export type TParsedSchemaInfo = {
   Types: IMongqlGeneratedTypes,
   Fields: FieldsFullInfos,
-  Schemas: TSchemaInfos
+  Schemas: TSchemaInfos,
+  Operations: string[]
 }
 
 export type FragmentPartEnum = 'RefsWhole' | 'RefsNone' | 'RefsOnly' | 'ScalarsOnly' | 'ObjectsOnly' | 'ObjectNone'

@@ -2,7 +2,7 @@ import { FragmentDefinitionNode, SelectionNode, DocumentNode, ObjectTypeDefiniti
 
 import { createSelections, createFragmentSpread, createSelectionSet } from './operation';
 import { detectScalarity, getNestedType } from '.';
-import { MutableDocumentNode, TParsedSchemaInfo, FieldFullInfo, FragmentPartEnum } from '../../types';
+import { MutableDocumentNode, TParsedSchemaInfo, FragmentPartEnum } from '../../types';
 import { objectTypeApi, ObjectTypeApi } from 'graphql-extra';
 import { t } from 'graphql-extra';
 import S from "voca";
@@ -68,16 +68,6 @@ function generateObjectFragments(FragmentName: string, ObjTypeDef: ObjectTypeDef
 }
 
 export function generateSchemaFragments(InitTypedefsAST: DocumentNode, SchemaInfo: TParsedSchemaInfo, FragmentDefinitionNodes: FragmentDefinitionNode[]) {
-  const TransformedSchemaInfoTypes: Record<string, any> = {};
-  Object.entries(SchemaInfo.Types).forEach(([TypeKey, TypeVal]) => {
-    TransformedSchemaInfoTypes[TypeKey] = {};
-    TypeVal.forEach((val: any) => {
-      Object.entries(val).forEach(([fieldkey, fieldval]: [string, any]) => {
-        TransformedSchemaInfoTypes[TypeKey][fieldkey] = { node: fieldval.node, fields: fieldval.fields }
-      })
-    })
-  });
-
   // Generating Custom Fragments from schema
   SchemaInfo.Schemas.forEach(Schemas => {
     Object.entries(Schemas).forEach(([SchemaName, SchemaInfo]) => {
@@ -105,7 +95,6 @@ export function generateSchemaFragments(InitTypedefsAST: DocumentNode, SchemaInf
       });
     })
   });
-  return TransformedSchemaInfoTypes;
 }
 
 /**
@@ -115,14 +104,12 @@ export function generateSchemaFragments(InitTypedefsAST: DocumentNode, SchemaInf
  */
 export function generateFragments(InitTypedefsAST: DocumentNode, SchemaInfo?: TParsedSchemaInfo): FragmentDefinitionNode[] {
   const FragmentDefinitionNodes: FragmentDefinitionNode[] = [];
-  const TransformedSchemaInfoTypes = SchemaInfo ? generateSchemaFragments(InitTypedefsAST, SchemaInfo, FragmentDefinitionNodes) : { objects: {} };
-  (InitTypedefsAST.definitions.filter(Node => Node.kind === "ObjectTypeDefinition") as ObjectTypeDefinitionNode[]).forEach((ObjTypeDef) => {
-    const GeneratedNode = TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value];
-
-    const hasRefs = GeneratedNode && Object.values(TransformedSchemaInfoTypes.objects[ObjTypeDef.name.value].fields).find((field) => (field as FieldFullInfo).ref_type)
-    if (ObjTypeDef.fields)
-      /* GeneratedNode ? */ FragmentDefinitionNodes.push(...(/* hasRefs ?  */['RefsWhole'/* , 'RefsNone', 'RefsOnly' */]/*  : [] */).reduce((acc, part) =>
-      acc.concat(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, part as FragmentPartEnum)), [] as any[]))/*  : FragmentDefinitionNodes.push(generateObjectFragments(ObjTypeDef.name.value, ObjTypeDef, InitTypedefsAST, '')); */
+  if (SchemaInfo)
+    generateSchemaFragments(InitTypedefsAST, SchemaInfo, FragmentDefinitionNodes);
+  InitTypedefsAST.definitions.forEach((Node) => {
+    if (Node.kind === "ObjectTypeDefinition" && Node.fields)
+      FragmentDefinitionNodes.push(...['RefsNone'].reduce((acc, part) =>
+        acc.concat(generateObjectFragments(Node.name.value, Node, InitTypedefsAST, part as FragmentPartEnum)), [] as any[]))
   })
   return FragmentDefinitionNodes;
 }

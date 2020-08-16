@@ -23,7 +23,8 @@ export default function operationAstToJS(OperationNodes: DocumentNode, module: M
           source: DefinitionString,
           fragments: FragmentsUsed
         }
-      OperationOutput += `const ${NodeName} = \`\n\t${DefinitionString}\`;\n\n${FragmentsUsed.length > 0 ? "" : `Operations.${NodeName} = ${NodeName};\n\n`}`;
+
+      OperationOutput += (FragmentsUsed.length === 0 ? `Operations.${NodeName} = ` : `const ${NodeName} = `) + `\`\n\t${DefinitionString}\`;\n\n`;
     }
     else if (Node.kind === "OperationDefinition") {
       ExportedDefinitions[1][NodeName] = {
@@ -33,9 +34,9 @@ export default function operationAstToJS(OperationNodes: DocumentNode, module: M
     }
   });
 
-  ExportedDefinitions.forEach(Definitions => {
+  ExportedDefinitions.forEach((Definitions, index) => {
     Object.entries(Definitions).forEach(([DefinitionName, DefinitionInfo]) => {
-      OperationOutput += `\nOperations.${DefinitionName} = \`\n\t${DefinitionInfo.source}\n${DefinitionInfo.fragments.reduce((acc, cur) => acc + `\t\${${"Operations." + cur}}\n`, '')}\`\n`
+      OperationOutput += `\nOperations.${DefinitionName} = \`\n\t${index === 1 ? DefinitionInfo.source : "${" + DefinitionName + "}"}\n${DefinitionInfo.fragments.reduce((acc, cur) => acc + `\t\${${"Operations." + cur}}\n`, '')} \`;\n`
     });
   })
 

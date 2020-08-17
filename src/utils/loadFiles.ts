@@ -18,23 +18,27 @@ export default function (_path: string) {
       if (filename !== 'index') {
         const extractedExport = require(filepath);
         res[S.capitalize(filename)] = extractedExport;
-        if (extractedExport.typeDefs && extractedExport.resolvers)
-          res[S.capitalize(filename)] = extractedExport;
+        if (extractedExport) {
+          if (extractedExport.typeDefs && extractedExport.resolvers)
+            res[S.capitalize(filename)] = extractedExport;
 
-        if (extractedExport.typeDef)
-          res[S.capitalize(filename)] = extractedExport.typeDef;
+          if (extractedExport.typeDef)
+            res[S.capitalize(filename)] = extractedExport.typeDef;
 
-        if (extractedExport.typeDefs)
-          res[S.capitalize(filename)] = extractedExport.typeDefs;
+          if (extractedExport.typeDefs)
+            res[S.capitalize(filename)] = extractedExport.typeDefs;
 
-        if (extractedExport.resolver)
-          res[S.capitalize(filename)] = extractedExport.resolver;
+          if (extractedExport.resolver)
+            res[S.capitalize(filename)] = extractedExport.resolver;
 
-        if (extractedExport.resolvers)
-          res[S.capitalize(filename)] = extractedExport.resolvers;
+          if (extractedExport.resolvers)
+            res[S.capitalize(filename)] = extractedExport.resolvers;
+        }
       }
-    } else if (extension.endsWith('graphql') || extension.endsWith('gql'))
-      res[S.capitalize(filename)] = gql(fs.readFileSync(filepath, { encoding: 'utf-8' }));
+    } else if (extension.endsWith('graphql') || extension.endsWith('gql')) {
+      const gqlcontent = fs.readFileSync(filepath, { encoding: 'utf-8' })
+      res[S.capitalize(filename)] = gqlcontent ? gql(gqlcontent) : undefined;
+    }
   });
   return res;
 }

@@ -5,7 +5,6 @@ import mkdirp from 'mkdirp';
 import fs, { mkdirpSync } from 'fs-extra';
 import path from 'path';
 import S from 'voca';
-import { makeExecutableSchema, IExecutableSchemaDefinition } from '@graphql-tools/schema';
 import gql from "graphql-tag"
 import { Model, model, connect } from "mongoose";
 
@@ -14,10 +13,10 @@ import { DocumentNode } from "graphql";
 import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
 
-import { IMongqlGlobalConfigsPartial, ITransformedPart, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TParsedSchemaInfo, IOutputFull, MutableDocumentNode } from "./types";
+import { IMongqlGlobalConfigsPartial, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TParsedSchemaInfo, IOutputFull, MutableDocumentNode, ITransformedASTPart, ITransformedResolverPart } from "./types";
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
-import { generateFragments, sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes } from "./utils";
+import { generateFragments, generateOperations, sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes } from "./utils";
 
 const BaseTypeDefs = gql`
   type Query {
@@ -111,15 +110,17 @@ class Mongql {
    * @param TransformedTypedefs Generated Typedefs
    * @param TransformedResolvers Generated Resolvers
    */
-  #addExtraTypedefsAndResolvers = (TransformedTypedefs: ITransformedPart, TransformedResolvers: ITransformedPart) => {
+  #addExtraTypedefsAndResolvers = (TransformedTypedefs: ITransformedASTPart, TransformedResolvers: ITransformedResolverPart) => {
 
     TransformedTypedefs.obj.External = [...typeDefs, 'scalar Password', 'scalar Username'];
-    TransformedTypedefs.arr.push(...typeDefs, 'scalar Password', 'scalar Username');
+    typeDefs.push('scalar Password', 'scalar Username');
+    TransformedTypedefs.DocumentNode.definitions.push(...gql(typeDefs.join("\n")).definitions);
+
     TransformedResolvers.obj.External = { ...resolvers, Password, Username };
     TransformedResolvers.arr.push({ ...resolvers, Password, Username });
 
     TransformedTypedefs.obj.Base = BaseTypeDefs;
-    TransformedTypedefs.arr.push(BaseTypeDefs);
+    TransformedTypedefs.DocumentNode.definitions.push(...BaseTypeDefs.definitions);
     const BaseResolver = {
       Query: {},
       Mutation: {}
@@ -128,32 +129,32 @@ class Mongql {
     TransformedResolvers.arr.push(BaseResolver);
   }
 
-  #schemaLooper = (Schema: IMongqlMongooseSchemaFull, { OperationNodes, InitTypedefs, InitResolvers, TransformedResolvers, TransformedTypedefs, SchemasInfo }: any) => {
+  #schemaLooper = (Schema: IMongqlMongooseSchemaFull, { InitTypedefs, InitResolvers, TransformedResolvers, TransformedTypedefs, SchemasInfo }: any) => {
     const {
       mongql
     } = Schema;
     const { resource } = mongql;
-    let typedefsAST = (mongql.TypeDefs || InitTypedefs[resource]) as MutableDocumentNode, resolver = mongql.Resolvers || InitResolvers[resource];
-    const generated = generateTypedefs(
+    const InitTypeDefAst = (mongql.TypeDefs || InitTypedefs[resource]) as MutableDocumentNode, InitResolver = mongql.Resolvers || InitResolvers[resource];
+    const { GeneratedDocumentNode, SchemaInfo } = generateTypedefs(
       Schema,
-      typedefsAST,
-      OperationNodes
+      InitTypeDefAst,
     );
-    typedefsAST = generated.typedefsAST;
+
     if (mongql.sort.fields)
-      typedefsAST.definitions = sortFields(typedefsAST.definitions);
+      sortFields(GeneratedDocumentNode);
     if (mongql.sort.nodes)
-      typedefsAST.definitions = sortNodes(typedefsAST.definitions);
-    resolver = generateResolvers(
-      resolver,
-      generated.SchemaInfo,
+      sortNodes(GeneratedDocumentNode);
+
+    const GeneratedResolver = generateResolvers(
+      InitResolver,
+      SchemaInfo,
     );
-    TransformedTypedefs.obj[resource] = typedefsAST;
-    TransformedTypedefs.arr.push(typedefsAST);
-    TransformedResolvers.obj[resource] = resolver;
-    TransformedResolvers.arr.push(resolver);
-    SchemasInfo[resource] = generated.SchemaInfo;
-    return generated;
+    TransformedTypedefs.obj[resource] = GeneratedDocumentNode;
+    TransformedTypedefs.DocumentNode.definitions.push(...GeneratedDocumentNode.definitions);
+    TransformedResolvers.obj[resource] = GeneratedResolver;
+    TransformedResolvers.arr.push(GeneratedResolver);
+    SchemasInfo[resource] = SchemaInfo;
+    return GeneratedDocumentNode;
   }
   /**
    * Generates the Typedefs and Resolvers using Global Configs and individual schema
@@ -162,8 +163,13 @@ class Mongql {
    * 3. Injects additional typedefs and resolvers
    */
   async generate() {
-    const TransformedTypedefs: ITransformedPart = { obj: {}, arr: [] },
-      TransformedResolvers: ITransformedPart = { obj: {}, arr: [] };
+    const ResDocumentNode: MutableDocumentNode = {
+      kind: "Document",
+      definitions: []
+    };
+
+    const TransformedTypedefs: ITransformedASTPart = { obj: {}, DocumentNode: ResDocumentNode },
+      TransformedResolvers: ITransformedResolverPart = { obj: {}, arr: [] };
     const {
       Typedefs,
       Resolvers,
@@ -178,20 +184,23 @@ class Mongql {
     const InitResolvers = Resolvers.init || {};
     const SchemasInfo: Record<string, TParsedSchemaInfo> = {};
     await AsyncForEach(Schemas, async (Schema: IMongqlMongooseSchemaFull) => {
-      const generated = this.#schemaLooper(Schema, { InitTypedefs, InitResolvers, TransformedResolvers, OperationNodes, TransformedTypedefs, SchemasInfo });
-      // delete Schema.mongql
-      await this.#output(Schema.mongql.output, generated.typedefsAST, Schema.mongql.resource);
+      const GeneratedDocumentNode = this.#schemaLooper(Schema, { InitTypedefs, InitResolvers, TransformedResolvers, TransformedTypedefs, SchemasInfo });
+      await this.#output(Schema.mongql.output, GeneratedDocumentNode, Schema.mongql.resource);
     });
-    const BaseTypeDefs = typeof Typedefs.base === 'string' ? gql(await fs.readFile(Typedefs.base, 'UTF-8')) : Typedefs.base;
-    if (BaseTypeDefs) {
-      TransformedTypedefs.arr.push(BaseTypeDefs);
-      OperationNodes.definitions.push(...generateFragments(BaseTypeDefs));
+    if (Typedefs.base) {
+      const BaseTypedefsContent = typeof Typedefs.base === 'string' ? await fs.readFile(Typedefs.base, 'UTF-8') : Typedefs.base;
+      const BaseTypeDefs = (BaseTypedefsContent as DocumentNode).kind === "Document" ? BaseTypedefsContent as DocumentNode : BaseTypedefsContent ? gql(BaseTypedefsContent as string) : undefined;
+      if (BaseTypeDefs)
+        TransformedTypedefs.DocumentNode.definitions.push(...BaseTypeDefs.definitions);
     }
+
+    this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
+    const GeneratedFragmentsMap = generateFragments(OperationNodes, TransformedTypedefs.DocumentNode, SchemasInfo);
+    generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, GeneratedFragmentsMap);
 
     if (output.Operation)
       await this.#cleanAndOutput(output.Operation, operationAstToJS(OperationNodes, this.#globalConfigs.Operations.module), 'Operations.js');
 
-    this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
     return {
       TransformedTypedefs,
       TransformedResolvers,
@@ -200,8 +209,13 @@ class Mongql {
   }
 
   generateSync() {
-    const TransformedTypedefs: ITransformedPart = { obj: {}, arr: [] },
-      TransformedResolvers: ITransformedPart = { obj: {}, arr: [] };
+    const ResDocumentNode: MutableDocumentNode = {
+      kind: "Document",
+      definitions: []
+    };
+
+    const TransformedTypedefs: ITransformedASTPart = { obj: {}, DocumentNode: ResDocumentNode },
+      TransformedResolvers: ITransformedResolverPart = { obj: {}, arr: [] };
     const {
       Typedefs,
       Resolvers,
@@ -215,35 +229,29 @@ class Mongql {
     const InitTypedefs = Typedefs.init || {};
     const InitResolvers = Resolvers.init || {};
     const SchemasInfo: Record<string, TParsedSchemaInfo> = {};
-    let OperationOutput = '';
     Schemas.forEach((Schema: IMongqlMongooseSchemaFull) => {
-      const generated = this.#schemaLooper(Schema, { InitTypedefs, InitResolvers, TransformedResolvers, OperationNodes, TransformedTypedefs, SchemasInfo });
-      // delete Schema.mongql
-      OperationOutput += this.#outputSync(Schema.mongql.output, generated.typedefsAST, Schema.mongql.resource);
+      const GeneratedDocumentNode = this.#schemaLooper(Schema, { InitTypedefs, InitResolvers, TransformedResolvers, OperationNodes, TransformedTypedefs, SchemasInfo });
+      this.#outputSync(Schema.mongql.output, GeneratedDocumentNode, Schema.mongql.resource);
     });
-    if (output.Operation) {
-      const OperationCode = this.#globalConfigs.Operations.module === "esm" ? "import gql from 'graphql-tag'\n" + OperationOutput : 'const gql = require("graphql-tag");\n\nconst Operations = {};\n' + OperationOutput + "module.exports = Operations"
-      this.#cleanAndOutputSync(output.Operation, OperationCode, 'Operations.js');
+    if (Typedefs.base) {
+      const BaseTypedefsContent = typeof Typedefs.base === 'string' ? fs.readFileSync(Typedefs.base, 'utf-8') : Typedefs.base;
+      const BaseTypeDefs = (BaseTypedefsContent as DocumentNode).kind === "Document" ? BaseTypedefsContent as DocumentNode : BaseTypedefsContent ? gql(BaseTypedefsContent as string) : undefined;
+      if (BaseTypeDefs)
+        TransformedTypedefs.DocumentNode.definitions.push(...BaseTypeDefs.definitions);
     }
-    const BaseTypeDefs = typeof Typedefs.base === 'string' ? gql(fs.readFileSync(Typedefs.base, 'utf-8')) : Typedefs.base;
-    if (BaseTypeDefs)
-      TransformedTypedefs.arr.push(BaseTypeDefs);
+
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
+    const GeneratedFragmentsMap = generateFragments(OperationNodes, TransformedTypedefs.DocumentNode, SchemasInfo);
+    generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, GeneratedFragmentsMap);
+
+    if (output.Operation)
+      this.#cleanAndOutputSync(output.Operation, operationAstToJS(OperationNodes, this.#globalConfigs.Operations.module), 'Operations.js');
 
     return {
       TransformedTypedefs,
       TransformedResolvers,
       SchemasInfo
     };
-  }
-
-  async generateSchema(additionalOptions: IExecutableSchemaDefinition) {
-    const { TransformedTypedefs, TransformedResolvers } = await this.generate();
-    return makeExecutableSchema({
-      ...additionalOptions,
-      typeDefs: TransformedTypedefs.arr,
-      resolvers: TransformedResolvers.arr,
-    });
   }
 
   #output = async (output: IOutputFull, typedefsAST: DocumentNode, resource: string) => {

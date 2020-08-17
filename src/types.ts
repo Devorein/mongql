@@ -5,7 +5,14 @@ import { EnumTypeApi, UnionTypeApi, InterfaceTypeApi, ObjectTypeApi, InputTypeAp
 /**
  * Mongql.generate() interface for TransformedTypedefs and TransformedResolvers
  */
-export interface ITransformedPart {
+export interface ITransformedASTPart {
+  obj: {
+    [key: string]: any
+  },
+  DocumentNode: MutableDocumentNode
+}
+
+export interface ITransformedResolverPart {
   obj: {
     [key: string]: any
   },
@@ -580,5 +587,3 @@ export type TParsedSchemaInfo = {
   Schemas: TSchemaInfos,
   Operations: string[]
 }
-
-export type FragmentPartEnum = 'RefsWhole' | 'RefsNone' | 'RefsOnly' | 'ScalarsOnly' | 'ObjectsOnly' | 'ObjectNone'

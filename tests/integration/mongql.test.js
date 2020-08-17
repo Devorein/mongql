@@ -65,7 +65,7 @@ describe('Single schema generation', () => {
 
 	it('Should create typedefs and resolvers with both obj and arr properties', async () => {
 		expect(TransformedTypedefs).toHaveProperty('obj');
-		expect(TransformedTypedefs).toHaveProperty('arr');
+		expect(TransformedTypedefs).toHaveProperty('DocumentNode');
 		expect(TransformedResolvers).toHaveProperty('obj');
 		expect(TransformedResolvers).toHaveProperty('arr');
 	});

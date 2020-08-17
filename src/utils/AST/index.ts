@@ -1,4 +1,4 @@
-import { TypeNode, NamedTypeNode } from "graphql/language/ast";
+import { TypeNode, NamedTypeNode, DocumentNode } from "graphql/language/ast";
 import { variableDefinitionNode } from 'graphql-extra';
 import { typeDefs } from 'graphql-scalars';
 
@@ -8,7 +8,6 @@ import convertToDocumentNodes from "./convertToDocumentNodes";
 import { createArgument } from "./operation";
 
 import generateOperations from "./generateOperations";
-import { MutableDocumentNode } from "../../types";
 import operationAstToJS from "./operationAstToJS";
 
 export * from "./transformASTToString";
@@ -29,8 +28,8 @@ export function createVariableDefAndArguments(Arguments: readonly any[]) {
   }
 }
 
-export function detectScalarity(TypeName: string, DocumentNode: MutableDocumentNode) {
-  return Scalars.includes(TypeName) || TypeName.includes("Enum") || DocumentNode.definitions.find((Node) => Node.kind === "EnumTypeDefinition" && Node.name.value === TypeName);
+export function detectScalarity(TypeName: string, DocumentNodes: DocumentNode) {
+  return Scalars.includes(TypeName) || TypeName.includes("Enum") || DocumentNodes.definitions.find((Node) => Node.kind === "EnumTypeDefinition" && Node.name.value === TypeName);
 }
 
 export {

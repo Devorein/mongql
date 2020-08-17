@@ -10,15 +10,12 @@ import {
   generateSpecificType
 } from './type';
 import { DocumentNode } from "graphql";
-import { generateFragments, generateOperations } from "../utils/AST";
 
-export default function (Schema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined, OperationNodes: MutableDocumentNode) {
+export default function (Schema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined) {
   const { SchemaInfo, DocumentAST } = parseMongooseSchema(Schema, InitTypedefsAST);
-  OperationNodes.definitions.push(...generateFragments(DocumentAST, SchemaInfo));
   generateQueryFields(SchemaInfo, DocumentAST);
   generateMutationFields(SchemaInfo, DocumentAST);
-  generateOperations(OperationNodes, DocumentAST, SchemaInfo);
-  return { typedefsAST: DocumentAST as MutableDocumentNode, SchemaInfo, OperationNodes };
+  return { GeneratedDocumentNode: DocumentAST as MutableDocumentNode, SchemaInfo };
 }
 
 export {

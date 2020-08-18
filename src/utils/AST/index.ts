@@ -1,14 +1,13 @@
-import { TypeNode, NamedTypeNode, DocumentNode } from "graphql/language/ast";
+import { TypeNode, NamedTypeNode, DocumentNode, ScalarTypeDefinitionNode, EnumTypeDefinitionNode } from "graphql/language/ast";
 import { variableDefinitionNode } from 'graphql-extra';
-import { typeDefs } from 'graphql-scalars';
-
-const Scalars = typeDefs.map(scalar => scalar.split(" ")[1]).concat(["Password", "Username", "String", "Int", "Float", "Boolean", "ID"]);
 
 import convertToDocumentNodes from "./convertToDocumentNodes";
 import { createArgument } from "./operation";
 
 import generateOperations from "./generateOperations";
 import operationAstToJS from "./operationAstToJS";
+
+type ScalarNode = EnumTypeDefinitionNode | ScalarTypeDefinitionNode;
 
 export * from "./transformASTToString";
 export * from "./operation";
@@ -29,7 +28,7 @@ export function createVariableDefAndArguments(Arguments: readonly any[]) {
 }
 
 export function detectScalarity(TypeName: string, DocumentNodes: DocumentNode) {
-  return Scalars.includes(TypeName) || TypeName.includes("Enum") || DocumentNodes.definitions.find((Node) => Node.kind === "EnumTypeDefinition" && Node.name.value === TypeName);
+  return DocumentNodes.definitions.find((Node) => Node.kind.match(/(EnumTypeDefinition|ScalarTypeDefinition)/) && (Node as ScalarNode).name.value === TypeName);
 }
 
 export {

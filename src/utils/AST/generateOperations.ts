@@ -11,7 +11,7 @@ import { MutableDocumentNode } from "../../types";
  * @param OperationNodes OperationNode to add OperationDefinition to
  * @param DocumentNode DocumentNode used to detect scalarity
  */
-export default function (OperationNodes: MutableDocumentNode, DocumentNode: MutableDocumentNode, GeneratedFragmentsMap: Record<string, string[]>) {
+export default function (OperationNodes: MutableDocumentNode, DocumentNode: MutableDocumentNode, FragmentInfoMap: Record<string, { [k: string]: string | boolean }>) {
   (['query', 'mutation'] as OperationTypeNode[]).forEach(operation => {
     const TypeExts = DocumentNode.definitions.filter(definition => definition.kind === "ObjectTypeExtension" && definition.name.value === S.capitalize(operation)) as ObjectTypeExtensionNode[];
     TypeExts.forEach(TypeExt => {
@@ -19,7 +19,7 @@ export default function (OperationNodes: MutableDocumentNode, DocumentNode: Muta
         TypeExt.fields.forEach(Operation => {
           const { name, arguments: FieldDefinitonArgs, type } = Operation;
           const FieldDefinitonType = getNestedType(type);
-          const Parts = GeneratedFragmentsMap[FieldDefinitonType] || [];
+          const Parts = FragmentInfoMap[FieldDefinitonType] ? Object.keys(FragmentInfoMap[FieldDefinitonType]) : [];
           Parts.forEach(part => {
             const OperationName = name.value + (part !== '' ? "_" + part : '');
             if (FieldDefinitonArgs && FieldDefinitonArgs.length !== 0) {

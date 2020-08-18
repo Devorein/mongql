@@ -195,11 +195,11 @@ class Mongql {
     }
 
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
-    const GeneratedFragmentsMap = generateFragments(OperationNodes, TransformedTypedefs.DocumentNode, SchemasInfo);
-    generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, GeneratedFragmentsMap);
+    const FragmentsInfoMap = generateFragments(OperationNodes, TransformedTypedefs.DocumentNode, SchemasInfo);
+    generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, FragmentsInfoMap);
 
     if (output.Operation)
-      await this.#cleanAndOutput(output.Operation, operationAstToJS(OperationNodes, this.#globalConfigs.Operations.module), 'Operations.js');
+      await this.#cleanAndOutput(output.Operation, operationAstToJS(OperationNodes, FragmentsInfoMap, this.#globalConfigs.Operations.module), 'Operations.js');
 
     return {
       TransformedTypedefs,
@@ -241,11 +241,11 @@ class Mongql {
     }
 
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
-    const GeneratedFragmentsMap = generateFragments(OperationNodes, TransformedTypedefs.DocumentNode, SchemasInfo);
-    generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, GeneratedFragmentsMap);
+    const FragmentsInfoMap = generateFragments(OperationNodes, TransformedTypedefs.DocumentNode, SchemasInfo);
+    generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, FragmentsInfoMap);
 
     if (output.Operation)
-      this.#cleanAndOutputSync(output.Operation, operationAstToJS(OperationNodes, this.#globalConfigs.Operations.module), 'Operations.js');
+      this.#cleanAndOutputSync(output.Operation, operationAstToJS(OperationNodes, FragmentsInfoMap, this.#globalConfigs.Operations.module), 'Operations.js');
 
     return {
       TransformedTypedefs,

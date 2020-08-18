@@ -19,7 +19,7 @@ export default function (OperationNodes: MutableDocumentNode, DocumentNode: Muta
         TypeExt.fields.forEach(Operation => {
           const { name, arguments: FieldDefinitonArgs, type } = Operation;
           const FieldDefinitonType = getNestedType(type);
-          const Parts = FragmentInfoMap[FieldDefinitonType] ? Object.keys(FragmentInfoMap[FieldDefinitonType]) : [];
+          const Parts = FragmentInfoMap[FieldDefinitonType] ? Object.keys(FragmentInfoMap[FieldDefinitonType]) : [''];
           Parts.forEach(part => {
             const OperationName = name.value + (part !== '' ? "_" + part : '');
             if (FieldDefinitonArgs && FieldDefinitonArgs.length !== 0) {

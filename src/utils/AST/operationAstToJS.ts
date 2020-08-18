@@ -60,7 +60,7 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
         }
       }
     }
-    else if (Node.kind === "OperationDefinition") {
+    else if (Node.kind === "OperationDefinition")
       ExportedDefinitions.operations.push(
         {
           source: DefinitionString,
@@ -69,7 +69,6 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
           nodename: NodeName
         }
       )
-    }
   });
 
   DependentFragments.forEach(({ dependency, dependents }) => {
@@ -77,8 +76,6 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
       OperationOutput += `Operations.${dependent} = Operations.${dependency};\n\n`
     })
   });
-
-  // ExportedDefinitions.fragments = ExportedDefinitions.fragments.reverse();
 
   Object.values(ExportedDefinitions).forEach((Nodes) => {
     Nodes.forEach(Node => {

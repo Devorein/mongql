@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { documentApi } = require('graphql-extra');
-const S = require('voca');
+const {capitalize} = require('../../dist/utils');
 
 const {
 	generateOptions,
@@ -63,7 +63,7 @@ function QueryChecker (target, { excludedQuery }, type) {
 	function checker (fields, against) {
 		fields.forEach((field) => {
 			const [ range, auth, part ] = field.split('.');
-			const typename = `get${S.capitalize(range)}${S.capitalize(auth)}Users${S.capitalize(part)}`;
+			const typename = `get${capitalize(range)}${capitalize(auth)}Users${capitalize(part)}`;
 			if (type === 'typedef') {
 				expect(target.hasField(typename)).toBe(against);
 				if (against) {

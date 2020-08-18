@@ -5,7 +5,7 @@ import { getNestedType } from '.';
 import { TParsedSchemaInfo, MutableDocumentNode } from '../../types';
 import { objectTypeApi, ObjectTypeApi } from 'graphql-extra';
 import { t } from 'graphql-extra';
-import S from "voca";
+import { capitalize } from '../../utils';
 import { decorateTypes } from '../../typedefs/index';
 
 /**
@@ -71,7 +71,7 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
   const FragmentsInfoMap: Record<string, { [k: string]: string | boolean }> = {};
 
   function generateCustomFragments(FragmentName: string, ObjTypeDef: ObjectTypeDefinitionNode, part: string) {
-    part = S.capitalize(part);
+    part = capitalize(part);
     if (!FragmentsInfoMap[FragmentName]) FragmentsInfoMap[FragmentName] = {};
     FragmentsInfoMap[FragmentName][part] = part;
     const selections = (ObjTypeDef.fields as FieldDefinitionNode[]).reduce(
@@ -176,19 +176,19 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
             FieldInfo.includedAuthSegments.forEach(includedAuthSegment => {
               if (!AuthObjectTypes[includedAuthSegment]) {
                 AuthObjectTypes[includedAuthSegment] = objectTypeApi(t.objectType({
-                  name: S.capitalize(includedAuthSegment) + SchemaName + "Object",
+                  name: capitalize(includedAuthSegment) + SchemaName + "Object",
                   description: ``,
                   fields: [],
                   interfaces: []
                 }));
               }
-              const FragmentSpread = FieldInfo.generic_type.match(/(object|ref)/) ? decorateTypes(S.capitalize(includedAuthSegment) + FieldInfo.object_type + "Object", FieldInfo.nullable.object[includedAuthSegment]) : FieldInfo.decorated_types.object[includedAuthSegment]
+              const FragmentSpread = FieldInfo.generic_type.match(/(object|ref)/) ? decorateTypes(capitalize(includedAuthSegment) + FieldInfo.object_type + "Object", FieldInfo.nullable.object[includedAuthSegment]) : FieldInfo.decorated_types.object[includedAuthSegment]
               AuthObjectTypes[includedAuthSegment].createField({ name: FragmentSelection, type: FragmentSpread as string });
             })
           });
 
           Object.entries(AuthObjectTypes).forEach(([AuthObjectType, AuthObjectValue]) => {
-            generateCustomFragments(S.capitalize(AuthObjectType) + SchemaName + "Object", AuthObjectValue.node, FragmentName)
+            generateCustomFragments(capitalize(AuthObjectType) + SchemaName + "Object", AuthObjectValue.node, FragmentName)
           })
         });
       })

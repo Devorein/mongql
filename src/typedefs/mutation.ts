@@ -1,7 +1,7 @@
 import { MutableDocumentNode, ActionEnumString, TargetEnumString, TParsedSchemaInfo, IMongqlBaseSchemaConfigsFull } from "../types";
 
 import pluralize from 'pluralize';
-import S from 'voca';
+import { capitalize } from '../utils';
 import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
 
 interface ArgumentMapFnParam {
@@ -74,7 +74,7 @@ export default function (SchemaInfo: TParsedSchemaInfo, TypedefAST: MutableDocum
   const { resource: r, generate: { mutation } } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
   const ast = documentApi().addSDL(TypedefAST);
   const doesMutationExtExists = ast.hasExt('Mutation');
-  const cr = S.capitalize(r);
+  const cr = capitalize(r);
   const pr = pluralize(r, 2);
   const cpr = pluralize(cr, 2);
   const actions = Object.keys(mutation);
@@ -96,14 +96,14 @@ export default function (SchemaInfo: TParsedSchemaInfo, TypedefAST: MutableDocum
         MutationExt.createField({
           name: MutationName,
           type: `Self${cr}Object!`,
-          description: `${S.capitalize(action)} single ${r}`,
+          description: `${capitalize(action)} single ${r}`,
           arguments: Arguments
         });
       else if (target === 'multi')
         MutationExt.createField({
           name: MutationName,
           type: `[Self${cr}Object!]!`,
-          description: `${S.capitalize(action)} multiple ${r}`,
+          description: `${capitalize(action)} multiple ${r}`,
           arguments: Arguments
         });
 

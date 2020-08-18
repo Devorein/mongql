@@ -1,10 +1,7 @@
 import { resolvers, typeDefs } from 'graphql-scalars';
-import colors from 'colors';
 import { documentApi } from "graphql-extra";
-import mkdirp from 'mkdirp';
-import fs, { mkdirpSync } from 'fs-extra';
+import fs from 'fs';
 import path from 'path';
-import S from 'voca';
 import gql from "graphql-tag"
 import { Model, model, connect } from "mongoose";
 
@@ -16,7 +13,7 @@ import Username from "./utils/gql-types/username"
 import { IMongqlGlobalConfigsPartial, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TParsedSchemaInfo, IOutputFull, MutableDocumentNode, ITransformedASTPart, ITransformedResolverPart } from "./types";
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
-import { generateFragments, generateOperations, sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes } from "./utils";
+import { capitalize, generateFragments, generateOperations, sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes,red,green } from "./utils";
 
 const BaseTypeDefs = gql`
   type Query {
@@ -69,7 +66,7 @@ class Mongql {
         imported = imported[fileWithoutExt + "Schema"] === undefined ? imported : imported[fileWithoutExt + "Schema"];
         if (fileWithoutExt !== "index" && imported.mongql.skip !== true) {
           imported_schemas.push(imported);
-          imported.mongql.resource = S.capitalize(imported.mongql.resource);
+          imported.mongql.resource = capitalize(imported.mongql.resource);
           if (imported.mongql.TypeDefs && typeof imported.mongql.TypeDefs === 'string') imported.mongql.TypeDefs = gql(imported.mongql.TypeDefs);
         }
       });
@@ -77,23 +74,23 @@ class Mongql {
     else
       imported_schemas = (options.Schemas).filter(schema => {
         if (schema.mongql.skip !== true) {
-          schema.mongql.resource = S.capitalize(schema.mongql.resource);
+          schema.mongql.resource = capitalize(schema.mongql.resource);
           if (schema.mongql.TypeDefs && typeof schema.mongql.TypeDefs === 'string') schema.mongql.TypeDefs = gql(schema.mongql.TypeDefs);
           return true;
         }
       })
     if (imported_schemas.length === 0)
       throw new Error(
-        colors.red.bold(`No schemas provided`)
+        red(`No schemas provided`)
       )
     return imported_schemas.map((schema) => {
       if (schema.mongql === undefined)
         throw new Error(
-          colors.red.bold(`Resource doesnt have a mongql key on the schema`)
+          red(`Resource doesnt have a mongql key on the schema`)
         )
       const { resource } = schema.mongql;
       if (resource === undefined)
-        throw new Error(colors.red.bold(`Provide the mongoose schema resource key for mongql`));
+        throw new Error(red(`Provide the mongoose schema resource key for mongql`));
       else this.#resources.push(resource);
       schema.mongql = generateBaseSchemaConfigs(schema.mongql, this.#globalConfigs as IMongqlGlobalConfigsFull);
       return schema as IMongqlMongooseSchemaFull
@@ -188,7 +185,7 @@ class Mongql {
       await this.#output(Schema.mongql.output, GeneratedDocumentNode, Schema.mongql.resource);
     });
     if (Typedefs.base) {
-      const BaseTypedefsContent = typeof Typedefs.base === 'string' ? await fs.readFile(Typedefs.base, 'UTF-8') : Typedefs.base;
+      const BaseTypedefsContent = typeof Typedefs.base === 'string' ? await fs.promises.readFile(Typedefs.base, 'utf-8') : Typedefs.base;
       const BaseTypeDefs = (BaseTypedefsContent as DocumentNode).kind === "Document" ? BaseTypedefsContent as DocumentNode : BaseTypedefsContent ? gql(BaseTypedefsContent as string) : undefined;
       if (BaseTypeDefs)
         TransformedTypedefs.DocumentNode.definitions.push(...BaseTypeDefs.definitions);
@@ -276,8 +273,9 @@ class Mongql {
   #cleanAndOutput = async (path: string, content: string, resource: string) => {
     if (path) {
       try {
-        await mkdirp(path);
-        await fs.writeFile(`${path}\\${resource}`, content, 'UTF-8');
+        const dirExists = fs.existsSync(path);
+        if(!dirExists) await fs.promises.mkdir(path);
+        await fs.promises.writeFile(`${path}\\${resource}`, content, 'utf-8');
       } catch (err) {
         console.log(err.message)
       }
@@ -287,7 +285,8 @@ class Mongql {
   #cleanAndOutputSync = (path: string, content: string, resource: string) => {
     if (path) {
       try {
-        mkdirpSync(path);
+        const dirExists = fs.existsSync(path);
+        if(!dirExists) fs.mkdirSync(path);
         fs.writeFileSync(`${path}\\${resource}`, content, 'UTF-8');
       } catch (err) {
         console.log(err.message)
@@ -305,11 +304,11 @@ class Mongql {
       useFindAndModify: false,
       useUnifiedTopology: true
     });
-    console.log(`MongoDB Connected: ${conn.connection.host}`.green.underline.bold);
+    green(`MongoDB Connected: ${conn.connection.host}`);
     const res: { [key: string]: Model<any> } = {};
     this.#globalConfigs.Schemas.forEach((schema: IMongqlMongooseSchemaFull) => {
       const { mongql: { resource } } = schema;
-      res[resource] = model(S.capitalize(resource), schema);
+      res[resource] = model(capitalize(resource), schema);
     });
     return res;
   }

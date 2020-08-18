@@ -1,5 +1,5 @@
 import pluralize from 'pluralize';
-import S from 'voca';
+import { capitalize } from '../utils';
 import { t, documentApi, objectExtApi, ObjectExtApi } from 'graphql-extra';
 
 import { RangeEnumString, AuthEnumString, PartEnumString, MutableDocumentNode, IMongqlBaseSchemaConfigsFull, TParsedSchemaInfo } from "../types";
@@ -42,7 +42,7 @@ export default function (SchemaInfo: TParsedSchemaInfo, TypedefAST: MutableDocum
   const ast = documentApi().addSDL(TypedefAST);
   const doesQueryExtExists = ast.hasExt('Query');
   const { resource: r, generate: { query } } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
-  const cr = S.capitalize(r);
+  const cr = capitalize(r);
   const cpr = pluralize(cr, 2);
   const QueryExt = doesQueryExtExists ? ast.getExt('Query') as ObjectExtApi : objectExtApi(
     t.objectExt({
@@ -59,10 +59,10 @@ export default function (SchemaInfo: TParsedSchemaInfo, TypedefAST: MutableDocum
     auths.forEach((auth) => {
       const parts = Object.keys(query[range as RangeEnumString][auth as AuthEnumString]).filter((part) => query[range as RangeEnumString][auth as AuthEnumString][part as PartEnumString]);
       parts.forEach((part) => {
-        let output = `${S.capitalize(auth)}${cr}Object!`;
+        let output = `${capitalize(auth)}${cr}Object!`;
         output = range !== 'id' ? `[${output}]!` : output;
         if (part === 'count') output = 'NonNegativeInt!';
-        const QueryName = `get${S.capitalize(range)}${S.capitalize(auth)}${cpr}${S.capitalize(part)}`;
+        const QueryName = `get${capitalize(range)}${capitalize(auth)}${cpr}${capitalize(part)}`;
         const Arguments = ArgumentMap[range as RangeEnumString]
         QueryExt.createField({
           name: QueryName,

@@ -1,9 +1,8 @@
 import { TParsedSchemaInfo, AuthEnumString, RangeEnumString, PartEnumString, IMongqlBaseSchemaConfigsFull } from "../types";
 
 import pluralize from 'pluralize';
-import S from 'voca';
 
-import parsePagination from '../utils/query/parsePagination';
+import { capitalize, parsePagination } from '../utils';
 
 type TExcludedFields = {
   self: string
@@ -25,7 +24,7 @@ export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<str
   if (!InitResolver.Query) InitResolver.Query = {};
 
   const { generate: { query }, resource } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
-  const cr = S.capitalize(resource);
+  const cr = capitalize(resource);
 
   const ExcludedFields: TExcludedFields = {
     self: '',
@@ -77,7 +76,7 @@ export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<str
     auths.forEach((auth) => {
       const parts = Object.keys(query[range][auth]).filter((part) => query[range][auth as AuthEnumString][part as PartEnumString] !== false);
       parts.forEach((part) => {
-        const key = `get${S.capitalize(range)}${S.capitalize(auth)}${pcr}${S.capitalize(part)}`;
+        const key = `get${capitalize(range)}${capitalize(auth)}${pcr}${capitalize(part)}`;
         if (!QueryResolvers[key])
           QueryResolvers[key] = async function (
             parent: any,

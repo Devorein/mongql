@@ -1,4 +1,4 @@
-import S from 'voca';
+import { capitalize } from '../utils';
 import { Schema } from 'mongoose';
 import { t, objectTypeApi, enumTypeApi, interfaceTypeApi, inputTypeApi, unionTypeApi, TypeDefinitonApi } from 'graphql-extra';
 import { resolvers } from 'graphql-scalars';
@@ -21,7 +21,7 @@ Object.entries({ ...resolvers }).forEach(([key, value]) => {
 });
 
 function snakeCapitalize(type: string): string {
-  return type.split('_').map(c => S.capitalize(c)).join(' ');
+  return type.split('_').map(c => capitalize(c)).join(' ');
 }
 
 /**
@@ -97,11 +97,11 @@ function generateSpecificType(generic_type: string, value: any, key: string, par
     ref_type = null,
     enum_type = null;
   if (generic_type.match(/(object|enum)/)) {
-    object_type = (parentKey ? parentKey.object_type : S.capitalize(resource)) + S.capitalize(value.mongql?.type || key);
+    object_type = (parentKey ? parentKey.object_type : capitalize(resource)) + capitalize(value.mongql?.type || key);
     input_type = object_type + 'Input'
   }
   if (generic_type === 'enum') {
-    object_type = (parentKey ? parentKey.object_type : S.capitalize(resource)) + S.capitalize(value.mongql?.type || key) + "Enum";
+    object_type = (parentKey ? parentKey.object_type : capitalize(resource)) + capitalize(value.mongql?.type || key) + "Enum";
     enum_type = object_type;
     input_type = object_type;
   }
@@ -131,7 +131,7 @@ const generateIncludedAuthSegments = (schema_object_auth: any, parentSchema_obje
  */
 function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefsAST: DocumentNode | undefined) {
   const BaseSchemaConfigs = BaseSchema.mongql;
-  const cr = S.capitalize(BaseSchemaConfigs.resource);
+  const cr = capitalize(BaseSchemaConfigs.resource);
   const ResultDocumentNode = {
     kind: 'Document',
     definitions: InitTypedefsAST ? [...InitTypedefsAST.definitions] : []
@@ -171,11 +171,11 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
     const UnionsObjTypes: NamedTypeNode[] = [];
 
     currentSchema_included_auth_segments.forEach((auth) => {
-      const ObjectName = `${S.capitalize(auth)}${Type}Object`;
+      const ObjectName = `${capitalize(auth)}${Type}Object`;
       Objects[ObjectName] = Object.assign({}, objectTypeApi(
         t.objectType({
           name: ObjectName,
-          description: `${S.capitalize(auth)} ${Type} Object Layer ${path.length + 1}`,
+          description: `${capitalize(auth)} ${Type} Object Layer ${path.length + 1}`,
           fields: [],
           interfaces: CurrentSchemaConfigs.generate.type.interface ? [`${Type}Interface`] : []
         })
@@ -258,11 +258,11 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       field_included_auth_segments.forEach((auth) => {
         path[path.length - 1] = { object_type, key, enum_type };
         const auth_object_type = generic_type.match(/(ref|object)/)
-          ? authMapper[S.capitalize(auth) as AuthEnumString] + object_type + "Object"
+          ? authMapper[capitalize(auth) as AuthEnumString] + object_type + "Object"
           : object_type;
         const decorated_object_type = decorateTypes(auth_object_type, nullable_object[auth]);
         generatedFieldFullInfo.decorated_types.object[auth] = decorated_object_type;
-        const object_key = `${S.capitalize(auth)}${Type}Object`;
+        const object_key = `${capitalize(auth)}${Type}Object`;
         if (!Objects[object_key].hasField(key)) {
           Objects[object_key].fields[key] = { ...generatedFieldFullInfo, auth };
           Objects[object_key].createField({
@@ -272,7 +272,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       });
 
       ['create', 'update'].forEach((action) => {
-        const _action = S.capitalize(action);
+        const _action = capitalize(action);
         if (CurrentSchemaConfigs.generate.type.input[action as InputActionEnumString] && attach_to_input[action as InputActionEnumString] && !Inputs[`${_action}${Type}Input`].hasField(key)) {
           const decorated_input_type = decorateTypes((generic_type.match(/(object)/) ? _action : "") + input_type, nullable_input[action as InputActionEnumString])
           generatedFieldFullInfo.decorated_types.input[action as InputActionEnumString] = decorated_input_type;

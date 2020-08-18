@@ -1,4 +1,4 @@
-import S from "voca";
+import { capitalize } from '../../utils';
 import { ObjectTypeExtensionNode, OperationTypeNode } from "graphql";
 
 import { createSelections, detectScalarity, getNestedType, createOperation, createVariableDefAndArguments, createSelectionSet, createFragmentSpread } from "./index";
@@ -13,7 +13,7 @@ import { MutableDocumentNode } from "../../types";
  */
 export default function (OperationNodes: MutableDocumentNode, DocumentNode: MutableDocumentNode, FragmentInfoMap: Record<string, { [k: string]: string | boolean }>) {
   (['query', 'mutation'] as OperationTypeNode[]).forEach(operation => {
-    const TypeExts = DocumentNode.definitions.filter(definition => definition.kind === "ObjectTypeExtension" && definition.name.value === S.capitalize(operation)) as ObjectTypeExtensionNode[];
+    const TypeExts = DocumentNode.definitions.filter(definition => definition.kind === "ObjectTypeExtension" && definition.name.value === capitalize(operation)) as ObjectTypeExtensionNode[];
     TypeExts.forEach(TypeExt => {
       if (TypeExt && TypeExt.fields)
         TypeExt.fields.forEach(Operation => {
@@ -25,11 +25,11 @@ export default function (OperationNodes: MutableDocumentNode, DocumentNode: Muta
             if (FieldDefinitonArgs && FieldDefinitonArgs.length !== 0) {
               const { VariableDefinitions, ArgumentNodes } = createVariableDefAndArguments(FieldDefinitonArgs.map(FieldDefinitonArg => ({ name: FieldDefinitonArg.name.value, type: FieldDefinitonArg.type })));
               OperationNodes.definitions.push(createOperation(
-                S.capitalize(OperationName), operation, detectScalarity(FieldDefinitonType, DocumentNode) ? [createSelections(`${name.value}`, ArgumentNodes)] : [createSelectionSet(`${name.value}`, [createFragmentSpread(FieldDefinitonType + part + "Fragment")], ArgumentNodes)], VariableDefinitions,
+                capitalize(OperationName), operation, detectScalarity(FieldDefinitonType, DocumentNode) ? [createSelections(`${name.value}`, ArgumentNodes)] : [createSelectionSet(`${name.value}`, [createFragmentSpread(FieldDefinitonType + part + "Fragment")], ArgumentNodes)], VariableDefinitions,
               ));
             } else
               OperationNodes.definitions.push(createOperation(
-                S.capitalize(OperationName), operation, detectScalarity(FieldDefinitonType, DocumentNode) ? [createSelections(`${name.value}`)] : [createSelectionSet(`${name.value}`, [createFragmentSpread(FieldDefinitonType + part + "Fragment")])],
+                capitalize(OperationName), operation, detectScalarity(FieldDefinitonType, DocumentNode) ? [createSelections(`${name.value}`)] : [createSelectionSet(`${name.value}`, [createFragmentSpread(FieldDefinitonType + part + "Fragment")])],
               ));
           })
         });

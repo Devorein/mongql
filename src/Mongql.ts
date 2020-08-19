@@ -4,7 +4,6 @@ import fs from 'fs';
 import path from 'path';
 import gql from "graphql-tag"
 import { Model, model, connect } from "mongoose";
-
 import { DocumentNode } from "graphql";
 
 import Password from "./utils/gql-types/password"
@@ -195,6 +194,9 @@ class Mongql {
       if (BaseTypeDefs)
         TransformedTypedefs.DocumentNode.definitions.push(...BaseTypeDefs.definitions);
     }
+
+    if (Resolvers.base)
+      TransformedResolvers.arr.push(Resolvers.base);
 
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
     const FragmentsInfoMap = generateFragments(OperationNodes, TransformedTypedefs.DocumentNode, SchemasInfo);

@@ -248,6 +248,7 @@ export interface IMongqlGlobalConfigsPartial extends IMongqlGlobalAndBaseSchemaC
   },
   Resolvers?: {
     init?: string | Record<string, IResolverPartial>,
+    base?: IResolverPartial
   },
   Operations?: {
     module?: ModuleEnumType
@@ -265,6 +266,7 @@ export interface IMongqlGlobalConfigsFull extends IMongqlGlobalAndBaseSchemaComm
   },
   Resolvers: {
     init: undefined | Record<string, IResolverFull>,
+    base: undefined | IResolverFull
   },
   Operations: {
     module: ModuleEnumType

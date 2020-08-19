@@ -34,12 +34,16 @@ A package to convert your mongoose schema to graphql schema
 3. Easily configurable (any of the typedef and resolvers can be turned off)
 4. Output the generated SDL
 5. Auto addition of graphql validators with mongoose
+6. Auto generation of fragments and operations
+7. Automatic integration with custom various scalar types from graphql-scalars
+8. Helper methods for dealing with graphql ast nodes
 
 ## Motivation
 
-1. Creating a graphql SDL is not a difficult task by any means, but things get really cumbersome after a while, especially since a lot of the typedefs and resolvers are being repeated.
+1. Creating a graphql SDL is not a difficult task, but things get really cumbersome after a while, especially since a lot of the typedefs and resolvers are being repeated.
 2. Automating the schema generation helps to avoid errors regarding forgetting to define something in the schema thats been added to the resolver or vice versa.
 3. Creating resolvers for subtypes in a PITA, especially if all of them just refers to the same named key in parent
+4. Generating fragments and operation manually is quite difficult and error prone, typing duplicate stuffs and figuring out the interrelationship between each fragment.
 
 ## Usage
 

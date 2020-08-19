@@ -13,7 +13,7 @@ import Username from "./utils/gql-types/username"
 import { IMongqlGlobalConfigsPartial, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TParsedSchemaInfo, IOutputFull, MutableDocumentNode, ITransformedASTPart, ITransformedResolverPart } from "./types";
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
-import { capitalize, generateFragments, generateOperations, sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes,red,green } from "./utils";
+import { capitalize, generateFragments, generateOperations, sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes, red, green } from "./utils";
 
 const BaseTypeDefs = gql`
   type Query {
@@ -30,6 +30,11 @@ const BaseTypeDefs = gql`
 		sort: String
 		filter: JSON
 	}
+
+  type Status {
+    success: Boolean!
+    message: String!
+  }
 `;
 
 class Mongql {
@@ -274,7 +279,7 @@ class Mongql {
     if (path) {
       try {
         const dirExists = fs.existsSync(path);
-        if(!dirExists) await fs.promises.mkdir(path);
+        if (!dirExists) await fs.promises.mkdir(path);
         await fs.promises.writeFile(`${path}\\${resource}`, content, 'utf-8');
       } catch (err) {
         console.log(err.message)
@@ -286,7 +291,7 @@ class Mongql {
     if (path) {
       try {
         const dirExists = fs.existsSync(path);
-        if(!dirExists) fs.mkdirSync(path);
+        if (!dirExists) fs.mkdirSync(path);
         fs.writeFileSync(`${path}\\${resource}`, content, 'UTF-8');
       } catch (err) {
         console.log(err.message)

@@ -225,7 +225,7 @@ export interface IMongqlGlobalAndBaseSchemaCommonPartial {
   generate?: boolean | IGeneratePartial,
   output?: boolean | IOutputPartial,
   Fragments?: Record<string, string[]>,
-  sort?: ISortPartial
+  sort?: boolean | ISortPartial
 }
 
 export interface IMongqlGlobalAndBaseSchemaCommonFull {

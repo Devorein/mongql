@@ -12,6 +12,11 @@ import generateOptions from "./options";
  */
 function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPartial): IMongqlGlobalConfigsFull {
   const { mutation, query, type } = generateOptions();
+  if (InitialMongqlGlobalConfig?.sort === false)
+    InitialMongqlGlobalConfig.sort = {
+      nodes: false,
+      fields: false
+    }
   return populateObjDefaultValue(InitialMongqlGlobalConfig, {
     output: {
       AST: undefined,
@@ -44,9 +49,14 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPa
  * @param ExtensionSchema Schema to extend
  * @returns Generated MongqlSchemaConfig
  */
-function generateBaseSchemaConfigs(MongqlSchemaConfig: IMongqlBaseSchemaConfigsPartial, ExtensionSchema: IMongqlGlobalConfigsFull): IMongqlBaseSchemaConfigsFull {
+function generateBaseSchemaConfigs(MongqlBaseSchemaConfig: IMongqlBaseSchemaConfigsPartial, ExtensionSchema: IMongqlGlobalConfigsFull): IMongqlBaseSchemaConfigsFull {
+  if (MongqlBaseSchemaConfig?.sort === false)
+    MongqlBaseSchemaConfig.sort = {
+      nodes: false,
+      fields: false
+    }
   const ModifiedMongqlGlobalConfig: { [key: string]: any } = Object.assign({}, ExtensionSchema);
-  const ModifiedMongqlSchemaConfig: { [key: string]: any } = Object.assign({}, MongqlSchemaConfig);
+  const ModifiedMongqlSchemaConfig: { [key: string]: any } = Object.assign({}, MongqlBaseSchemaConfig);
   ['Typedefs', 'Resolvers', 'Schemas'].forEach(globalConfigKey => delete ModifiedMongqlGlobalConfig[globalConfigKey]);
   ModifiedMongqlSchemaConfig.generate = {
     mutation: nestedObjPopulation(ModifiedMongqlSchemaConfig?.generate?.mutation, ModifiedMongqlGlobalConfig.generate.mutation),

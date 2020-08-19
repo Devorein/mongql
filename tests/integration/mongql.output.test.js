@@ -58,12 +58,12 @@ describe('Correct AST and SDL output', () => {
 			});
 			await cleanOutputs();
 			await mongql.generate();
-			const resources = mongql.getResources();
-			const files = await fs.promises.readdir(OutputDir[part]);
-			// expect(files.length).toBe(2);
-			// resources.forEach((resource) => {
-			// 	expect(files.includes(`${resource}.${part === 'SDL' ? 'graphql' : 'json'}`)).toBe(true);
-			// });
+			// const resources = mongql.getResources();
+			// const files = await fs.promises.readdir(OutputDir[part]);
+			// 			expect(files.length).toBe(2);
+			// 			resources.forEach((resource) => {
+			// 				expect(files.includes(`${resource}.${part === 'SDL' ? 'graphql' : 'json'}`)).toBe(true);
+			// 			});
 		});
 	});
 });

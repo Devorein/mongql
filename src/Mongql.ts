@@ -203,7 +203,7 @@ class Mongql {
     generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, FragmentsInfoMap);
 
     if (output.Operation)
-      await this.#cleanAndOutput(output.Operation, operationAstToJS(OperationNodes, FragmentsInfoMap, this.#globalConfigs.Operations.module), 'Operations.js');
+      await this.#cleanAndOutput(output.Operation, operationAstToJS(OperationNodes, FragmentsInfoMap, this.#globalConfigs.Operations), 'Operations.js');
 
     return {
       TransformedTypedefs,
@@ -249,7 +249,7 @@ class Mongql {
     generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, FragmentsInfoMap);
 
     if (output.Operation)
-      this.#cleanAndOutputSync(output.Operation, operationAstToJS(OperationNodes, FragmentsInfoMap, this.#globalConfigs.Operations.module), 'Operations.js');
+      this.#cleanAndOutputSync(output.Operation, operationAstToJS(OperationNodes, FragmentsInfoMap, this.#globalConfigs.Operations), 'Operations.js');
 
     return {
       TransformedTypedefs,

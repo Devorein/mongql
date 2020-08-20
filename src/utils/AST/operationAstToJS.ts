@@ -1,6 +1,6 @@
 import { DocumentNode, print, NameNode, FragmentDefinitionNode, OperationDefinitionNode } from "graphql";
 import extractFragments from "./extractFragments";
-import { ModuleEnumType, TFragmentInfoMap } from "../../types";
+import { ModuleEnumType, TFragmentInfoMap, JSExportConfigFull } from "../../types";
 
 type SelectionSetDefinitionNode = FragmentDefinitionNode | OperationDefinitionNode;
 type SelectionSetDefinitionNodes = SelectionSetDefinitionNode[];
@@ -10,8 +10,15 @@ type SelectionSetDefinitionNodes = SelectionSetDefinitionNode[];
  * @param OperationNodes DocumentNode containing Operation and Fragments
  * @param module Module System to convert to
  */
-export default function operationAstToJS(OperationNodes: DocumentNode, FragmentsInfoMap: TFragmentInfoMap, module: ModuleEnumType): string {
-  let OperationOutput = 'const Operations = {};\n';
+export default function operationAstToJS(OperationNodes: DocumentNode, FragmentsInfoMap: TFragmentInfoMap, export_configs: JSExportConfigFull): string {
+  const { module, importGql } = export_configs;
+  let OperationOutput = '';
+  if (importGql) {
+    if (module === "esm") OperationOutput += "import gql from \"graphql-tag\";\n"
+    else if (module === "cjs") OperationOutput += "const gql = require(\"graphql-tag\");\n"
+  }
+
+  OperationOutput += `const Operations = {};\n`
   const EmptyFragmentMap: any = {};
   const FlattenedFragmentsInfoMap: any = {};
   const GeneratedFragmentsMap: any = {};
@@ -42,7 +49,7 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
       if (mapped_fragment) {
         const same_fragment = mapped_fragment + "Fragment" === NodeName;
         const contains_nested_fragments = FragmentsUsed.length === 0;
-        let GeneratedCode = contains_nested_fragments ? `Operations.${NodeName} = ` : `const ${NodeName} = `;
+        let GeneratedCode = (contains_nested_fragments ? `Operations.${NodeName} = ` : `const ${NodeName} = `) + `${importGql ? "gql" : ""}`;
         if (same_fragment) {
           GeneratedFragmentsMap[NodeName] = true;
           GeneratedCode += `\`\n\t${DefinitionString}\`;\n\n`;
@@ -79,9 +86,8 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
 
   Object.values(ExportedDefinitions).forEach((Nodes) => {
     Nodes.forEach(Node => {
-      OperationOutput += `\nOperations.${Node.nodename} = \`\n\t${Node.kind === "OperationDefinition" ? Node.source : "${" + Node.nodename + "}"}\n${Node.fragments.reduce((acc, cur) => acc + (EmptyFragmentMap[cur] !== false ? `\t\${${"Operations." + cur}}\n` : ''), '')} \`;\n`
+      OperationOutput += `\nOperations.${Node.nodename} = ${importGql ? "gql" : ""}\`\n\t${Node.kind === "OperationDefinition" ? Node.source : "${" + Node.nodename + "}"}\n${Node.fragments.reduce((acc, cur) => acc + (EmptyFragmentMap[cur] !== false ? `\t\${${"Operations." + cur}}\n` : ''), '')} \`;\n`
     });
   })
-
   return OperationOutput += module === "esm" ? "\nexport default Operations;" : "\nmodule.exports = Operations;";
 }

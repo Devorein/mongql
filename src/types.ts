@@ -239,6 +239,16 @@ export interface IMongqlGlobalAndBaseSchemaCommonFull {
 
 export type ModuleEnumType = "esm" | "cjs";
 
+export type JSExportConfigFull = {
+  module: ModuleEnumType,
+  importGql: boolean
+};
+
+export type JSExportConfigPartial = {
+  module?: ModuleEnumType,
+  importGql?: boolean
+};
+
 /**
  * Partial interface for Mongql Global configs
  */
@@ -252,9 +262,7 @@ export interface IMongqlGlobalConfigsPartial extends IMongqlGlobalAndBaseSchemaC
     init?: string | Record<string, IResolverPartial>,
     base?: IResolverPartial
   },
-  Operations?: {
-    module?: ModuleEnumType
-  }
+  Operations?: JSExportConfigPartial
 }
 
 /**
@@ -270,9 +278,7 @@ export interface IMongqlGlobalConfigsFull extends IMongqlGlobalAndBaseSchemaComm
     init: undefined | Record<string, IResolverFull>,
     base: undefined | IResolverFull
   },
-  Operations: {
-    module: ModuleEnumType
-  }
+  Operations: JSExportConfigFull
 }
 
 

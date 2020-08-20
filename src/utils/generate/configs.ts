@@ -12,11 +12,10 @@ import generateOptions from "./options";
  */
 function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPartial): IMongqlGlobalConfigsFull {
   const { mutation, query, type } = generateOptions();
+
   if (InitialMongqlGlobalConfig?.sort === false)
-    InitialMongqlGlobalConfig.sort = {
-      nodes: false,
-      fields: false
-    }
+    populateLeafsFromStem(InitialMongqlGlobalConfig, 'sort', ['nodes', 'operations'], false);
+
   return populateObjDefaultValue(InitialMongqlGlobalConfig, {
     output: {
       AST: undefined,
@@ -38,9 +37,15 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPa
     Fragments: {},
     sort: { fields: true, nodes: true },
     Operations: {
-      module: "esm"
+      module: "esm",
+      importGql: false
     }
   });
+}
+
+function populateLeafsFromStem(stemparent: any, stem: string, leafs: string[], value: any) {
+  stemparent[stem] = {};
+  leafs.forEach(leaf => stemparent[stem][leaf] = value)
 }
 
 /**
@@ -51,10 +56,7 @@ function generateGlobalConfigs(InitialMongqlGlobalConfig: IMongqlGlobalConfigsPa
  */
 function generateBaseSchemaConfigs(MongqlBaseSchemaConfig: IMongqlBaseSchemaConfigsPartial, ExtensionSchema: IMongqlGlobalConfigsFull): IMongqlBaseSchemaConfigsFull {
   if (MongqlBaseSchemaConfig?.sort === false)
-    MongqlBaseSchemaConfig.sort = {
-      nodes: false,
-      fields: false
-    }
+    populateLeafsFromStem(MongqlBaseSchemaConfig, 'sort', ['nodes', 'operations'], false);
   const ModifiedMongqlGlobalConfig: { [key: string]: any } = Object.assign({}, ExtensionSchema);
   const ModifiedMongqlSchemaConfig: { [key: string]: any } = Object.assign({}, MongqlBaseSchemaConfig);
   ['Typedefs', 'Resolvers', 'Schemas'].forEach(globalConfigKey => delete ModifiedMongqlGlobalConfig[globalConfigKey]);
@@ -83,11 +85,6 @@ function generateNestedSchemaConfigs(MongqlSchemaConfig: MongqlSchemaConfigsPart
   delete ModifiedMongqlNestedSchemaConfig.attach;
 
   return populateObjDefaultValue(ModifiedMongqlNestedSchemaConfig, { type: undefined, Fragments: {} });
-}
-
-function populateLeafsFromStem(stemparent: any, stem: string, leafs: string[], value: any) {
-  stemparent[stem] = {};
-  leafs.forEach(leaf => stemparent[stem][leaf] = value)
 }
 
 /**

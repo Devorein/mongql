@@ -104,6 +104,9 @@ function generateFieldConfigs(MongooseField: any, ParentSchema: MongqlSchemaConf
     populateLeafsFromStem(InnerMongooseField.mongql.nullable, 'object', ['mixed', 'self', 'others'], [...InnerMongooseField.mongql.nullable.object]);
   if (Array.isArray(InnerMongooseField?.mongql?.nullable?.input))
     populateLeafsFromStem(InnerMongooseField.mongql.nullable, 'object', ['create', 'update'], [...InnerMongooseField.mongql.nullable.input]);
+
+  if (InnerMongooseField?.mongql?.attach === false)
+    populateLeafsFromStem(InnerMongooseField.mongql, 'attach', ['input', 'object', 'interface', 'enum', 'union'], false);
   if (InnerMongooseField?.mongql?.attach?.input === false)
     populateLeafsFromStem(InnerMongooseField.mongql.attach, 'input', ['create', 'update'], false);
   if (InnerMongooseField?.mongql?.attach?.object === false)

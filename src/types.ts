@@ -154,7 +154,8 @@ export interface IGenerateTypePartial {
     self?: boolean,
     others?: boolean,
     mixed?: boolean,
-  }
+  },
+  fragment?: boolean
 }
 
 /**
@@ -172,7 +173,8 @@ export interface IGenerateTypeFull {
     self: boolean,
     others: boolean,
     mixed: boolean,
-  }
+  },
+  fragment: boolean
 }
 
 /**

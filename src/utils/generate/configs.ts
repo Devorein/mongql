@@ -106,7 +106,7 @@ function generateFieldConfigs(MongooseField: any, ParentSchema: MongqlSchemaConf
     populateLeafsFromStem(InnerMongooseField.mongql.nullable, 'object', ['create', 'update'], [...InnerMongooseField.mongql.nullable.input]);
 
   if (InnerMongooseField?.mongql?.attach === false)
-    populateLeafsFromStem(InnerMongooseField.mongql, 'attach', ['input', 'object', 'interface', 'enum', 'union'], false);
+    populateLeafsFromStem(InnerMongooseField.mongql, 'attach', ['input', 'object', 'interface', 'enum', 'union', 'fragment'], false);
   if (InnerMongooseField?.mongql?.attach?.input === false)
     populateLeafsFromStem(InnerMongooseField.mongql.attach, 'input', ['create', 'update'], false);
   if (InnerMongooseField?.mongql?.attach?.object === false)
@@ -135,7 +135,8 @@ function generateFieldConfigs(MongooseField: any, ParentSchema: MongqlSchemaConf
         update: true
       },
       interface: true,
-      enum: true
+      enum: true,
+      fragment: true
     }),
     authMapper: {
       Mixed: 'Mixed',

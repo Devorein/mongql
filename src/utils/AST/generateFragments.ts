@@ -58,6 +58,8 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
   };
 
   const RefsNodeMap: any = {};
+  const FragmentsInfoMap: Record<string, { [k: string]: string | boolean }> = {};
+  const FieldInfoMap: any = {};
 
   InitTypedefsAST.definitions.forEach(DefinitionNode => {
     if (DefinitionNode.kind === "ObjectTypeDefinition") DocumentNodeTypes.objects[DefinitionNode.name.value] = true;
@@ -68,7 +70,6 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
     else if (DefinitionNode.kind === "ScalarTypeDefinition") DocumentNodeTypes.scalars[DefinitionNode.name.value] = true;
   });
 
-  const FragmentsInfoMap: Record<string, { [k: string]: string | boolean }> = {};
 
   function generateCustomFragments(FragmentName: string, ObjTypeDef: ObjectTypeDefinitionNode, part: string) {
     part = capitalize(part);
@@ -99,6 +100,7 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
     FragmentsInfoMap[FragmentName].RefsNone = 'RefsNone';
     FragmentsInfoMap[FragmentName].ObjectsNone = 'ObjectsNone';
     FragmentsInfoMap[FragmentName].ScalarsOnly = 'ScalarsOnly';
+    const SchemaName = FragmentName.replace('Object', '').replace(/(Self|Mixed|Others)/, '');
 
     const FieldMap: Record<string, { FieldType: string, FieldVariant: string }> = {};
     let containsScalar = false, containsRef = false, containsObject = false;
@@ -137,10 +139,10 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
         FragmentsInfoMap[FragmentName].ObjectsNone = false
         break;
     }
-
     parts.forEach(part => {
       const selections = (ObjTypeDef.fields as FieldDefinitionNode[]).reduce(
         (acc, FieldDefinition) => {
+          const FieldInfo = FieldInfoMap[SchemaName]?.[FieldDefinition.name.value];
           const { FieldType, FieldVariant } = FieldMap[FieldDefinition.name.value];
           const isScalar = FieldVariant === "Scalar";
           const FragmentSpread = FieldType + part + 'Fragment';
@@ -149,7 +151,7 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
           else if (part === "RefsNone" && !RefsNodeMap[FieldType])
             Selection = createSelectionSet(FieldDefinition.name.value, [createFragmentSpread(FragmentSpread)]);
           else if (part === "ScalarsOnly") Selection = createSelectionSet(FieldDefinition.name.value, [createFragmentSpread(FieldType + "ObjectsNoneFragment")]);
-          return Selection !== null ? acc.concat(
+          return FieldInfo?.attach?.fragment && Selection !== null ? acc.concat(
             Selection
           ) : acc;
         },
@@ -164,11 +166,15 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
     ['Mixed', 'Self', 'Others'].forEach(auth => {
       RefsNodeMap[auth + ResourceName + "Object"] = true;
     });
-  })
+  });
 
   Object.values(SchemasInfo).forEach((SchemaInfo) => {
     SchemaInfo.Schemas.forEach(Schemas => {
       Object.entries(Schemas).forEach(([SchemaName, SchemaInfo]) => {
+        if (!FieldInfoMap[SchemaName]) FieldInfoMap[SchemaName] = {};
+        Object.entries(SchemaInfo.fields).forEach(([fieldName, fieldInfo]) => {
+          FieldInfoMap[SchemaName][fieldName] = fieldInfo;
+        });
         Object.entries(SchemaInfo.Fragments).forEach(([FragmentName, FragmentSelections]) => {
           const AuthObjectTypes: Record<string, ObjectTypeApi> = {};
           FragmentSelections.forEach(FragmentSelection => {

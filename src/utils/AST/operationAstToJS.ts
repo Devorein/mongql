@@ -17,13 +17,10 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
     if (module === "esm") OperationOutput += "import gql from \"graphql-tag\";\n"
     else if (module === "cjs") OperationOutput += "const gql = require(\"graphql-tag\");\n"
   }
-  const FragmentRelationMap: any = {};
 
   OperationOutput += `const Operations = {};\n`
+  const FragmentRelationMap: Record<string, string[]> = {};
   const EmptyFragmentMap: any = {};
-  const FlattenedFragmentsInfoMap: any = {};
-  const GeneratedFragmentsMap: any = {};
-  const DependentFragments: { dependency: string, dependents: string[], on: string }[] = [];
 
   Object.entries(FragmentsInfoMap).forEach(([FragmentName, FragmentInfo]) => {
     Object.entries(FragmentInfo).forEach(([FragmentPartName, FragmentPartRel]) => {
@@ -31,16 +28,18 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
       else if (FragmentPartRel !== false) FragmentRelationMap[`${FragmentName}${FragmentPartRel}Fragment`].push(`${FragmentName}${FragmentPartName}Fragment`);
       if (FragmentPartRel === false)
         EmptyFragmentMap[`${FragmentName}${FragmentPartName}Fragment`] = false
-      FlattenedFragmentsInfoMap[`${FragmentName}${FragmentPartName}Fragment`] = FragmentPartRel !== false ? FragmentName + FragmentPartRel : FragmentPartRel;
     })
   });
-
+  type FlattenedOp = { node: FragmentDefinitionNode | OperationDefinitionNode, fragments_used: string[], definition_str: string, definition_str_lines: string[] }
   type TExport = { nodename: string, source: string, fragments: string[], kind: string };
   const ExportedDefinitions: { operations: TExport[], fragments: TExport[] } = { fragments: [], operations: [] };
-  (OperationNodes.definitions as SelectionSetDefinitionNodes).reverse().forEach((Node: SelectionSetDefinitionNode) => {
+  const FlattenedOperationMap: { fragments: Record<string, FlattenedOp>, operations: Record<string, FlattenedOp> } = { fragments: {}, operations: {} };
+
+  (OperationNodes.definitions as SelectionSetDefinitionNodes).forEach((Node: SelectionSetDefinitionNode) => {
     const FragmentsUsed: string[] = extractFragments(Node.selectionSet);
-    const DefinitionString = print(Node).split("\n").join("\n\t");
-    const NodeName = (Node.name as NameNode).value;
+    const DefinitionStringLines = print(Node).split("\n");
+    const DefinitionString = DefinitionStringLines.join("\n\t");
+    const NodeName = (Node.name as NameNode).value
     if (Node.kind === "FragmentDefinition") {
       if (FragmentsUsed.length > 0)
         ExportedDefinitions.fragments.push({
@@ -49,30 +48,19 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
           kind: Node.kind,
           nodename: NodeName
         })
-      const FragmentTarget = Node.typeCondition.name.value;
-      const mapped_fragment = FlattenedFragmentsInfoMap[NodeName];
-      if (mapped_fragment) {
-        const same_fragment = mapped_fragment + "Fragment" === NodeName;
-        const contains_nested_fragments = FragmentsUsed.length !== 0;
-        let GeneratedCode = (!contains_nested_fragments ? `Operations.${NodeName} = ` : `const ${NodeName} = `) + `${importGql ? "gql" : ""}`;
-        if (same_fragment) {
-          GeneratedFragmentsMap[NodeName] = true;
-          GeneratedCode += `\`\n\t${DefinitionString}\`;\n\n`;
-          OperationOutput += GeneratedCode;
-        }
-        else {
-          const isDependencyGenerated = Boolean(GeneratedFragmentsMap[mapped_fragment]);
-          if (!isDependencyGenerated)
-            DependentFragments.push({ on: FragmentTarget, dependency: mapped_fragment + "Fragment", dependents: [NodeName] });
-          else {
-            GeneratedFragmentsMap[NodeName] = true;
-            GeneratedCode += `${!contains_nested_fragments ? "Operations." : ""}${mapped_fragment}Fragment;\n\n`;
-            OperationOutput += GeneratedCode;
-          }
-        }
-      }
-    }
-    else if (Node.kind === "OperationDefinition")
+      FlattenedOperationMap.fragments[NodeName] = {
+        node: Node,
+        fragments_used: FragmentsUsed,
+        definition_str: DefinitionString,
+        definition_str_lines: DefinitionStringLines
+      };
+    } else if (Node.kind === "OperationDefinition") {
+      FlattenedOperationMap.operations[NodeName] = {
+        node: Node,
+        fragments_used: FragmentsUsed,
+        definition_str: DefinitionString,
+        definition_str_lines: DefinitionStringLines
+      };
       ExportedDefinitions.operations.push(
         {
           source: DefinitionString,
@@ -81,16 +69,25 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
           nodename: NodeName
         }
       )
+    }
   });
 
-  DependentFragments.forEach(({ dependency, dependents, on }) => {
-    dependents.forEach(dependent => {
-      OperationOutput += `Operations.${dependent} = \`\nfragment ${dependent} on ${on}{}\``
-    })
+  Object.entries(FragmentRelationMap).forEach(([DependancyFragment, DependentFragments]) => {
+    const { node: Fragment, fragments_used: FragmentsUsed, definition_str: DefinitionString, definition_str_lines } = FlattenedOperationMap.fragments[DependancyFragment];
+    if (DependentFragments.length === 1)
+      OperationOutput += (FragmentsUsed.length === 0 ? `Operations.${DependancyFragment} = ` : `const ${DependancyFragment} = `) + `${importGql ? "gql" : ""}` + `\`\n\t${DefinitionString}\`;\n\n`;
+    else {
+      const FragmentTarget = (Fragment as FragmentDefinitionNode).typeCondition.name.value;
+      const common_fields = definition_str_lines.slice(1, definition_str_lines.length - 1).join("\n");
+      OperationOutput += `const ${DependancyFragment}CommonFields = \`\n${common_fields}\n\`\n`;
+      DependentFragments.forEach(DependentFragment => {
+        OperationOutput += (FragmentsUsed.length === 0 ? `Operations.${DependentFragment} = ` : `const ${DependentFragment} = `) + `${importGql ? "gql" : ""}` + `\`\nfragment ${DependentFragment} on ${FragmentTarget} {\n\t\${${DependancyFragment}CommonFields}\n}\`;\n\n`;
+      })
+    }
   });
 
   Object.values(ExportedDefinitions).forEach((Nodes) => {
-    Nodes.forEach(Node => {
+    Nodes.reverse().forEach(Node => {
       OperationOutput += `\nOperations.${Node.nodename} = ${importGql ? "gql" : ""}\`\n\t${Node.kind === "OperationDefinition" ? Node.source : "${" + Node.nodename + "}"}\n${Node.fragments.reduce((acc, cur) => acc + (EmptyFragmentMap[cur] !== false ? `\t\${${"Operations." + cur}}\n` : ''), '')} \`;\n`
     });
   });

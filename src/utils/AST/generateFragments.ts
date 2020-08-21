@@ -1,12 +1,9 @@
-import { FragmentDefinitionNode, SelectionNode, DocumentNode, ObjectTypeDefinitionNode, FieldDefinitionNode } from 'graphql';
+import { FragmentDefinitionNode, SelectionNode, DocumentNode, ObjectTypeDefinitionNode, FieldDefinitionNode, FieldNode } from 'graphql';
 
 import { createSelections, createFragmentSpread, createSelectionSet } from './operation';
 import { getNestedType } from '.';
-import { TParsedSchemaInfo, MutableDocumentNode } from '../../types';
-import { objectTypeApi, ObjectTypeApi } from 'graphql-extra';
-import { t } from 'graphql-extra';
+import { TParsedSchemaInfo, MutableDocumentNode, TFragmentInfoMap } from '../../types';
 import { capitalize } from '../../utils';
-import { decorateTypes } from '../../typedefs/index';
 
 /**
  * Creates a fragment node
@@ -40,6 +37,17 @@ export function createFragment(fragmentname: string, objectname: undefined | str
   };
 }
 
+export function createField(field_name: string): FieldNode {
+  return {
+    kind: "Field",
+    name: {
+      kind: "Name",
+      value: field_name
+    },
+    arguments: [],
+    directives: []
+  }
+}
 /**
  * Generate auto and custom Fragments from DocumentNode 
  * @param InitTypedefsAST DocumentNode to generate fragments from
@@ -58,7 +66,7 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
   };
 
   const RefsNodeMap: any = {};
-  const FragmentsInfoMap: Record<string, { [k: string]: string | boolean }> = {};
+  const FragmentsInfoMap: TFragmentInfoMap = {};
   const FieldInfoMap: any = {};
 
   InitTypedefsAST.definitions.forEach(DefinitionNode => {
@@ -69,29 +77,6 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
     else if (DefinitionNode.kind === "UnionTypeDefinition") DocumentNodeTypes.unions[DefinitionNode.name.value] = true;
     else if (DefinitionNode.kind === "ScalarTypeDefinition") DocumentNodeTypes.scalars[DefinitionNode.name.value] = true;
   });
-
-
-  function generateCustomFragments(FragmentName: string, ObjTypeDef: ObjectTypeDefinitionNode, part: string) {
-    part = capitalize(part);
-    if (!FragmentsInfoMap[FragmentName]) FragmentsInfoMap[FragmentName] = {};
-    FragmentsInfoMap[FragmentName][part] = part;
-    const selections = (ObjTypeDef.fields as FieldDefinitionNode[]).reduce(
-      (acc, FieldDefinition) => {
-        const FieldType = getNestedType(FieldDefinition.type);
-        const isScalar = (DocumentNodeTypes.enums[FieldType] || DocumentNodeTypes.scalars[FieldType]) === true;
-        const FragmentSpread = FieldType + part + 'Fragment';
-        let Selection = null;
-        if (isScalar) Selection = createSelections(FieldDefinition.name.value);
-        else Selection = createSelectionSet(FieldDefinition.name.value, [createFragmentSpread(FragmentSpread)]);
-        return Selection !== null ? acc.concat(
-          Selection
-        ) : acc;
-      },
-      [] as any[]
-    );
-
-    OperationNodes.definitions.push(createFragment(FragmentName + part + "Fragment", ObjTypeDef.name.value, selections));
-  }
 
   function generateObjectFragments(FragmentName: string, ObjTypeDef: ObjectTypeDefinitionNode, parts: string[]) {
     if (!FragmentsInfoMap[FragmentName]) FragmentsInfoMap[FragmentName] = {};
@@ -173,25 +158,23 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
           FieldInfoMap[SchemaName][fieldName] = fieldInfo;
         });
         Object.entries(SchemaInfo.Fragments).forEach(([FragmentName, FragmentSelections]) => {
-          const AuthObjectTypes: Record<string, ObjectTypeApi> = {};
+          const CustomFragmentsMap: Record<string, FragmentDefinitionNode> = {};
           FragmentSelections.forEach(FragmentSelection => {
-            const FieldInfo = SchemaInfo.fields[FragmentSelection];
+            const FieldName = Array.isArray(FragmentSelection) ? FragmentSelection[0] : FragmentSelection;
+            const FieldFragmentName = Array.isArray(FragmentSelection) ? FragmentSelection[1] : FragmentName;
+            const FieldInfo = SchemaInfo.fields[FieldName];
             if (!FieldInfo) throw new Error(`Field ${FragmentSelection} doesn't exist on Schema ${SchemaName}.`)
             FieldInfo.includedAuthSegments.forEach(includedAuthSegment => {
-              if (!AuthObjectTypes[includedAuthSegment])
-                AuthObjectTypes[includedAuthSegment] = objectTypeApi(t.objectType({
-                  name: capitalize(includedAuthSegment) + SchemaName + "Object",
-                  description: ``,
-                  fields: [],
-                  interfaces: []
-                }));
-              const FragmentSpread = FieldInfo.generic_type.match(/(object|ref)/) ? decorateTypes(capitalize(includedAuthSegment) + FieldInfo.object_type + "Object", FieldInfo.nullable.object[includedAuthSegment]) : FieldInfo.decorated_types.object[includedAuthSegment]
-              AuthObjectTypes[includedAuthSegment].createField({ name: FragmentSelection, type: FragmentSpread as string });
-            })
+              const FragmentObjectName = capitalize(includedAuthSegment) + SchemaName + "Object";
+              if (!FragmentsInfoMap[FragmentObjectName]) FragmentsInfoMap[FragmentObjectName] = {};
+              FragmentsInfoMap[FragmentObjectName][FragmentName] = FragmentName;
+              if (!CustomFragmentsMap[includedAuthSegment])
+                CustomFragmentsMap[includedAuthSegment] = createFragment(capitalize(includedAuthSegment) + SchemaName + "Object" + FragmentName + "Fragment", FragmentObjectName, []);
+              (CustomFragmentsMap[includedAuthSegment].selectionSet.selections as SelectionNode[]).push(FieldInfo.generic_type.match(/(object|ref)/) ? createSelectionSet(FieldName, [createFragmentSpread(capitalize(includedAuthSegment) + FieldInfo.object_type + "Object" + FieldFragmentName + "Fragment")]) : createField(FragmentSelection))
+            });
           });
-
-          Object.entries(AuthObjectTypes).forEach(([AuthObjectType, AuthObjectValue]) => {
-            generateCustomFragments(capitalize(AuthObjectType) + SchemaName + "Object", AuthObjectValue.node, FragmentName)
+          Object.values(CustomFragmentsMap).forEach((CustomGeneratedFragmentNode) => {
+            OperationNodes.definitions.push(CustomGeneratedFragmentNode);
           })
         });
       })

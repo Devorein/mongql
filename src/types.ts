@@ -598,4 +598,4 @@ export type TParsedSchemaInfo = {
   Operations: string[]
 }
 
-export type TFragmentInfoMap = Record<string, { [k: string]: string | boolean }>;
+export type TFragmentInfoMap = Record<string, { [k: string]: string | false }>;

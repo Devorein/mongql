@@ -17,20 +17,24 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
     if (module === "esm") OperationOutput += "import gql from \"graphql-tag\";\n"
     else if (module === "cjs") OperationOutput += "const gql = require(\"graphql-tag\");\n"
   }
+  const FragmentRelationMap: any = {};
 
   OperationOutput += `const Operations = {};\n`
   const EmptyFragmentMap: any = {};
   const FlattenedFragmentsInfoMap: any = {};
   const GeneratedFragmentsMap: any = {};
-  const DependentFragments: { dependency: string, dependents: string[] }[] = [];
+  const DependentFragments: { dependency: string, dependents: string[], on: string }[] = [];
 
   Object.entries(FragmentsInfoMap).forEach(([FragmentName, FragmentInfo]) => {
     Object.entries(FragmentInfo).forEach(([FragmentPartName, FragmentPartRel]) => {
+      if (FragmentPartRel !== false && !FragmentRelationMap[`${FragmentName}${FragmentPartRel}Fragment`]) FragmentRelationMap[`${FragmentName}${FragmentPartRel}Fragment`] = [`${FragmentName}${FragmentPartName}Fragment`];
+      else if (FragmentPartRel !== false) FragmentRelationMap[`${FragmentName}${FragmentPartRel}Fragment`].push(`${FragmentName}${FragmentPartName}Fragment`);
       if (FragmentPartRel === false)
         EmptyFragmentMap[`${FragmentName}${FragmentPartName}Fragment`] = false
       FlattenedFragmentsInfoMap[`${FragmentName}${FragmentPartName}Fragment`] = FragmentPartRel !== false ? FragmentName + FragmentPartRel : FragmentPartRel;
     })
   });
+
   type TExport = { nodename: string, source: string, fragments: string[], kind: string };
   const ExportedDefinitions: { operations: TExport[], fragments: TExport[] } = { fragments: [], operations: [] };
   (OperationNodes.definitions as SelectionSetDefinitionNodes).reverse().forEach((Node: SelectionSetDefinitionNode) => {
@@ -45,11 +49,12 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
           kind: Node.kind,
           nodename: NodeName
         })
+      const FragmentTarget = Node.typeCondition.name.value;
       const mapped_fragment = FlattenedFragmentsInfoMap[NodeName];
       if (mapped_fragment) {
         const same_fragment = mapped_fragment + "Fragment" === NodeName;
-        const contains_nested_fragments = FragmentsUsed.length === 0;
-        let GeneratedCode = (contains_nested_fragments ? `Operations.${NodeName} = ` : `const ${NodeName} = `) + `${importGql ? "gql" : ""}`;
+        const contains_nested_fragments = FragmentsUsed.length !== 0;
+        let GeneratedCode = (!contains_nested_fragments ? `Operations.${NodeName} = ` : `const ${NodeName} = `) + `${importGql ? "gql" : ""}`;
         if (same_fragment) {
           GeneratedFragmentsMap[NodeName] = true;
           GeneratedCode += `\`\n\t${DefinitionString}\`;\n\n`;
@@ -58,10 +63,10 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
         else {
           const isDependencyGenerated = Boolean(GeneratedFragmentsMap[mapped_fragment]);
           if (!isDependencyGenerated)
-            DependentFragments.push({ dependency: mapped_fragment + "Fragment", dependents: [NodeName] });
+            DependentFragments.push({ on: FragmentTarget, dependency: mapped_fragment + "Fragment", dependents: [NodeName] });
           else {
             GeneratedFragmentsMap[NodeName] = true;
-            GeneratedCode += `${contains_nested_fragments ? "Operations." : ""}${mapped_fragment}Fragment;\n\n`;
+            GeneratedCode += `${!contains_nested_fragments ? "Operations." : ""}${mapped_fragment}Fragment;\n\n`;
             OperationOutput += GeneratedCode;
           }
         }
@@ -78,9 +83,9 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
       )
   });
 
-  DependentFragments.forEach(({ dependency, dependents }) => {
+  DependentFragments.forEach(({ dependency, dependents, on }) => {
     dependents.forEach(dependent => {
-      OperationOutput += `Operations.${dependent} = Operations.${dependency};\n\n`
+      OperationOutput += `Operations.${dependent} = \`\nfragment ${dependent} on ${on}{}\``
     })
   });
 

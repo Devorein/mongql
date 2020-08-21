@@ -134,7 +134,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
   const cr = capitalize(BaseSchemaConfigs.resource);
   const ResultDocumentNode = {
     kind: 'Document',
-    definitions: InitTypedefsAST ? [...InitTypedefsAST.definitions] : []
+    definitions: InitTypedefsAST?.definitions ? [...InitTypedefsAST.definitions] : []
   };
   const Fields: FieldsFullInfos = [];
   const Types: IMongqlGeneratedTypes = {

@@ -2,7 +2,7 @@ import { capitalize } from '../../utils';
 import { ObjectTypeExtensionNode, OperationTypeNode } from "graphql";
 
 import { createSelections, detectScalarity, getNestedType, createOperation, createVariableDefAndArguments, createSelectionSet, createFragmentSpread } from "./index";
-import { MutableDocumentNode } from "../../types";
+import { MutableDocumentNode, TFragmentInfoMap } from "../../types";
 
 /**
  * Creates OperationDefinitions from a given ObjectTypeExtension node fields
@@ -11,7 +11,7 @@ import { MutableDocumentNode } from "../../types";
  * @param OperationNodes OperationNode to add OperationDefinition to
  * @param DocumentNode DocumentNode used to detect scalarity
  */
-export default function (OperationNodes: MutableDocumentNode, DocumentNode: MutableDocumentNode, FragmentInfoMap: Record<string, { [k: string]: string | boolean }>) {
+export default function (OperationNodes: MutableDocumentNode, DocumentNode: MutableDocumentNode, FragmentInfoMap: TFragmentInfoMap) {
   (['query', 'mutation'] as OperationTypeNode[]).forEach(operation => {
     const TypeExts = DocumentNode.definitions.filter(definition => definition.kind === "ObjectTypeExtension" && definition.name.value === capitalize(operation)) as ObjectTypeExtensionNode[];
     TypeExts.forEach(TypeExt => {

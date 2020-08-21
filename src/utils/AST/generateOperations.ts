@@ -35,5 +35,4 @@ export default function (OperationNodes: MutableDocumentNode, DocumentNode: Muta
         });
     })
   })
-
 }

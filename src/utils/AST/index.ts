@@ -28,7 +28,7 @@ export function createVariableDefAndArguments(Arguments: readonly any[]) {
 }
 
 export function detectScalarity(TypeName: string, DocumentNodes: DocumentNode) {
-  return DocumentNodes.definitions.find((Node) => Node.kind.match(/(EnumTypeDefinition|ScalarTypeDefinition)/) && (Node as ScalarNode).name.value === TypeName);
+  return TypeName.match(/(String|ID|Int|Boolean|Float)/) || DocumentNodes.definitions.find((Node) => Node.kind.match(/(EnumTypeDefinition|ScalarTypeDefinition)/) && (Node as ScalarNode).name.value === TypeName);
 }
 
 export {

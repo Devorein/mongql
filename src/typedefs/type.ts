@@ -180,7 +180,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
           interfaces: CurrentSchemaConfigs.generate.type.interface ? [`${Type}Interface`] : []
         })
       ), { fields: {} });
-      if (!parentKey) Objects[ObjectName].createField({ name: 'id', type: 'ID!' });
+      // if (!parentKey) Objects[ObjectName].createField({ name: 'id', type: 'ID!' });
       UnionsObjTypes.push({
         kind: 'NamedType',
         name: {
@@ -217,7 +217,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       })
     );
 
-    if (!parentKey) Interfaces[`${Type}Interface`].createField({ name: 'id', type: 'ID!' });
+    // if (!parentKey) Interfaces[`${Type}Interface`].createField({ name: 'id', type: 'ID!' });
 
     if (!Fields[path.length]) Fields.push({});
 

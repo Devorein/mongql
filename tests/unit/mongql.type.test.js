@@ -64,7 +64,7 @@ describe('Proper typedef types generation', () => {
 	it('Interface type Validation', async () => {
 		CheckTypeFields(
 			[
-				[ ``, [ 'ID!', '[String!]!', 'UserField2Enum!', 'UserField3Union!', 'PositiveInt!' ] ],
+				[ ``, [ '[String!]!', 'UserField2Enum!', 'UserField3Union!', 'PositiveInt!' ] ],
 				[ `Field3`, [ 'Int!', '[UserField3Field32Union!]!', 'UserField3Field33Enum!' ] ],
 				[ `Field3Field32`, [ '[Int!]!' ] ]
 			],
@@ -87,7 +87,7 @@ describe('Proper typedef types generation', () => {
 		[ 'Mixed', 'Others', 'Self' ].forEach((auth) => {
 			CheckTypeFields(
 				[
-					[ `User`, [ 'ID!', '[String!]!', 'UserField2Enum!', `${auth}UserField3Object!`, 'PositiveInt!' ] ],
+					[ `User`, [ '[String!]!', 'UserField2Enum!', `${auth}UserField3Object!`, 'PositiveInt!' ] ],
 					[ `UserField3`, [ 'Int!', `[${auth}UserField3Field32Object!]!`, 'UserField3Field33Enum!' ] ],
 					[ `UserField3Field32`, [ '[Int!]!' ] ]
 				],

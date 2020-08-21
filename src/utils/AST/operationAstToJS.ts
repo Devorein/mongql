@@ -1,6 +1,6 @@
 import { DocumentNode, print, NameNode, FragmentDefinitionNode, OperationDefinitionNode } from "graphql";
 import extractFragments from "./extractFragments";
-import { ModuleEnumType, TFragmentInfoMap, JSExportConfigFull } from "../../types";
+import { TFragmentInfoMap, JSExportConfigFull } from "../../types";
 
 type SelectionSetDefinitionNode = FragmentDefinitionNode | OperationDefinitionNode;
 type SelectionSetDefinitionNodes = SelectionSetDefinitionNode[];
@@ -88,6 +88,6 @@ export default function operationAstToJS(OperationNodes: DocumentNode, Fragments
     Nodes.forEach(Node => {
       OperationOutput += `\nOperations.${Node.nodename} = ${importGql ? "gql" : ""}\`\n\t${Node.kind === "OperationDefinition" ? Node.source : "${" + Node.nodename + "}"}\n${Node.fragments.reduce((acc, cur) => acc + (EmptyFragmentMap[cur] !== false ? `\t\${${"Operations." + cur}}\n` : ''), '')} \`;\n`
     });
-  })
+  });
   return OperationOutput += module === "esm" ? "\nexport default Operations;" : "\nmodule.exports = Operations;";
 }

@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import gql from "graphql-tag"
 import { Model, model, connect } from "mongoose";
-import { DocumentNode } from "graphql";
+import { DocumentNode, print } from "graphql";
 
 import Password from "./utils/gql-types/password"
 import Username from "./utils/gql-types/username"
@@ -202,8 +202,16 @@ class Mongql {
     const FragmentsInfoMap = generateFragments(OperationNodes, TransformedTypedefs.DocumentNode, SchemasInfo);
     generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, FragmentsInfoMap);
 
-    if (output.Operation)
-      await this.#cleanAndOutput(output.Operation, operationAstToJS(OperationNodes, FragmentsInfoMap, this.#globalConfigs.Operations), 'Operations.js');
+    if (output.Operation) {
+      const extension = path.extname(output.Operation);
+      if (extension === ".js")
+        await this.#cleanAndOutput(output.Operation, operationAstToJS(OperationNodes, FragmentsInfoMap, this.#globalConfigs.Operations));
+      else if (extension === ".graphql") {
+        await this.#cleanAndOutput(output.Operation, print(OperationNodes));
+      }
+      else
+        throw new Error(red("Invalid Fragment and Operation output file extension"))
+    }
 
     return {
       TransformedTypedefs,
@@ -244,6 +252,9 @@ class Mongql {
         TransformedTypedefs.DocumentNode.definitions.push(...BaseTypeDefs.definitions);
     }
 
+    if (Resolvers.base)
+      TransformedResolvers.arr.push(Resolvers.base);
+
     this.#addExtraTypedefsAndResolvers(TransformedTypedefs, TransformedResolvers);
     const FragmentsInfoMap = generateFragments(OperationNodes, TransformedTypedefs.DocumentNode, SchemasInfo);
     generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, FragmentsInfoMap);
@@ -260,9 +271,9 @@ class Mongql {
 
   #output = async (output: IOutputFull, typedefsAST: DocumentNode, resource: string) => {
     if (typeof output.SDL === 'string' && typedefsAST)
-      await this.#cleanAndOutput(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
+      await this.#cleanAndOutput(path.join(output.SDL, resource + ".graphql"), documentApi().addSDL(typedefsAST).toSDLString())
     if (typeof output.AST === 'string')
-      await this.#cleanAndOutput(output.AST, JSON.stringify(typedefsAST), `${resource}.json`);
+      await this.#cleanAndOutput(path.join(output.AST, `${resource}.json`), JSON.stringify(typedefsAST));
   }
 
   #outputSync = (output: IOutputFull, typedefsAST: DocumentNode, resource: string) => {
@@ -277,12 +288,13 @@ class Mongql {
    * @param TypedefsAST The AST to convert to SDL
    * @param resource Name of the resource
    */
-  #cleanAndOutput = async (path: string, content: string, resource: string) => {
-    if (path) {
+  #cleanAndOutput = async (full_path: string, content: string) => {
+    if (full_path) {
+      const dirname = path.dirname(full_path);
       try {
-        const dirExists = fs.existsSync(path);
-        if (!dirExists) await fs.promises.mkdir(path);
-        await fs.promises.writeFile(`${path}\\${resource}`, content, 'utf-8');
+        const dirExists = fs.existsSync(dirname);
+        if (!dirExists) await fs.promises.mkdir(dirname);
+        await fs.promises.writeFile(full_path, content, 'utf-8');
       } catch (err) {
         console.log(err.message)
       }

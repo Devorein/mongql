@@ -5,5 +5,10 @@ module.exports = {
 	globalTeardown: './tests/globalTeardown.js',
 	verbose: true,
 	testPathIgnorePatterns: [ '<rootDir>/node_modules', '<rootDir>/dist' ],
-	modulePathIgnorePatterns: [ '<rootDir>/dist' ]
+	modulePathIgnorePatterns: [ '<rootDir>/dist' ],
+	roots: [ '<rootDir>/tests' ],
+	testMatch: [ '<rootDir>/tests/**/*.ts' ],
+	transform: {
+		'^.+\\.(ts)$': 'ts-jest'
+	}
 };

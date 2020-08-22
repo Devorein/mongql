@@ -68,7 +68,7 @@ class Mongql {
         const fileWithoutExt = path.basename(file, path.extname(file));
         let imported = require(schemaFile);
         imported = imported[fileWithoutExt + "Schema"] === undefined ? imported : imported[fileWithoutExt + "Schema"];
-        if (fileWithoutExt !== "index" && imported.mongql.skip !== true) {
+        if (fileWithoutExt !== "index" && imported?.mongql?.skip !== true) {
           imported_schemas.push(imported);
           imported.mongql.resource = capitalize(imported.mongql.resource);
           if (imported.mongql.TypeDefs && typeof imported.mongql.TypeDefs === 'string') imported.mongql.TypeDefs = gql(imported.mongql.TypeDefs);
@@ -259,8 +259,16 @@ class Mongql {
     const FragmentsInfoMap = generateFragments(OperationNodes, TransformedTypedefs.DocumentNode, SchemasInfo);
     generateOperations(OperationNodes, TransformedTypedefs.DocumentNode, FragmentsInfoMap);
 
-    if (output.Operation)
-      this.#cleanAndOutputSync(output.Operation, operationAstToJS(OperationNodes, FragmentsInfoMap, this.#globalConfigs.Operations), 'Operations.js');
+    if (output.Operation) {
+      const extension = path.extname(output.Operation);
+      if (extension === ".js")
+        this.#cleanAndOutputSync(output.Operation, operationAstToJS(OperationNodes, FragmentsInfoMap, this.#globalConfigs.Operations));
+      else if (extension === ".graphql") {
+        this.#cleanAndOutputSync(output.Operation, print(OperationNodes));
+      }
+      else
+        throw new Error(red("Invalid Fragment and Operation output file extension"))
+    }
 
     return {
       TransformedTypedefs,
@@ -278,9 +286,9 @@ class Mongql {
 
   #outputSync = (output: IOutputFull, typedefsAST: DocumentNode, resource: string) => {
     if (typeof output.SDL === 'string' && typedefsAST)
-      this.#cleanAndOutputSync(output.SDL, documentApi().addSDL(typedefsAST).toSDLString(), resource + ".graphql")
+      this.#cleanAndOutputSync(output.SDL + resource + ".graphql", documentApi().addSDL(typedefsAST).toSDLString())
     if (typeof output.AST === 'string')
-      this.#cleanAndOutputSync(output.AST, JSON.stringify(typedefsAST), `${resource}.json`)
+      this.#cleanAndOutputSync(output.AST + `${resource}.json`, JSON.stringify(typedefsAST))
   }
   /**
    * Clean the directory and creates output file
@@ -301,12 +309,13 @@ class Mongql {
     }
   }
 
-  #cleanAndOutputSync = (path: string, content: string, resource: string) => {
-    if (path) {
+  #cleanAndOutputSync = async (full_path: string, content: string) => {
+    if (full_path) {
+      const dirname = path.dirname(full_path);
       try {
-        const dirExists = fs.existsSync(path);
-        if (!dirExists) fs.mkdirSync(path);
-        fs.writeFileSync(`${path}\\${resource}`, content, 'UTF-8');
+        const dirExists = fs.existsSync(dirname);
+        if (!dirExists) fs.mkdirSync(dirname);
+        await fs.writeFileSync(full_path, content, 'utf-8');
       } catch (err) {
         console.log(err.message)
       }

@@ -6,6 +6,7 @@ import { createArgument } from "./operation";
 
 import generateOperations from "./generateOperations";
 import operationAstToJS from "./operationAstToJS";
+import flattenDocumentNode from "./flattenDocumentNode";
 
 type ScalarNode = EnumTypeDefinitionNode | ScalarTypeDefinitionNode;
 
@@ -34,5 +35,6 @@ export function detectScalarity(TypeName: string, DocumentNodes: DocumentNode) {
 export {
   convertToDocumentNodes,
   generateOperations,
-  operationAstToJS
+  operationAstToJS,
+  flattenDocumentNode
 }

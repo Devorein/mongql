@@ -1,5 +1,5 @@
 import { DocumentNode, print, NameNode, FragmentDefinitionNode, OperationDefinitionNode } from "graphql";
-import extractFragments from "./extractFragments";
+import { extractFragments } from "./extractFragments";
 import { TFragmentInfoMap, JSExportConfigFull } from "../../types";
 
 type SelectionSetDefinitionNode = FragmentDefinitionNode | OperationDefinitionNode;

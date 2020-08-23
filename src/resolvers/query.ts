@@ -23,7 +23,7 @@ type TExcludedFields = {
 export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<string, any>) {
   if (!InitResolver.Query) InitResolver.Query = {};
 
-  const { generate: { query }, resource } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
+  const { generate: { query }, resource, operationNameMapper = {} } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
   const cr = capitalize(resource);
 
   const ExcludedFields: TExcludedFields = {
@@ -76,7 +76,8 @@ export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<str
     auths.forEach((auth) => {
       const parts = Object.keys(query[range][auth]).filter((part) => query[range][auth as AuthEnumString][part as PartEnumString] !== false);
       parts.forEach((part) => {
-        const key = `get${capitalize(range)}${capitalize(auth)}${pcr}${capitalize(part)}`;
+        let key = `get${capitalize(range)}${capitalize(auth)}${pcr}${capitalize(part)}`;
+        key = operationNameMapper[key] || key;
         if (!QueryResolvers[key])
           QueryResolvers[key] = async function (
             parent: any,

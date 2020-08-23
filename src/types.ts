@@ -292,6 +292,7 @@ export interface IMongqlBaseSchemaConfigsPartial extends IMongqlGlobalAndBaseSch
   Resolvers?: IResolverPartial,
   uniqueBy?: string[],
   unAuthOpsList?: string[],
+  operationNameMapper?: Record<string, string>
 }
 
 /**
@@ -304,6 +305,7 @@ export interface IMongqlBaseSchemaConfigsFull extends IMongqlGlobalAndBaseSchema
   Resolvers: IResolverFull | undefined,
   uniqueBy: undefined | string[],
   unAuthOpsList: [] | string[],
+  operationNameMapper: undefined | Record<string, string>
 }
 
 /**

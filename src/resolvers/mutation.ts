@@ -17,7 +17,7 @@ import deleteResource from '../utils/resource/deleteResource';
 export default function generateMutationResolvers(SchemaInfo: TParsedSchemaInfo, InitResolver: Record<string, any>) {
   if (!InitResolver.Mutation) InitResolver.Mutation = {};
   const BaseSchemaConfigs = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
-  const { generate: { mutation }, resource } = BaseSchemaConfigs;
+  const { generate: { mutation }, resource, operationNameMapper = {} } = BaseSchemaConfigs;
 
   const capitalizedResource = resource.charAt(0).toUpperCase() + resource.substr(1);
   const pluralizedcapitalizedResource = pluralize(capitalizedResource, 2);
@@ -54,7 +54,8 @@ export default function generateMutationResolvers(SchemaInfo: TParsedSchemaInfo,
   actions.forEach((action) => {
     const targets = Object.keys(mutation[action as ActionEnumString]).filter((target) => mutation[action as ActionEnumString][target as TargetEnumString]);
     targets.forEach((target) => {
-      const key = `${action}${target === 'single' ? capitalizedResource : pluralizedcapitalizedResource}`;
+      let key = `${action}${target === 'single' ? capitalizedResource : pluralizedcapitalizedResource}`;
+      key = operationNameMapper[key] || key;
       if (!MutationResolvers[key])
         MutationResolvers[key] =
           MutationResolversMapper[(action as ActionEnumString)][target as TargetEnumString];

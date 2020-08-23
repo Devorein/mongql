@@ -41,7 +41,7 @@ const ArgumentMap: Record<string, any[]> = {
 export default function (SchemaInfo: TParsedSchemaInfo, TypedefAST: MutableDocumentNode) {
   const ast = documentApi().addSDL(TypedefAST);
   const doesQueryExtExists = ast.hasExt('Query');
-  const { resource: r, generate: { query } } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
+  const { resource: r, generate: { query }, operationNameMapper = {} } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
   const cr = capitalize(r);
   const cpr = pluralize(cr, 2);
   const QueryExt = doesQueryExtExists ? ast.getExt('Query') as ObjectExtApi : objectExtApi(
@@ -65,7 +65,7 @@ export default function (SchemaInfo: TParsedSchemaInfo, TypedefAST: MutableDocum
         const QueryName = `get${capitalize(range)}${capitalize(auth)}${cpr}${capitalize(part)}`;
         const Arguments = ArgumentMap[range as RangeEnumString]
         QueryExt.createField({
-          name: QueryName,
+          name: operationNameMapper[QueryName] || QueryName,
           type: output,
           description: `Get ${range} ${auth} ${r} ${part}`,
           arguments: Arguments

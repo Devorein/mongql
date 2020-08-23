@@ -71,7 +71,7 @@ const ArgumentMap = {
  * @param TypedefAST Initital or Previous DocumentNode to merge to Final AST
  */
 export default function (SchemaInfo: TParsedSchemaInfo, TypedefAST: MutableDocumentNode) {
-  const { resource: r, generate: { mutation } } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
+  const { resource: r, generate: { mutation }, operationNameMapper = {} } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
   const ast = documentApi().addSDL(TypedefAST);
   const doesMutationExtExists = ast.hasExt('Mutation');
   const cr = capitalize(r);
@@ -94,14 +94,14 @@ export default function (SchemaInfo: TParsedSchemaInfo, TypedefAST: MutableDocum
       const MutationName = `${action}${target === "single" ? cr : cpr}`
       if (target === 'single')
         MutationExt.createField({
-          name: MutationName,
+          name: operationNameMapper[MutationName] || MutationName,
           type: `Self${cr}Object!`,
           description: `${capitalize(action)} single ${r}`,
           arguments: Arguments
         });
       else if (target === 'multi')
         MutationExt.createField({
-          name: MutationName,
+          name: operationNameMapper[MutationName] || MutationName,
           type: `[Self${cr}Object!]!`,
           description: `${capitalize(action)} multiple ${r}`,
           arguments: Arguments

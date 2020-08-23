@@ -12,7 +12,7 @@ import Username from "./utils/gql-types/username"
 import { IMongqlGlobalConfigsPartial, IMongqlGlobalConfigsFull, IMongqlMongooseSchemaFull, IMongqlMongooseSchemaPartial, TParsedSchemaInfo, IOutputFull, MutableDocumentNode, ITransformedASTPart, ITransformedResolverPart } from "./types";
 import generateTypedefs from './typedefs';
 import generateResolvers from './resolvers';
-import { capitalize, generateFragments, generateOperations, sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes, red, green } from "./utils";
+import { capitalize, generateFragments, generateOperations, sortNodes, sortFields, operationAstToJS, AsyncForEach, generateGlobalConfigs, generateBaseSchemaConfigs, loadFiles, convertToDocumentNodes, red, green, yellow } from "./utils";
 
 const BaseTypeDefs = gql`
   type Query {
@@ -67,12 +67,12 @@ class Mongql {
         const schemaFile = path.join(schemaPath, file);
         const fileWithoutExt = path.basename(file, path.extname(file));
         let imported = require(schemaFile);
-        imported = imported[fileWithoutExt + "Schema"] === undefined ? imported : imported[fileWithoutExt + "Schema"];
-        if (fileWithoutExt !== "index" && imported?.mongql?.skip !== true) {
+        imported = imported[fileWithoutExt + "Schema"] || imported;
+        if (fileWithoutExt !== "index" && imported.mongql && imported.mongql?.skip !== true) {
           imported_schemas.push(imported);
           imported.mongql.resource = capitalize(imported.mongql.resource);
           if (imported.mongql.TypeDefs && typeof imported.mongql.TypeDefs === 'string') imported.mongql.TypeDefs = gql(imported.mongql.TypeDefs);
-        }
+        } else yellow(`Skipping ${file}`)
       });
     }
     else
@@ -216,7 +216,8 @@ class Mongql {
     return {
       TransformedTypedefs,
       TransformedResolvers,
-      SchemasInfo
+      SchemasInfo,
+      OperationNodes
     };
   }
 
@@ -273,7 +274,8 @@ class Mongql {
     return {
       TransformedTypedefs,
       TransformedResolvers,
-      SchemasInfo
+      SchemasInfo,
+      OperationNodes
     };
   }
 

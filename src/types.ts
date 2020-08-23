@@ -290,7 +290,7 @@ export interface IMongqlBaseSchemaConfigsPartial extends IMongqlGlobalAndBaseSch
   skip?: boolean,
   TypeDefs?: DocumentNode,
   Resolvers?: IResolverPartial,
-  uniqueBy?: string,
+  uniqueBy?: string[],
   unAuthOpsList?: string[],
 }
 
@@ -302,7 +302,7 @@ export interface IMongqlBaseSchemaConfigsFull extends IMongqlGlobalAndBaseSchema
   skip: boolean,
   TypeDefs: DocumentNode | undefined,
   Resolvers: IResolverFull | undefined,
-  uniqueBy: undefined | string,
+  uniqueBy: undefined | string[],
   unAuthOpsList: [] | string[],
 }
 

@@ -26,26 +26,26 @@ export default function generateMutationResolvers(SchemaInfo: TParsedSchemaInfo,
   const MutationResolversMapper = {
     create: {
       single: async function (parent: any, args: any, ctx: any) {
-        return await createResource(ctx[capitalizedResource], args.data, ctx.user.id, SchemaInfo, BaseSchemaConfigs);
+        return await createResource(ctx[capitalizedResource], args.data, ctx?.user?.id, SchemaInfo, BaseSchemaConfigs, ctx);
       },
       multi: async function (parent: any, args: any, ctx: any) {
-        return await createResource(ctx[capitalizedResource], args.datas, ctx.user.id, SchemaInfo, BaseSchemaConfigs);
+        return await createResource(ctx[capitalizedResource], args.datas, ctx?.user?.id, SchemaInfo, BaseSchemaConfigs, ctx);
       }
     },
     update: {
       single: async function (parent: any, args: any, ctx: any) {
-        return (await updateResource(ctx[capitalizedResource], args.data, ctx.user.id, SchemaInfo));
+        return (await updateResource(ctx[capitalizedResource], args.data, ctx?.user?.id, SchemaInfo, ctx));
       },
       multi: async function (parent: any, args: any, ctx: any) {
-        return await updateResource(ctx[capitalizedResource], args.datas, ctx.user.id, SchemaInfo);
+        return await updateResource(ctx[capitalizedResource], args.datas, ctx?.user?.id, SchemaInfo, ctx);
       }
     },
     delete: {
       single: async function (parent: any, args: any, ctx: any) {
-        return await deleteResource(ctx[capitalizedResource], args.id, ctx.user.id, SchemaInfo);
+        return await deleteResource(ctx[capitalizedResource], args.id, ctx?.user?.id, SchemaInfo, ctx);
       },
       multi: async function (parent: any, args: any, ctx: any) {
-        return await deleteResource(ctx[capitalizedResource], args.ids, ctx.user.id, SchemaInfo);
+        return await deleteResource(ctx[capitalizedResource], args.ids, ctx?.user?.id, SchemaInfo, ctx);
       }
     }
   };

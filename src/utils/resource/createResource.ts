@@ -1,24 +1,26 @@
 import { Model } from "mongoose";
-
+import { capitalize } from "../../utils";
 import { TParsedSchemaInfo, IMongqlBaseSchemaConfigsFull } from "../../types";
 
-async function createResource(model: Model<any>, data: any, userId: string, SchemaInfo: TParsedSchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull) {
+async function createResource(model: Model<any>, data: any, userId: string, SchemaInfo: TParsedSchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull, ctx: any) {
   const { uniqueBy } = SchemaConfig;
-  // Check if previous resource with same uniqueBy key exists
   if (uniqueBy) {
-    const alreadyExists = await model.countDocuments({
-      [uniqueBy]: data[uniqueBy],
-      user: userId
-    }) > 0;
-    if (alreadyExists)
-      throw new Error(`You already have an environment named ${data.name}`);
+    for (let i = 0; i < uniqueBy.length; i++) {
+      const uniqueKey = uniqueBy[i];
+      const query = {
+        [uniqueKey]: data[uniqueKey],
+      };
+      if (model.name !== "user") query.user = userId;
+      const alreadyExists = await model.countDocuments(query) > 0;
+      if (alreadyExists)
+        throw new Error(`${capitalize(model.collection.collectionName)} with ${uniqueKey} ${data[uniqueKey]} already exists`);
+    }
   }
 
   data.user = userId;
-  // Call the precreate and postcreate static methods on the schema if they exists
-  if (typeof model.schema.statics.precreate === 'function') await model.schema.statics.precreate(data, SchemaInfo);
+  if (typeof model.schema.statics.precreate === 'function') await model.schema.statics.precreate(data, SchemaInfo, ctx);
   const resource = await model.create(data);
-  if (typeof model.schema.statics.postcreate === 'function') await model.schema.statics.postcreate(data, SchemaInfo);
+  if (typeof model.schema.statics.postcreate === 'function') await model.schema.statics.postcreate(data, SchemaInfo, ctx);
   return resource;
 }
 
@@ -31,12 +33,12 @@ async function createResource(model: Model<any>, data: any, userId: string, Sche
  * @param SchemaConfig Configuration of the BaseMongqlMongooseSchema
  * @returns created resource(s)
  */
-export default async function (model: Model<any>, datas: any | any[], userId: string, SchemaInfo: TParsedSchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull) {
+export default async function (model: Model<any>, datas: any | any[], userId: string, SchemaInfo: TParsedSchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull, ctx: any) {
   if (Array.isArray(datas)) {
     const created_resources = [];
     for (let i = 0; i < datas.length; i++)
-      created_resources.push(await createResource(model, datas[i], userId, SchemaInfo, SchemaConfig));
+      created_resources.push(await createResource(model, datas[i], userId, SchemaInfo, SchemaConfig, ctx));
     return created_resources
   }
-  else return await createResource(model, datas, userId, SchemaInfo, SchemaConfig)
+  else return await createResource(model, datas, userId, SchemaInfo, SchemaConfig, ctx)
 }

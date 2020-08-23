@@ -32,9 +32,9 @@ describe('Fragment generation checker', () => {
     Schemas: [Schema1]
   });
 
-  const { TransformedTypedefs } = mongql.generateSync();
-  const FlattenedDocumentNode = flattenDocumentNode(TransformedTypedefs.DocumentNode);
+  const { SchemasInfo, OperationNodes } = mongql.generateSync();
+  const FlattenedDocumentNode = flattenDocumentNode(OperationNodes);
   it('Should output correct fragments', () => {
-    expect(TransformedTypedefs).not.toBe(null);
+    expect(OperationNodes).not.toBe(null);
   });
 });

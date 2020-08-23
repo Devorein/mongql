@@ -159,7 +159,6 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       type.push({})
     });
 
-
     const Interfaces = Types.interfaces[path.length];
     const Enums = Types.enums[path.length];
     const Objects = Types.objects[path.length];
@@ -180,7 +179,6 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
           interfaces: CurrentSchemaConfigs.generate.type.interface ? [`${Type}Interface`] : []
         })
       ), { fields: {} });
-      // if (!parentKey) Objects[ObjectName].createField({ name: 'id', type: 'ID!' });
       UnionsObjTypes.push({
         kind: 'NamedType',
         name: {
@@ -217,8 +215,6 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       })
     );
 
-    // if (!parentKey) Interfaces[`${Type}Interface`].createField({ name: 'id', type: 'ID!' });
-
     if (!Fields[path.length]) Fields.push({});
 
     Object.entries(Schema.obj).forEach(([key, value]: [string, any]) => {
@@ -228,7 +224,6 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       const { description, authMapper, nullable: { input: nullable_input, object: nullable_object }, attach: { input: attach_to_input, interface: attach_to_interface, enum: attach_to_enum } } = generatedFieldConfigs;
       const { object_type, input_type, ref_type, enum_type } = generateSpecificType(generic_type, innerValue, key, parentKey, cr);
       const [field_excluded_auth_segments, field_included_auth_segments] = generateIncludedAuthSegments(generatedFieldConfigs.attach.object, currentSchema_included_auth_segments);
-
       path = parentKey ? [...path, { object_type, key, enum_type }] : [{ object_type, key, enum_type }];
       const generatedFieldFullInfo: FieldFullInfo = Object.assign({}, generatedFieldConfigs, {
         input_type,
@@ -287,7 +282,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
           values: [...value.enum]
         }));
 
-      if (CurrentSchemaConfigs.generate.type.interface && (field_excluded_auth_segments.length !== 2 && field_included_auth_segments.length !== 2) && attach_to_interface && !Interfaces[`${Type}Interface`].hasField(key))
+      if (CurrentSchemaConfigs.generate.type.interface && (field_excluded_auth_segments.length !== 2 && field_included_auth_segments.length !== 2) && field_included_auth_segments.length !== 0 && attach_to_interface && !Interfaces[`${Type}Interface`].hasField(key))
         Interfaces[`${Type}Interface`].createField({
           name: key, type: decorateTypes(object_type + (generic_type.match(/(ref|object)/) ? "Union" : ""), nullable_object[(field_included_auth_segments)[0]])
         })

@@ -32,9 +32,15 @@ describe('Fragment generation checker', () => {
     Schemas: [Schema1]
   });
 
-  const { SchemasInfo, OperationNodes } = mongql.generateSync();
+  const { OperationNodes } = mongql.generateSync();
   const FlattenedDocumentNode = flattenDocumentNode(OperationNodes);
-  it('Should output correct fragments', () => {
-    expect(OperationNodes).not.toBe(null);
+  it('Should create correct fragments', () => {
+    ['Self', 'Others', 'Mixed'].forEach(auth => {
+      ['Schema1', 'Schema1Field2'].forEach(schema => {
+        ['ObjectRefsNone', 'ObjectObjectsNone', 'ObjectScalarsOnly'].forEach(fragment => {
+          expect(FlattenedDocumentNode.FragmentDefinition[auth + schema + fragment + "Fragment"]).toBeTruthy();
+        });
+      })
+    })
   });
 });

@@ -159,7 +159,7 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
         });
         Object.entries(SchemaInfo.Fragments).forEach(([FragmentName, FragmentSelections]) => {
           const CustomFragmentsMap: Record<string, FragmentDefinitionNode> = {};
-          FragmentSelections.forEach(FragmentSelection => {
+          FragmentSelections.forEach((FragmentSelection) => {
             const FieldName = Array.isArray(FragmentSelection) ? FragmentSelection[0] : FragmentSelection;
             const FieldFragmentName = Array.isArray(FragmentSelection) ? FragmentSelection[1] : FragmentName;
             const FieldInfo = SchemaInfo.fields[FieldName];
@@ -170,7 +170,7 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
               FragmentsInfoMap[FragmentObjectName][FragmentName] = FragmentName;
               if (!CustomFragmentsMap[includedAuthSegment])
                 CustomFragmentsMap[includedAuthSegment] = createFragment(capitalize(includedAuthSegment) + SchemaName + "Object" + FragmentName + "Fragment", FragmentObjectName, []);
-              (CustomFragmentsMap[includedAuthSegment].selectionSet.selections as SelectionNode[]).push(FieldInfo.generic_type.match(/(object|ref)/) ? createSelectionSet(FieldName, [createFragmentSpread(capitalize(includedAuthSegment) + FieldInfo.object_type + "Object" + FieldFragmentName + "Fragment")]) : createField(FragmentSelection))
+              (CustomFragmentsMap[includedAuthSegment].selectionSet.selections as SelectionNode[]).push(FieldInfo.generic_type.match(/(object|ref)/) ? createSelectionSet(FieldName, [createFragmentSpread(capitalize(includedAuthSegment) + FieldInfo.object_type + "Object" + FieldFragmentName + "Fragment")]) : createField(FragmentSelection as string))
             });
           });
           Object.values(CustomFragmentsMap).forEach((CustomGeneratedFragmentNode) => {

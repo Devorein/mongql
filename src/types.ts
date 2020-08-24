@@ -226,14 +226,14 @@ export type ISortPartial = {
 export interface IMongqlGlobalAndBaseSchemaCommonPartial {
   generate?: boolean | IGeneratePartial,
   output?: boolean | IOutputPartial,
-  Fragments?: Record<string, string[]>,
+  Fragments?: Record<string, (string | [string, string])[]>,
   sort?: boolean | ISortPartial
 }
 
 export interface IMongqlGlobalAndBaseSchemaCommonFull {
   generate: IGenerateFull,
   output: IOutputFull,
-  Fragments: Record<string, string[]>,
+  Fragments: Record<string, (string | [string, string])[]>,
   sort: ISortFull
 }
 
@@ -313,7 +313,7 @@ export interface IMongqlBaseSchemaConfigsFull extends IMongqlGlobalAndBaseSchema
  */
 export interface IMongqlNestedSchemaConfigsFull extends IMongqlFieldConfigsFull {
   generate: IGenerateFull,
-  Fragments: Record<string, string[]>,
+  Fragments: Record<string, (string | [string, string])[]>,
   type: undefined | string
 }
 
@@ -322,7 +322,7 @@ export interface IMongqlNestedSchemaConfigsFull extends IMongqlFieldConfigsFull 
  */
 export interface IMongqlNestedSchemaConfigsPartial extends IMongqlFieldConfigsPartial {
   generate?: IGeneratePartial,
-  Fragments?: Record<string, string[]>,
+  Fragments?: Record<string, (string | [string, string])[]>,
   type?: string
 }
 

@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@graphql-tools/resolvers-composition": "^6.0.14",
+    "bson": "^4.1.0",
     "graphql": "^15.3.0",
     "graphql-extra": "^0.2.2",
     "graphql-scalars": "^1.2.6",

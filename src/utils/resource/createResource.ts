@@ -1,6 +1,7 @@
 import { Model } from "mongoose";
 import { capitalize } from "../../utils";
 import { TParsedSchemaInfo, IMongqlBaseSchemaConfigsFull } from "../../types";
+import { ObjectID } from "bson";
 
 async function createResource(model: Model<any>, data: any, userId: string, SchemaInfo: TParsedSchemaInfo, SchemaConfig: IMongqlBaseSchemaConfigsFull, ctx: any) {
   const { uniqueBy } = SchemaConfig;
@@ -19,7 +20,9 @@ async function createResource(model: Model<any>, data: any, userId: string, Sche
 
   data.user = userId;
   if (typeof model.schema.statics.precreate === 'function') await model.schema.statics.precreate(data, SchemaInfo, ctx);
-  const resource = await model.create(data);
+  data._id = new ObjectID();
+  const resource = new model(data);
+  await resource.save();
   if (typeof model.schema.statics.postcreate === 'function') await model.schema.statics.postcreate(data, SchemaInfo, ctx);
   return resource;
 }

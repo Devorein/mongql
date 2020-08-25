@@ -19,8 +19,8 @@ async function createResource(model: Model<any>, data: any, userId: string, Sche
   }
 
   data.user = userId;
-  if (typeof model.schema.statics.precreate === 'function') await model.schema.statics.precreate(data, SchemaInfo, ctx);
   data._id = new ObjectID();
+  if (typeof model.schema.statics.precreate === 'function') await model.schema.statics.precreate(data, SchemaInfo, ctx);
   const resource = new model(data);
   await resource.save();
   if (typeof model.schema.statics.postcreate === 'function') await model.schema.statics.postcreate(data, SchemaInfo, ctx);

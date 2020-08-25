@@ -6,7 +6,8 @@
         "target": "ESNext",
         "outDir": "dist",
         "lib": [
-            "ESNext"
+            "ESNext",
+            "dom"
         ],
         "noImplicitAny": true,
         "moduleResolution": "node",

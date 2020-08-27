@@ -58,8 +58,33 @@ export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<str
   const QueryResolvers: { [key: string]: any } = InitResolver.Query;
 
   const Pagination = async (auth: AuthEnumString, args: any, ctx: any) => {
-    const { page, limit, sort, filter } = parsePagination(args.pagination);
-    return ctx[cr].find({ ...filter, ...AuthFilters[auth](ctx) }).sort(sort).skip(page).limit(limit);
+    const model = ctx[cr];
+    const { startIndex, endIndex, page, limit, sort, filter } = parsePagination(args.pagination);
+    const total = await model.countDocuments();
+    const pagination = {
+      prev: {},
+      next: {}
+    };
+
+    if (endIndex < total)
+      pagination.next = {
+        page: page + 1,
+        limit
+      };
+
+    if (startIndex > 0)
+      pagination.prev = {
+        page: page - 1,
+        limit
+      };
+
+    const data = ctx[cr].find({ ...filter, ...AuthFilters[auth](ctx) }).sort(sort).skip(startIndex).limit(limit);
+
+    return {
+      count: data.length,
+      pagination,
+      data
+    };
   };
 
   const Filter = async (auth: AuthEnumString, args: any, ctx: any) => {
@@ -100,7 +125,7 @@ export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<str
             let query = null;
 
             if (range === 'all') query = ctx[cr].find({ ...AuthFilter });
-            else if (range === 'paginated') query = Pagination(auth, args, ctx);
+            else if (range === 'paginated') query = await Pagination(auth, args, ctx);
             else if (range === 'filtered') query = Filter(auth, args, ctx);
             else if (range === 'id')
               query = ctx[cr].find({

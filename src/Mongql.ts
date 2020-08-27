@@ -34,6 +34,11 @@ const BaseTypeDefs = gql`
     success: Boolean!
     message: String!
   }
+
+  type PaginationObject{
+    page: Int!
+    limit: Int!
+  }
 `;
 
 class Mongql {

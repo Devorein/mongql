@@ -300,6 +300,21 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
 
   _inner(BaseSchema, cr, [], BaseSchemaConfigs);
 
+  ['Self', 'Others', 'Mixed'].forEach(auth => {
+    Types.objects[0][`${auth}${cr}PaginationObject`] = Object.assign({},
+      objectTypeApi(
+        t.objectType({
+          name: `${auth}${cr}PaginationObject`,
+          description: `${auth} ${cr} Pagination Object`,
+          fields: [],
+          interfaces: []
+        })
+      ), { fields: {} });
+    Types.objects[0][`${auth}${cr}PaginationObject`].createField({ name: 'count', type: 'PositiveInt!' });
+    Types.objects[0][`${auth}${cr}PaginationObject`].createField({ name: 'pagination', type: 'PaginationObject!' });
+    Types.objects[0][`${auth}${cr}PaginationObject`].createField({ name: 'data', type: `[${auth}${cr}PaginationObject!]!` });
+  })
+
   Object.values(Types).forEach((types) => {
     types.forEach((type: TypeDefinitonApi) => {
       Object.values(type).forEach((value) => {

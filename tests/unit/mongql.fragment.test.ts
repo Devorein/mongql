@@ -130,6 +130,7 @@ it('Regular Schema with additional fragments Fragment generation checker', () =>
   const mongql = new Mongql({
     Schemas: [Schema1],
   });
+
   const { OperationNodes } = mongql.generateSync();
   const FlattenedDocumentNode = flattenDocumentNode(OperationNodes);
   ['Self', 'Others', 'Mixed'].forEach(auth => {

@@ -59,8 +59,8 @@ export default function (SchemaInfo: TParsedSchemaInfo, TypedefAST: MutableDocum
     auths.forEach((auth) => {
       const parts = Object.keys(query[range as RangeEnumString][auth as AuthEnumString]).filter((part) => query[range as RangeEnumString][auth as AuthEnumString][part as PartEnumString]);
       parts.forEach((part) => {
-        let output = `${capitalize(auth)}${cr}Object!`;
-        output = range !== 'id' ? `[${output}]!` : output;
+        let output = range === "paginated" ? `${capitalize(auth)}${cr}PaginationObject!` : `${capitalize(auth)}${cr}Object!`;
+        output = !range.match(/(id|paginated)/) ? `[${output}]!` : output;
         if (part === 'count') output = 'NonNegativeInt!';
         const QueryName = `get${capitalize(range)}${capitalize(auth)}${cpr}${capitalize(part)}`;
         const Arguments = ArgumentMap[range as RangeEnumString]

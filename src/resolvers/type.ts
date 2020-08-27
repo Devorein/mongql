@@ -1,4 +1,5 @@
-import { FieldFullInfo, TParsedSchemaInfo } from "../types";
+import { FieldFullInfo, TParsedSchemaInfo, IMongqlBaseSchemaConfigsFull } from "../types";
+import { capitalize } from "../utils";
 
 /**
  * Generates type (except query and mutation) resolvers from the Schemainfo
@@ -9,6 +10,8 @@ import { FieldFullInfo, TParsedSchemaInfo } from "../types";
 export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<string, any>) {
   const { Types: { objects } } = SchemaInfo;
   const result: { [key: string]: any } = InitResolver;
+  const { resource } = Object.values(SchemaInfo.Schemas[0])[0] as IMongqlBaseSchemaConfigsFull;
+  const cr = capitalize(resource);
 
   objects.forEach(object => {
     Object.entries(object).forEach(([object_key, value]) => {
@@ -38,4 +41,10 @@ export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<str
       })
     });
   });
+  ['Self', 'Others', 'Mixed'].forEach(auth => {
+    InitResolver[`${auth}${cr}PaginationObject`] = {
+      pagination: (parent: any) => parent.pagination,
+      data: (parent: any) => parent.data
+    };
+  })
 }

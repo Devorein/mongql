@@ -42,12 +42,6 @@ export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<str
     })
   });
 
-
-  const Selection = (auth: AuthEnumString, part: string) => {
-    if (part === 'nameandind') return 'name';
-    else if (part === 'whole') return ExcludedFields[auth];
-  };
-
   const AuthFilters = {
     self: (ctx: any) => ({ user: ctx.user.id }),
     others: (ctx: any) => ({ user: { $ne: ctx.user.id } }),
@@ -78,10 +72,13 @@ export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<str
         limit
       };
 
-    const data = ctx[cr].find({ ...filter, ...AuthFilters[auth](ctx) }).sort(sort).skip(startIndex).limit(limit);
-
+    const data = await ctx[cr].find({ ...filter, ...AuthFilters[auth](ctx) }).sort(sort).skip(startIndex).limit(limit).select(ExcludedFields[auth]);
+    const count = await ctx[cr].countDocuments({
+      ...filter,
+      ...AuthFilters[auth](ctx)
+    });
     return {
-      count: data.length,
+      count,
       pagination,
       data
     };
@@ -89,10 +86,10 @@ export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<str
 
   const Filter = async (auth: AuthEnumString, args: any, ctx: any) => {
     const { filter = '{}' } = args;
-    return ctx[cr].find({
+    return await ctx[cr].find({
       ...JSON.parse(filter),
       ...AuthFilters[auth](ctx)
-    });
+    }).select(ExcludedFields[auth]);
   };
 
   const ranges = Object.keys(query) as RangeEnumString[];
@@ -122,18 +119,17 @@ export default function (SchemaInfo: TParsedSchemaInfo, InitResolver: Record<str
                 });
             }
 
-            let query = null;
+            let res = null;
 
-            if (range === 'all') query = ctx[cr].find({ ...AuthFilter });
-            else if (range === 'paginated') query = await Pagination(auth, args, ctx);
-            else if (range === 'filtered') query = Filter(auth, args, ctx);
+            if (range === 'all') res = await ctx[cr].find({ ...AuthFilter }).select(ExcludedFields[auth]);
+            else if (range === 'paginated') res = await Pagination(auth, args, ctx);
+            else if (range === 'filtered') res = await Filter(auth, args, ctx);
             else if (range === 'id')
-              query = ctx[cr].find({
+              res = await ctx[cr].find({
                 ...AuthFilter,
                 _id: args.id
               });
 
-            const res = await query.select(Selection(auth, part));
             return range === 'id' ? res[0] : res;
           };
       });

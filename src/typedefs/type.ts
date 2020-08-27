@@ -312,7 +312,7 @@ function parseMongooseSchema(BaseSchema: IMongqlMongooseSchemaFull, InitTypedefs
       ), { fields: {} });
     Types.objects[0][`${auth}${cr}PaginationObject`].createField({ name: 'count', type: 'PositiveInt!' });
     Types.objects[0][`${auth}${cr}PaginationObject`].createField({ name: 'pagination', type: 'PaginationObject!' });
-    Types.objects[0][`${auth}${cr}PaginationObject`].createField({ name: 'data', type: `[${auth}${cr}PaginationObject!]!` });
+    Types.objects[0][`${auth}${cr}PaginationObject`].createField({ name: 'data', type: `[${auth}${cr}Object!]!` });
   })
 
   Object.values(Types).forEach((types) => {

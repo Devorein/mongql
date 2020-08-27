@@ -4,6 +4,7 @@ import { createSelections, createFragmentSpread, createSelectionSet } from './op
 import { getNestedType } from '.';
 import { TParsedSchemaInfo, MutableDocumentNode, TFragmentInfoMap } from '../../types';
 import { capitalize } from '../../utils';
+import flattenDocumentNode from './flattenDocumentNode';
 
 /**
  * Creates a fragment node
@@ -54,30 +55,19 @@ export function createField(field_name: string): FieldNode {
  * @param SchemaInfo Parsed Schemainfo for generating custom fragments
  */
 export function generateFragments(OperationNodes: MutableDocumentNode, InitTypedefsAST: DocumentNode, SchemasInfo: Record<string, TParsedSchemaInfo>) {
-  const DocumentNodeTypes: any = {
-    objects: {},
-    inputs: {},
-    interfaces: {},
-    unions: {},
-    enums: {},
-    scalars: {
-      String: true, Boolean: true, Int: true, Float: true, ID: true
-    }
+  const FlattenedDocumentNode = flattenDocumentNode(InitTypedefsAST);
+  const Scalars: any = {
+    String: true,
+    Boolean: true,
+    ID: true,
+    Float: true,
+    Int: true
   };
-
   const RefsNodeMap: any = {};
   const FragmentsInfoMap: TFragmentInfoMap = {};
   const FieldInfoMap: any = {};
 
-  InitTypedefsAST.definitions.forEach(DefinitionNode => {
-    if (DefinitionNode.kind === "ObjectTypeDefinition") DocumentNodeTypes.objects[DefinitionNode.name.value] = true;
-    else if (DefinitionNode.kind === "EnumTypeDefinition") DocumentNodeTypes.enums[DefinitionNode.name.value] = true;
-    else if (DefinitionNode.kind === "InputObjectTypeDefinition") DocumentNodeTypes.inputs[DefinitionNode.name.value] = true;
-    else if (DefinitionNode.kind === "InterfaceTypeDefinition") DocumentNodeTypes.interfaces[DefinitionNode.name.value] = true;
-    else if (DefinitionNode.kind === "UnionTypeDefinition") DocumentNodeTypes.unions[DefinitionNode.name.value] = true;
-    else if (DefinitionNode.kind === "ScalarTypeDefinition") DocumentNodeTypes.scalars[DefinitionNode.name.value] = true;
-  });
-
+  // Generated and preadded types fragment generation
   function generateObjectFragments(FragmentName: string, ObjTypeDef: ObjectTypeDefinitionNode, parts: string[]) {
     if (!FragmentsInfoMap[FragmentName]) FragmentsInfoMap[FragmentName] = {};
     FragmentsInfoMap[FragmentName].RefsNone = 'RefsNone';
@@ -88,7 +78,7 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
     let containsScalar = false, containsRef = false, containsObject = false;
     ObjTypeDef.fields?.forEach(FieldDefinition => {
       const FieldType = getNestedType(FieldDefinition.type);
-      const isScalar = (DocumentNodeTypes.enums[FieldType] || DocumentNodeTypes.scalars[FieldType]) === true;
+      const isScalar = Boolean(FlattenedDocumentNode?.EnumTypeDefinition?.[FieldType] || Scalars[FieldType] || FlattenedDocumentNode?.ScalarTypeDefinition[FieldType]);
       if (isScalar) containsScalar = true;
       else if (RefsNodeMap[FieldType]) containsRef = true;
       else containsObject = true;
@@ -121,6 +111,7 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
         FragmentsInfoMap[FragmentName].ObjectsNone = false
         break;
     }
+
     parts.forEach(part => {
       const selections = (ObjTypeDef.fields as FieldDefinitionNode[]).reduce(
         (acc, FieldDefinition) => {
@@ -150,6 +141,7 @@ export function generateFragments(OperationNodes: MutableDocumentNode, InitTyped
     });
   });
 
+  // Custom fragment generation
   Object.values(SchemasInfo).forEach((SchemaInfo) => {
     SchemaInfo.Schemas.forEach(Schemas => {
       Object.entries(Schemas).forEach(([SchemaName, SchemaInfo]) => {

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { documentApi } from 'graphql-extra';
-import { capitalize } from '../../dist/utils';
-import { IMongqlMongooseSchemaPartial } from '../../dist';
+import { capitalize, flattenDocumentNode } from '../../dist/utils';
+import { IMongqlMongooseSchemaPartial, MutableDocumentNode } from '../../dist';
 
 const {
   generateOptions,
@@ -16,11 +16,13 @@ const {
 
 const { query: { options: QueryOptions, fields: QueryFields } } = generateOptions();
 
-const queryOpts: {
+type QueryOpt = {
   field: string,
-  excludedQuery: string[],
+  excludedQueries: string[],
   query: boolean
-}[] = [];
+};
+
+const queryOpts: QueryOpt[] = [];
 
 const QueryMap: Record<string, string[]> = {
   getAllSelfUsersWhole: ['', '[SelfUserObject!]!'],
@@ -51,43 +53,59 @@ const Arraydiff = (target: any[], a: any) => {
 
 queryOpts.push({
   field: 'query',
-  excludedQuery: QueryFields,
+  excludedQueries: QueryFields,
   query: false
 });
 
-mixObjectProp(flattenObject(QueryOptions)).sort().forEach((excludeQuery: string) => {
+mixObjectProp(flattenObject(QueryOptions)).sort().forEach((excludeQuery: string, index: number) => {
   const query = setNestedFields({}, excludeQuery, false);
-  const excludedQuery = matchFlattenedObjProps(excludeQuery, QueryFields);
+  const excludedQueries = matchFlattenedObjProps(excludeQuery, QueryFields);
   queryOpts.push({
     field: excludeQuery,
     query,
-    excludedQuery
+    excludedQueries
   });
 });
 
-function QueryChecker(target: any, { excludedQuery }: any, type: any) {
+function QueryChecker(target: any, { excludedQueries }: any, type: any) {
   function checker(fields: string[], against: boolean) {
     fields.forEach((field) => {
       const [range, auth, part] = field.split('.');
-      const typename = `get${capitalize(range)}${capitalize(auth)}Users${capitalize(part)}`;
+      const queryname = `get${capitalize(range)}${capitalize(auth)}Users${capitalize(part)}`;
       if (type === 'typedef') {
-        expect(target.hasField(typename)).toBe(against);
+        expect(target.hasField(queryname)).toBe(against);
         if (against) {
-          expect(QueryMap[typename][0]).toBe(argumentsToString(target.getField(typename).node.arguments));
-          expect(QueryMap[typename][1]).toBe(outputToString(target.getField(typename).node.type));
+          expect(QueryMap[queryname][0]).toBe(argumentsToString(target.getField(queryname).node.arguments));
+          expect(QueryMap[queryname][1]).toBe(outputToString(target.getField(queryname).node.type));
         }
-      } else expect(Boolean(target[typename])).toBe(against);
+      } else expect(Boolean(target[queryname])).toBe(against);
     });
   }
-  if (excludedQuery.length === QueryMapLength) {
+  if (excludedQueries.length === QueryMapLength) {
     if (type === 'typedef') expect(documentApi().addSDL(target).hasExt('Query')).toBe(false);
     if (type === 'resolver') expect(target.Query).toBeFalsy();
   } else {
     target = type === 'typedef' ? documentApi().addSDL(target).getExt('Query') : target;
-    const includedFields = Arraydiff(QueryFields, excludedQuery);
-    checker(excludedQuery, false);
-    checker(includedFields, true);
+    const includedQueries = Arraydiff(QueryFields, excludedQueries);
+    checker(excludedQueries, false);
+    checker(includedQueries, true);
   }
+}
+
+function OperationChecker(OperationNodes: MutableDocumentNode, { excludedQueries }: QueryOpt) {
+  const FlattenedDocumentNode = flattenDocumentNode(OperationNodes);
+  const includedQueries = Arraydiff(QueryFields, excludedQueries);
+  function checker(arr: string[], against: boolean) {
+    arr.forEach(query => {
+      const [range, auth, part] = query.split('.');
+      (part !== "count" ? ['RefsNone', 'ObjectsNone', 'ScalarsOnly'] : ['']).forEach(fragment_name => {
+        const opname = `Get${capitalize(range)}${capitalize(auth)}Users${capitalize(part)}${fragment_name ? "_" + fragment_name : ''}`;
+        expect(Boolean(FlattenedDocumentNode.OperationDefinition[opname])).toBe(against)
+      })
+    })
+  }
+  checker(excludedQueries, false);
+  checker(includedQueries, true);
 }
 
 describe('Query option checker', () => {
@@ -95,9 +113,18 @@ describe('Query option checker', () => {
     queryOpts.forEach((queryOpt, index) => {
       const { query, field } = queryOpt;
       it(`Should output correct query when ${field} is false in ${partition} config`, async () => {
+        const nested_schema = new mongoose.Schema({
+          nested: Number
+        })
         const Schema = new mongoose.Schema({
-          name: String
+          name: String,
+          ref: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Folder'
+          },
+          nested: nested_schema
         }) as IMongqlMongooseSchemaPartial;
+
         Schema.mongql = { resource: 'user' };
         const generate = {
           query
@@ -106,15 +133,16 @@ describe('Query option checker', () => {
           Schema.mongql.generate = { query };
           const GlobalQueryOtps = queryOpts[index !== queryOpts.length - 1 ? index + 1 : 1];
           generate.query = GlobalQueryOtps.query;
-          queryOpt.excludedQuery = Array.from(new Set(queryOpt.excludedQuery.concat(GlobalQueryOtps.excludedQuery)));
+          queryOpt.excludedQueries = Array.from(new Set(queryOpt.excludedQueries.concat(GlobalQueryOtps.excludedQueries)));
         }
         const mongql = new Mongql({
           Schemas: [Schema],
           generate
         });
-        const { TransformedTypedefs, TransformedResolvers } = await mongql.generate();
+        const { TransformedTypedefs, TransformedResolvers, OperationNodes } = await mongql.generate();
         QueryChecker(TransformedTypedefs.obj.User, queryOpt, 'typedef');
         QueryChecker(TransformedResolvers.obj.User.Query, queryOpt, 'resolver');
+        OperationChecker(OperationNodes, queryOpt);
       });
     });
   });

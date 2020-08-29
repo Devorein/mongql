@@ -96,7 +96,7 @@ function OperationChecker(OperationNodes: MutableDocumentNode, { excludedMutatio
 }
 
 describe('Mutation option checker', () => {
-  ['global'/* , 'local' */].forEach((partition) => {
+  ['global', 'local'].forEach((partition) => {
     mutationOpts.forEach((mutationOpt, index) => {
       const { mutation, field } = mutationOpt;
       it(`Should output correct mutation when ${field} is false in ${partition} config`, async () => {

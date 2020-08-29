@@ -44,15 +44,15 @@
     "graphql-extra": "^0.2.2",
     "graphql-scalars": "^1.2.6",
     "graphql-tag": "^2.11.0",
-    "mongoose": "^5.10.1",
+    "mongoose": "^5.10.2",
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
-    "@types/eslint": "^7.2.1",
+    "@types/eslint": "^7.2.2",
     "@types/jest": "^26.0.10",
     "@types/mkdirp": "^1.0.1",
     "@types/mongoose": "^5.7.36",
-    "@types/node": "^14.6.1",
+    "@types/node": "^14.6.2",
     "@types/pluralize": "0.0.29",
     "@types/rimraf": "^3.0.0",
     "@types/voca": "^1.4.0",
@@ -68,7 +68,6 @@
     "rimraf": "^3.0.2",
     "sort-package-json": "^1.44.0",
     "ts-jest": "^26.3.0",
-    "ts-node": "^9.0.0",
     "typescript": "^4.0.2"
   }
 }

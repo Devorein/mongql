@@ -218,11 +218,14 @@ class Mongql {
         throw new Error(red("Invalid Fragment and Operation output file extension"))
     }
 
+    const generatedModels = await this.generateModels();
+
     return {
       TransformedTypedefs,
       TransformedResolvers,
       SchemasInfo,
-      OperationNodes
+      OperationNodes,
+      generatedModels
     };
   }
 

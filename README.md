@@ -1,3 +1,5 @@
+
+
 # Mongql
 
 A package to convert your mongoose schema to graphql schema
@@ -24,6 +26,8 @@ A package to convert your mongoose schema to graphql schema
     - [Generation of Query](#generation-of-query)
     - [Generation of Mutation](#generation-of-mutation)
     - [Generation of Types](#generation-of-types)
+    - [Generation of Fragments](#generation-of-fragments)
+    - [Generation of Operations](#generation-of-operations)
   - [API](#api)
   - [TODO](#todo)
 
@@ -37,6 +41,8 @@ A package to convert your mongoose schema to graphql schema
 6. Auto generation of fragments and operations
 7. Automatic integration with custom various scalar types from graphql-scalars
 8. Helper methods for dealing with graphql ast nodes
+9. Auto generation of fragments and operations
+10. Auto generation of basic crud operations
 
 ## Motivation
 
@@ -423,6 +429,7 @@ Generated Query Examples: `getSelfSettingsWhole, getOthersSettingsCount` ;
 
    1. Action: One of create|update|delete
    2. Target: resource for targeting single resource, resources for targeting multiple resources
+2. Specific named functions pre|post(action) attached to  the model's static is called pre and post of each action
 
 Generated Mutation Examples: `createSetting, updateSettings`
 
@@ -432,6 +439,19 @@ Generated Mutation Examples: `createSetting, updateSettings`
 
    1. For each schema (base and nested), based on the permitted auth, object will be created, and based on generate config interface, input and union will be created
 
+### Generation of Fragments
+
+1. Each object type gets converted into 3 differnet kinds of fragment
+   1. RefsNone: A fragment which excludes all the Refs Object type
+   2. ScalarsOnly: A fragment which includes its and all included object types scalar fields 
+   3. ObjectsNone: A fragment which includes only scalar fields
+
+2. All the custom fragments are generated from all the schemas 
+
+### Generation of Operations
+
+1. All the generated operations have various kinds based on the generated fragments of that schema
+
 ## API
 
 All of the methods and configs have been commented along with their types
@@ -439,6 +459,10 @@ All of the methods and configs have been commented along with their types
 ## TODO
 
 1. Add more well rounded tests
-2. Provide ES modules to make the library tree-shakable
+2. Provide ES modules to make the library tree-shakabl
 
 **PRS are more than welcome and highly appreciated!!!!**
+
+
+
+

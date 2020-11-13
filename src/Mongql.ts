@@ -336,13 +336,13 @@ class Mongql {
    * Generates models from the Schemas passed to Global Configs
    */
   async generateModels() {
-    const conn = await connect(process.env.MONGO_URI as string, {
+    /*const conn = await connect(process.env.MONGO_URI as string, {
       useNewUrlParser: true,
       useCreateIndex: true,
       useFindAndModify: false,
       useUnifiedTopology: true
     });
-    green(`MongoDB Connected: ${conn.connection.host}`);
+    green(`MongoDB Connected: ${conn.connection.host}`);*/
     const res: { [key: string]: Model<any> } = {};
     this.#globalConfigs.Schemas.forEach((schema: IMongqlMongooseSchemaFull) => {
       const { mongql: { resource } } = schema;

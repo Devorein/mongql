@@ -48,7 +48,7 @@
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
-    "@types/eslint": "^7.2.2",
+    "@types/eslint": "^8.2.1",
     "@types/jest": "^26.0.10",
     "@types/mkdirp": "^1.0.1",
     "@types/mongoose": "^5.7.36",
